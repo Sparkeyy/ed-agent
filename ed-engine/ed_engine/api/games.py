@@ -22,6 +22,7 @@ from ed_engine.api.schemas import (
 )
 from ed_engine.api.session import GameSession, store
 from ed_engine.engine.perspective import PerspectiveFilter
+from ed_engine.db.elo import update_multiplayer_elo
 
 router = APIRouter()
 
@@ -239,6 +240,36 @@ async def perform_action(game_id: str, req: PerformActionRequest) -> PerformActi
 
         winner = max(scores, key=scores.get) if scores else None  # type: ignore[arg-type]
         session.broadcast_event("game_over", {"scores": scores, "winner": winner})
+
+        # Update ELO ratings
+        try:
+            from ed_engine.api.players import get_store, classify
+
+            ps = get_store()
+            # Build results sorted by score (descending)
+            elo_results = []
+            sorted_players = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+            for placement, (name, score) in enumerate(sorted_players, 1):
+                player = ps.get_or_create_player(name)
+                elo_results.append({
+                    "player_id": player["id"],
+                    "elo": player["elo"],
+                    "placement": placement,
+                    "score": score,
+                    "name": name,
+                })
+            updated = update_multiplayer_elo(elo_results)
+            for r in updated:
+                ps.record_game(
+                    game_id=session.game_id,
+                    player_id=r["player_id"],
+                    final_score=r["score"],
+                    placement=r["placement"],
+                    elo_before=r["elo"],
+                    elo_after=r["new_elo"],
+                )
+        except Exception:
+            pass  # ELO update is non-critical
 
     return PerformActionResponse(status="ok", game=game_resp)
 

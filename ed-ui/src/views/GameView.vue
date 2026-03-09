@@ -12,6 +12,8 @@ import PlayerCity from '../components/PlayerCity.vue'
 import PlayerHand from '../components/PlayerHand.vue'
 import ActionBar from '../components/ActionBar.vue'
 import EventsPanel from '../components/EventsPanel.vue'
+import DebugPanel from '../components/DebugPanel.vue'
+import StatsPanel from '../components/StatsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,6 +21,8 @@ const store = useGameStore()
 const gameId = route.params.id as string
 
 const activeCityTab = ref<string | null>(null)
+const debugPanel = ref<InstanceType<typeof DebugPanel> | null>(null)
+const statsPanel = ref<InstanceType<typeof StatsPanel> | null>(null)
 
 onMounted(() => {
   if (!store.gameId) {
@@ -82,28 +86,33 @@ const activeCityIsMe = computed(() => {
 })
 
 // Actions
+function captureAndSubmit(action: ValidAction) {
+  debugPanel.value?.captureAction(action)
+  store.submitAction(action)
+}
+
 function handlePlayFromHand(cardName: string) {
   const action = store.validActions.find(
     a => a.action_type === 'play_card' && a.source === 'hand' && a.card_name === cardName
   )
-  if (action) store.submitAction(action)
+  if (action) captureAndSubmit(action)
 }
 
 function handlePlayFromMeadow(index: number) {
   const action = store.validActions.find(
     a => a.action_type === 'play_card' && a.source === 'meadow' && a.meadow_index === index
   )
-  if (action) store.submitAction(action)
+  if (action) captureAndSubmit(action)
 }
 
 function handlePlaceWorker(locationId: string) {
   const action: ValidAction = { action_type: 'place_worker', location_id: locationId }
-  store.submitAction(action)
+  captureAndSubmit(action)
 }
 
 function handlePrepareForSeason() {
   const action: ValidAction = { action_type: 'prepare_for_season' }
-  store.submitAction(action)
+  captureAndSubmit(action)
 }
 
 function handleClaimEvent(_eventId: string) {
@@ -209,6 +218,10 @@ function goToScores() {
       :current-player-name="store.currentPlayer?.name"
       @prepare-for-season="handlePrepareForSeason"
     />
+
+    <!-- Overlay panels -->
+    <DebugPanel ref="debugPanel" />
+    <StatsPanel ref="statsPanel" />
 
     <!-- Error toast -->
     <div v-if="store.error" class="error-toast">

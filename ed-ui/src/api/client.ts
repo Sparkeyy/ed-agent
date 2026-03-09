@@ -1,6 +1,7 @@
-import type { GameState, ValidAction } from '../types'
+import type { GameState, ValidAction, PlayerProfile, LeaderboardEntry, MoveEvaluation } from '../types'
 
 const BASE = '/api/v1'
+const AI_BASE = 'http://localhost:4243'
 
 export class ApiError extends Error {
   status: number
@@ -88,4 +89,42 @@ export async function performAction(gameId: string, playerToken: string, action:
     body: JSON.stringify(body),
   })
   return resp.state
+}
+
+// Player profile
+export async function getProfile(username: string): Promise<PlayerProfile> {
+  return request<PlayerProfile>(`/players/${encodeURIComponent(username)}`)
+}
+
+// Leaderboard
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  return request<LeaderboardEntry[]>('/leaderboard')
+}
+
+// Move evaluation (ed-ai service)
+export async function evaluateMove(
+  gameState: GameState,
+  action: ValidAction,
+  validActions: ValidAction[],
+): Promise<MoveEvaluation> {
+  const res = await fetch(`${AI_BASE}/evaluate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      game_state: gameState,
+      action,
+      valid_actions: validActions,
+    }),
+  })
+
+  if (!res.ok) {
+    let message = `${res.status} ${res.statusText}`
+    try {
+      const body = await res.json()
+      if (body.detail) message = body.detail
+    } catch { /* no JSON body */ }
+    throw new ApiError(res.status, res.statusText, message)
+  }
+
+  return res.json()
 }

@@ -86,3 +86,59 @@ export const RESOURCE_ICONS: Record<keyof ResourceBank, string> = {
   pebble: '\u{1FAA8}',
   berry: '\u{1FAD0}',
 }
+
+// Move evaluation from ed-ai service
+export type MoveQuality = 'brilliant' | 'good' | 'inaccuracy' | 'mistake' | 'blunder'
+
+export interface MoveAlternative {
+  action: ValidAction
+  description: string
+  score_delta: number
+}
+
+export interface MoveEvaluation {
+  quality: MoveQuality
+  score: number
+  explanation: string
+  alternatives: MoveAlternative[]
+}
+
+// Player profile and leaderboard
+export type PlayerClassification = 'Seedling' | 'Wanderer' | 'Forager' | 'Ranger' | 'Elder'
+
+export interface GameHistoryEntry {
+  game_id: string
+  date: string
+  players: number
+  placement: number
+  score: number
+  opponent_scores: number[]
+}
+
+export interface PlayerProfile {
+  username: string
+  elo: number
+  classification: PlayerClassification
+  games_played: number
+  win_rate: number
+  avg_move_accuracy: number
+  elo_history: number[]
+  recent_games: GameHistoryEntry[]
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  username: string
+  elo: number
+  classification: PlayerClassification
+  games_played: number
+  win_rate: number
+}
+
+export function getClassification(elo: number): PlayerClassification {
+  if (elo >= 1600) return 'Elder'
+  if (elo >= 1400) return 'Ranger'
+  if (elo >= 1200) return 'Forager'
+  if (elo >= 1000) return 'Wanderer'
+  return 'Seedling'
+}

@@ -1,40 +1,62 @@
-from typing import Any
-from uuid import UUID
+"""Player API — profiles, leaderboard, and ELO tracking."""
+
+from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from ed_engine.db import PlayerStore
+
 router = APIRouter()
 
-# In-memory store stub
-_players: dict[UUID, dict[str, Any]] = {}
+# Singleton store — initialized once at import time
+_store = PlayerStore()
+
+CLASSIFICATIONS = [
+    (1600, "Elder"),
+    (1400, "Ranger"),
+    (1200, "Forager"),
+    (1000, "Wanderer"),
+    (0, "Seedling"),
+]
+
+
+def classify(elo: int) -> str:
+    for threshold, name in CLASSIFICATIONS:
+        if elo >= threshold:
+            return name
+    return "Seedling"
+
+
+def get_store() -> PlayerStore:
+    return _store
 
 
 class RegisterPlayerRequest(BaseModel):
     name: str
 
 
-@router.post("", response_model=dict)
-async def register_player(req: RegisterPlayerRequest) -> dict[str, Any]:
-    """Register a new player."""
-    from uuid import uuid4
-
-    player_id = uuid4()
-    player = {"id": str(player_id), "name": req.name, "games_played": 0, "wins": 0}
-    _players[player_id] = player
+@router.post("")
+async def register_player(req: RegisterPlayerRequest) -> dict:
+    player = _store.get_or_create_player(req.name)
+    player["classification"] = classify(player["elo"])
     return player
 
 
-@router.get("/{player_id}")
-async def get_player(player_id: UUID) -> dict[str, Any]:
-    """Get a player profile."""
-    player = _players.get(player_id)
+@router.get("/leaderboard")
+async def leaderboard(limit: int = 20) -> list[dict]:
+    entries = _store.get_leaderboard(limit=limit)
+    for e in entries:
+        e["classification"] = classify(e["elo"])
+    return entries
+
+
+@router.get("/{username}")
+async def get_profile(username: str) -> dict:
+    player = _store.get_player_by_username(username)
     if player is None:
         raise HTTPException(status_code=404, detail="Player not found")
-    return player
-
-
-@router.get("")
-async def leaderboard() -> list[dict[str, Any]]:
-    """Get the leaderboard."""
-    return sorted(_players.values(), key=lambda p: p.get("wins", 0), reverse=True)
+    stats = _store.get_player_stats(player["id"])
+    stats["classification"] = classify(stats["elo"])
+    stats["game_history"] = _store.get_game_history(player["id"])
+    return stats

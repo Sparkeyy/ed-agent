@@ -12,6 +12,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ed_ai.agent import AIPlayer
+from ed_ai.evaluator import evaluate_move
 from ed_ai.ollama_client import OllamaClient
 from ed_ai.parser import ResponseParser
 from ed_ai.prompts.personas import get_system_prompt
@@ -58,13 +59,22 @@ class ThinkResponse(BaseModel):
 
 
 class EvaluateRequest(BaseModel):
-    game_state: dict[str, Any]
+    game_state: str
+    action_taken: dict[str, Any]
+    valid_actions: list[dict[str, Any]] = Field(default_factory=list)
+    difficulty: str = Field(default="journeyman", pattern="^(apprentice|journeyman|master)$")
+
+
+class AlternativeAction(BaseModel):
     action: dict[str, Any]
+    reason: str
 
 
 class EvaluateResponse(BaseModel):
-    quality: float = Field(ge=0.0, le=1.0, default=0.5)
-    explanation: str = "Evaluation not yet implemented (Phase 5 stub)"
+    quality: str
+    score: float = Field(ge=0.0, le=1.0)
+    alternatives: list[AlternativeAction] = Field(default_factory=list)
+    explanation: str
 
 
 class GameSession(BaseModel):
@@ -179,11 +189,15 @@ async def think(req: ThinkRequest) -> ThinkResponse:
 
 @app.post("/evaluate", response_model=EvaluateResponse)
 async def evaluate(req: EvaluateRequest) -> EvaluateResponse:
-    """Evaluate an action's quality (Phase 5 stub)."""
-    return EvaluateResponse(
-        quality=0.5,
-        explanation="Evaluation not yet implemented (Phase 5 stub)",
+    """Evaluate a player's move quality (chess-style rating with alternatives)."""
+    result = await evaluate_move(
+        ollama=_ollama,
+        game_state=req.game_state,
+        action_taken=req.action_taken,
+        valid_actions=req.valid_actions,
+        difficulty=req.difficulty,
     )
+    return EvaluateResponse(**result)
 
 
 @app.get("/health")

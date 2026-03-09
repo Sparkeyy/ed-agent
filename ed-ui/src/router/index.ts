@@ -19,7 +19,7 @@ const router = createRouter({
       component: () => import('../views/ScoreView.vue'),
     },
     {
-      path: '/profile/:id',
+      path: '/profile/:username',
       name: 'Profile',
       component: () => import('../views/ProfileView.vue'),
     },

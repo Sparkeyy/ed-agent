@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+import random
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, Field
+
+from ed_engine.models.enums import LocationType, Season
+
+if TYPE_CHECKING:
+    from ed_engine.models.game import GameState
+    from ed_engine.models.player import Player
+
+
+class Location(BaseModel):
+    """Base location for worker placement."""
+
+    id: str
+    name: str
+    location_type: LocationType
+    exclusive: bool = True
+    workers: list[str] = Field(default_factory=list)
+
+    def is_available(self, player_id: str) -> bool:
+        """Check if a player can place a worker here."""
+        if self.exclusive:
+            return len(self.workers) == 0
+        # Shared locations: player can only place once
+        return player_id not in self.workers
+
+    def place_worker(self, player_id: str) -> None:
+        if not self.is_available(player_id):
+            raise ValueError(f"Location {self.id} not available for player {player_id}")
+        self.workers.append(player_id)
+
+    def remove_worker(self, player_id: str) -> None:
+        if player_id in self.workers:
+            self.workers.remove(player_id)
+
+    def on_activate(self, game: Any, player: Any) -> None:
+        """Override in subclasses to define what happens when a worker is placed."""
+        pass
+
+
+class BasicLocation(Location):
+    """Standard board spaces."""
+
+    location_type: LocationType = LocationType.BASIC
+
+
+class ForestLocation(Location):
+    """Variable per player count."""
+
+    location_type: LocationType = LocationType.FOREST
+    exclusive: bool = True
+
+
+class HavenLocation(Location):
+    """Shared location: discard 2 cards for 1 any resource."""
+
+    location_type: LocationType = LocationType.HAVEN
+    exclusive: bool = False
+
+
+class JourneyLocation(Location):
+    """Autumn only: discard cards equal to point value."""
+
+    location_type: LocationType = LocationType.JOURNEY
+    point_value: int = 0
+
+    def is_available(self, player_id: str) -> bool:
+        """Journey locations use normal availability rules; season check is in LocationManager."""
+        return super().is_available(player_id)
+
+
+class EventLocation(Location):
+    """For basic and special events."""
+
+    location_type: LocationType = LocationType.EVENT
+
+
+# --- All 11 possible forest location definitions ---
+ALL_FOREST_LOCATIONS = [
+    ForestLocation(id="forest_01", name="2 twigs + 2 resin"),
+    ForestLocation(id="forest_02", name="2 resin + 1 card"),
+    ForestLocation(id="forest_03", name="1 twig + 1 resin + 1 pebble"),
+    ForestLocation(id="forest_04", name="2 twigs + 1 pebble"),
+    ForestLocation(id="forest_05", name="1 pebble + 1 berry"),
+    ForestLocation(id="forest_06", name="2 berries + 1 card"),
+    ForestLocation(id="forest_07", name="3 twigs + 1 card"),
+    ForestLocation(id="forest_08", name="1 twig + 1 resin + 1 berry"),
+    ForestLocation(id="forest_09", name="3 berries"),
+    ForestLocation(id="forest_10", name="Copy any basic/forest"),
+    ForestLocation(id="forest_11", name="Discard up to 3 cards, gain any per card"),
+]
+
+
+class LocationManager:
+    """Initializes and manages all board locations."""
+
+    def __init__(self, player_count: int, seed: int | None = None) -> None:
+        self._locations: dict[str, Location] = {}
+        self._player_count = player_count
+        self._setup_basic_locations(player_count)
+        self._setup_forest_locations(player_count, seed)
+        self._setup_haven()
+        self._setup_journey_locations()
+
+    def _setup_basic_locations(self, player_count: int) -> None:
+        basics = [
+            BasicLocation(id="basic_3twigs", name="3 Twigs", exclusive=True),
+            BasicLocation(id="basic_2twigs_1card", name="2 Twigs + 1 Card", exclusive=True),
+            BasicLocation(id="basic_2resin", name="2 Resin", exclusive=True),
+            BasicLocation(id="basic_1pebble_1card", name="1 Pebble + 1 Card", exclusive=True),
+            BasicLocation(id="basic_1berry_1card", name="1 Berry + 1 Card", exclusive=False),
+            BasicLocation(id="basic_1any", name="1 Any Resource", exclusive=False),
+            BasicLocation(id="basic_2cards", name="2 Cards", exclusive=False),
+        ]
+        # 2 any resource: exclusive, but 4-player has 2 copies
+        basics.append(BasicLocation(id="basic_2any_1", name="2 Any Resources", exclusive=True))
+        if player_count >= 4:
+            basics.append(BasicLocation(id="basic_2any_2", name="2 Any Resources (2nd)", exclusive=True))
+
+        for loc in basics:
+            self._locations[loc.id] = loc
+
+    def _setup_forest_locations(self, player_count: int, seed: int | None) -> None:
+        rng = random.Random(seed)
+        count = 3 if player_count <= 2 else 4
+        chosen = rng.sample(ALL_FOREST_LOCATIONS, count)
+        for loc in chosen:
+            copy = loc.model_copy()
+            self._locations[copy.id] = copy
+
+    def _setup_haven(self) -> None:
+        haven = HavenLocation(id="haven", name="Haven", exclusive=False)
+        self._locations[haven.id] = haven
+
+    def _setup_journey_locations(self) -> None:
+        journeys = [
+            JourneyLocation(id="journey_2pt", name="Journey (2 VP)", exclusive=False, point_value=2),
+            JourneyLocation(id="journey_3pt", name="Journey (3 VP)", exclusive=True, point_value=3),
+            JourneyLocation(id="journey_4pt", name="Journey (4 VP)", exclusive=True, point_value=4),
+            JourneyLocation(id="journey_5pt", name="Journey (5 VP)", exclusive=True, point_value=5),
+        ]
+        for loc in journeys:
+            self._locations[loc.id] = loc
+
+    def get_available_locations(self, player_id: str, season: Season) -> list[Location]:
+        """Return all locations where the player can place a worker."""
+        available = []
+        for loc in self._locations.values():
+            # Journey locations only available in autumn
+            if loc.location_type == LocationType.JOURNEY and season != Season.AUTUMN:
+                continue
+            if loc.is_available(player_id):
+                available.append(loc)
+        return available
+
+    def place_worker(self, location_id: str, player_id: str) -> None:
+        loc = self._locations.get(location_id)
+        if loc is None:
+            raise ValueError(f"Unknown location: {location_id}")
+        loc.place_worker(player_id)
+
+    def recall_all_workers(self, player_id: str) -> list[Location]:
+        """Recall all workers for a player. Returns locations they were recalled from."""
+        recalled_from = []
+        for loc in self._locations.values():
+            if player_id in loc.workers:
+                loc.remove_worker(player_id)
+                recalled_from.append(loc)
+        return recalled_from
+
+    def get_location(self, location_id: str) -> Location | None:
+        return self._locations.get(location_id)
+
+    @property
+    def all_locations(self) -> list[Location]:
+        return list(self._locations.values())

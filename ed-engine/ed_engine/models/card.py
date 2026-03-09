@@ -1,24 +1,26 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ed_engine.models.enums import CardCategory, CardType
 from ed_engine.models.resources import ResourceBank
 
 if TYPE_CHECKING:
+    from ed_engine.models.game import GameState
     from ed_engine.models.player import Player
 
 
 class Card(BaseModel):
-    """Base class for all Everdell cards.
+    """Base card model for Everdell.
 
-    Subclass one of the five type-specific bases instead of this directly.
+    Concrete base with no-op default methods. Subclass per card type
+    and override the relevant hooks.
     """
 
-    id: str
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     name: str
     card_type: CardType
     category: CardCategory
@@ -26,135 +28,28 @@ class Card(BaseModel):
     base_points: int = 0
     paired_with: Optional[str] = None
     unique: bool = False
-    copies: int = 1
+    copies_in_deck: int = 1
+    occupies_city_space: bool = True
+    is_open_destination: bool = False
 
-    @abstractmethod
-    def on_play(self, player: Player, **kwargs: Any) -> None:
-        """Called when the card is played into a player's city."""
-        raise NotImplementedError
+    # --- lifecycle hooks (override in subclasses) ---
 
-    @abstractmethod
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:
-        """Called when the card is triggered (e.g. during production)."""
-        raise NotImplementedError
+    def on_play(self, game: GameState, player: Player) -> None:
+        """Called when this card is played into a city."""
 
-    @abstractmethod
-    def on_score(self, player: Player, **kwargs: Any) -> int:
-        """Return the total VP this card contributes at end-of-game."""
-        raise NotImplementedError
+    def on_production(self, game: GameState, player: Player) -> None:
+        """Called during green production triggers (spring/autumn Prepare for Season)."""
 
+    def on_worker_placed(
+        self, game: GameState, player: Player, visitor: Player
+    ) -> None:
+        """Called when a worker is placed on this red destination card."""
 
-# ---------------------------------------------------------------------------
-# Type-specific base classes
-# ---------------------------------------------------------------------------
+    def on_card_played(
+        self, game: GameState, player: Player, played_card: Card
+    ) -> None:
+        """Called for blue governance triggers when *any* card is played."""
 
-
-class TanTravelerCard(Card):
-    """Tan / Traveler — one-time effect when played, then inert.
-
-    Subclasses MUST override ``on_play`` to define the one-time effect.
-    ``on_trigger`` is a no-op; ``on_score`` returns ``base_points``.
-    """
-
-    card_type: CardType = CardType.TAN_TRAVELER
-
-    @abstractmethod
-    def on_play(self, player: Player, **kwargs: Any) -> None:  # type: ignore[override]
-        raise NotImplementedError
-
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:
-        pass  # Travelers have no recurring trigger
-
-    def on_score(self, player: Player, **kwargs: Any) -> int:
-        return self.base_points
-
-
-class GreenProductionCard(Card):
-    """Green / Production — triggers each Prepare for Season (spring & autumn).
-
-    Subclasses MUST override ``on_trigger`` to define the production effect.
-    ``on_play`` is a no-op; ``on_score`` returns ``base_points``.
-    """
-
-    card_type: CardType = CardType.GREEN_PRODUCTION
-
-    def on_play(self, player: Player, **kwargs: Any) -> None:
-        pass  # Production cards have no immediate play effect
-
-    @abstractmethod
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:  # type: ignore[override]
-        raise NotImplementedError
-
-    def on_score(self, player: Player, **kwargs: Any) -> int:
-        return self.base_points
-
-
-class RedDestinationCard(Card):
-    """Red / Destination — acts as a worker-placement location in the player's city.
-
-    Only the owning player (or sharing rules) can place a worker here.
-    ``on_trigger`` fires when a worker is placed on the card.
-    ``on_play`` is a no-op; ``on_score`` returns ``base_points``.
-    """
-
-    card_type: CardType = CardType.RED_DESTINATION
-    occupied_by: Optional[str] = None  # player id that placed a worker here
-
-    def on_play(self, player: Player, **kwargs: Any) -> None:
-        pass  # Destination cards have no immediate play effect
-
-    @abstractmethod
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:  # type: ignore[override]
-        """Effect when a worker is placed on this destination."""
-        raise NotImplementedError
-
-    def on_score(self, player: Player, **kwargs: Any) -> int:
-        return self.base_points
-
-    def place_worker(self, player_id: str) -> None:
-        if self.occupied_by is not None:
-            raise ValueError(f"{self.name} is already occupied")
-        self.occupied_by = player_id
-
-    def recall_worker(self) -> None:
-        self.occupied_by = None
-
-
-class BlueGovernanceCard(Card):
-    """Blue / Governance — grants an ongoing rule or end-of-game scoring bonus.
-
-    Subclasses SHOULD override ``on_score`` when the card has conditional VP.
-    ``on_play`` and ``on_trigger`` are no-ops by default.
-    """
-
-    card_type: CardType = CardType.BLUE_GOVERNANCE
-
-    def on_play(self, player: Player, **kwargs: Any) -> None:
-        pass
-
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:
-        pass  # Governance cards don't trigger during production
-
-    @abstractmethod
-    def on_score(self, player: Player, **kwargs: Any) -> int:  # type: ignore[override]
-        raise NotImplementedError
-
-
-class PurpleProsperityCard(Card):
-    """Purple / Prosperity — worth variable bonus VP at end of game.
-
-    Subclasses MUST override ``on_score`` to compute the conditional bonus.
-    ``on_play`` and ``on_trigger`` are no-ops.
-    """
-
-    card_type: CardType = CardType.PURPLE_PROSPERITY
-
-    def on_play(self, player: Player, **kwargs: Any) -> None:
-        pass
-
-    def on_trigger(self, player: Player, **kwargs: Any) -> None:
-        pass  # Prosperity cards don't trigger during production
-
-    @abstractmethod
-    def on_score(self, player: Player, **kwargs: Any) -> int:  # type: ignore[override]
-        raise NotImplementedError
+    def on_score(self, game: GameState, player: Player) -> int:
+        """Return bonus points beyond base_points (purple prosperity cards)."""
+        return 0

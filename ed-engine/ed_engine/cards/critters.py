@@ -118,11 +118,43 @@ class ChipSweep(ProductionCard):
     paired_with: str | None = "Resin Refinery"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Activate any 1 green Production card in city (auto-pick first, skip ChipSweeps to prevent recursion)."""
+        """Activate any 1 green Production card in city — interactive choice."""
+        skip = {"Chip Sweep"}
+        eligible = [
+            c for c in player.city
+            if c.card_type == CardType.GREEN_PRODUCTION and c is not self and c.name not in skip
+        ]
+        if not eligible:
+            return
+        if len(eligible) == 1:
+            # Only one option — activate directly
+            eligible[0].on_production(game, player, ctx=ctx)
+            return
+        game.pending_choice = {
+            "choice_type": "select_card",
+            "card": "Chip Sweep",
+            "player_id": str(player.id),
+            "step": "pick_card",
+            "prompt": "Choose a green Production card to activate with Chip Sweep",
+            "options": [
+                {"label": c.name, "value": c.name, "base_points": c.base_points}
+                for c in eligible
+            ],
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        card_name = option["value"]
         for card in player.city:
-            if card.card_type == CardType.GREEN_PRODUCTION and card is not self and card.name != "Chip Sweep":
+            if card.name == card_name and card.card_type == CardType.GREEN_PRODUCTION:
+                game.pending_choice = None
                 card.on_production(game, player, ctx=ctx)
-                break
+                return [f"{player.name} activated {card_name} via Chip Sweep"]
+        game.pending_choice = None
+        return [f"ERROR: Could not find {card_name} in city"]
 
 
 @register
@@ -154,10 +186,33 @@ class Harvester(ProductionCard):
     paired_with: str | None = "Farm"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """If have Farm in city, gain 1 berry (auto-pick as 'any resource')."""
+        """If have Farm in city, gain 1 of any resource — interactive choice."""
         has_farm = any(c.name == "Farm" for c in player.city)
         if has_farm:
-            player.resources = player.resources.gain(ResourceBank(berry=1))
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Harvester",
+                "player_id": str(player.id),
+                "step": "pick_resource",
+                "prompt": "Choose a resource to gain from Harvester",
+                "options": [
+                    {"label": "1 Twig", "value": "1T", "resource": "twig", "amount": 1},
+                    {"label": "1 Resin", "value": "1R", "resource": "resin", "amount": 1},
+                    {"label": "1 Pebble", "value": "1P", "resource": "pebble", "amount": 1},
+                    {"label": "1 Berry", "value": "1B", "resource": "berry", "amount": 1},
+                ],
+                "context": {},
+            }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        resource = option["resource"]
+        amount = option["amount"]
+        player.resources = player.resources.gain(ResourceBank(**{resource: amount}))
+        game.pending_choice = None
+        return [f"{player.name} gained {amount} {resource} from Harvester"]
 
 
 @register
@@ -171,15 +226,116 @@ class MinerMole(ProductionCard):
     paired_with: str | None = "Mine"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Copy 1 green Production card from an opponent's city (auto-pick first, skip recursive cards)."""
+        """Copy 1 green Production card from an opponent's city — interactive choice."""
         skip = {"Chip Sweep", "Miner Mole"}
-        for other in game.players:
-            if str(other.id) == str(player.id):
-                continue
-            for card in other.city:
+        opponents = [p for p in game.players if str(p.id) != str(player.id)]
+        if not opponents:
+            return
+
+        # Collect all eligible green cards from all opponents
+        all_eligible = []
+        for opp in opponents:
+            for card in opp.city:
                 if card.card_type == CardType.GREEN_PRODUCTION and card.name not in skip:
-                    card.on_production(game, player, ctx=ctx)
-                    return
+                    all_eligible.append((opp, card))
+
+        if not all_eligible:
+            return
+
+        if len(all_eligible) == 1:
+            # Only one option — activate directly
+            _, card = all_eligible[0]
+            card.on_production(game, player, ctx=ctx)
+            return
+
+        # Check if all from same opponent
+        opp_ids = {str(o.id) for o, _ in all_eligible}
+        if len(opp_ids) == 1:
+            # Single opponent, pick card directly
+            options = [
+                {"label": f"{c.name} ({opp.name})", "value": c.name, "opponent_id": str(opp.id), "base_points": c.base_points}
+                for opp, c in all_eligible
+            ]
+            game.pending_choice = {
+                "choice_type": "select_card",
+                "card": "Miner Mole",
+                "player_id": str(player.id),
+                "step": "pick_card",
+                "prompt": "Choose an opponent's green Production card to copy (Miner Mole)",
+                "options": options,
+                "context": {},
+            }
+        else:
+            # Multiple opponents — pick opponent first
+            opp_options = []
+            seen = set()
+            for opp, _ in all_eligible:
+                oid = str(opp.id)
+                if oid not in seen:
+                    seen.add(oid)
+                    opp_options.append({"label": opp.name, "value": oid})
+            game.pending_choice = {
+                "choice_type": "select_opponent",
+                "card": "Miner Mole",
+                "player_id": str(player.id),
+                "step": "pick_opponent",
+                "prompt": "Choose an opponent to copy a green Production card from (Miner Mole)",
+                "options": opp_options,
+                "context": {},
+            }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        step = pending_choice.get("step")
+        skip = {"Chip Sweep", "Miner Mole"}
+
+        if step == "pick_opponent":
+            opponent_id = option["value"]
+            opp = None
+            for p in game.players:
+                if str(p.id) == opponent_id:
+                    opp = p
+                    break
+            if not opp:
+                game.pending_choice = None
+                return ["ERROR: Opponent not found for Miner Mole"]
+
+            eligible = [c for c in opp.city if c.card_type == CardType.GREEN_PRODUCTION and c.name not in skip]
+            if len(eligible) == 1:
+                game.pending_choice = None
+                eligible[0].on_production(game, player, ctx=ctx)
+                return [f"{player.name} copied {eligible[0].name} from {opp.name} via Miner Mole"]
+
+            options = [
+                {"label": c.name, "value": c.name, "opponent_id": opponent_id, "base_points": c.base_points}
+                for c in eligible
+            ]
+            game.pending_choice = {
+                "choice_type": "select_card",
+                "card": "Miner Mole",
+                "player_id": str(player.id),
+                "step": "pick_card",
+                "prompt": f"Choose a green Production card to copy from {opp.name} (Miner Mole)",
+                "options": options,
+                "context": {"opponent_id": opponent_id},
+            }
+            return [f"{player.name} chose {opp.name} for Miner Mole"]
+
+        elif step == "pick_card":
+            card_name = option["value"]
+            opponent_id = option.get("opponent_id") or pending_choice.get("context", {}).get("opponent_id")
+            game.pending_choice = None
+            for p in game.players:
+                if str(p.id) == opponent_id:
+                    for c in p.city:
+                        if c.name == card_name and c.card_type == CardType.GREEN_PRODUCTION:
+                            c.on_production(game, player, ctx=ctx)
+                            return [f"{player.name} copied {card_name} from {p.name} via Miner Mole"]
+
+        game.pending_choice = None
+        return []
 
 
 @register
@@ -193,16 +349,84 @@ class Monk(ProductionCard):
     paired_with: str | None = "Monastery"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Give up to 2 berries to first opponent, gain 2 VP per berry given."""
-        give = min(2, player.resources.berry)
-        if give > 0:
-            player.resources = player.resources.spend(ResourceBank(berry=give))
-            # Give to first opponent
-            for other in game.players:
-                if str(other.id) != str(player.id):
-                    other.resources = other.resources.gain(ResourceBank(berry=give))
-                    break
-            player.point_tokens += 2 * give
+        """Give up to 2 berries to an opponent, gain 2 VP per berry — interactive choice."""
+        opponents = [p for p in game.players if str(p.id) != str(player.id)]
+        max_give = min(2, player.resources.berry)
+        if not opponents or max_give == 0:
+            return
+
+        if len(opponents) == 1:
+            # Skip opponent selection, go straight to amount
+            opp = opponents[0]
+            options = [
+                {"label": f"Give {n} berry(ies) (+{n*2} VP)", "value": str(n), "amount": n}
+                for n in range(max_give + 1)
+            ]
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Monk",
+                "player_id": str(player.id),
+                "step": "pick_amount",
+                "prompt": f"Choose how many berries to give {opp.name} (Monk)",
+                "options": options,
+                "context": {"opponent_id": str(opp.id)},
+            }
+        else:
+            # Multi-opponent: pick opponent first
+            options = [
+                {"label": p.name, "value": str(p.id)}
+                for p in opponents
+            ]
+            game.pending_choice = {
+                "choice_type": "select_opponent",
+                "card": "Monk",
+                "player_id": str(player.id),
+                "step": "pick_opponent",
+                "prompt": "Choose an opponent to give berries to (Monk)",
+                "options": options,
+                "context": {"max_give": max_give},
+            }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        step = pending_choice.get("step")
+        context = pending_choice.get("context", {})
+
+        if step == "pick_opponent":
+            opponent_id = option["value"]
+            max_give = context.get("max_give", min(2, player.resources.berry))
+            options = [
+                {"label": f"Give {n} berry(ies) (+{n*2} VP)", "value": str(n), "amount": n}
+                for n in range(max_give + 1)
+            ]
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Monk",
+                "player_id": str(player.id),
+                "step": "pick_amount",
+                "prompt": "Choose how many berries to give (Monk)",
+                "options": options,
+                "context": {"opponent_id": opponent_id},
+            }
+            return [f"{player.name} chose opponent for Monk"]
+
+        elif step == "pick_amount":
+            amount = option.get("amount", int(option["value"]))
+            opponent_id = context.get("opponent_id")
+            game.pending_choice = None
+            if amount > 0:
+                player.resources = player.resources.spend(ResourceBank(berry=amount))
+                for other in game.players:
+                    if str(other.id) == opponent_id:
+                        other.resources = other.resources.gain(ResourceBank(berry=amount))
+                        player.point_tokens += 2 * amount
+                        return [f"{player.name} gave {amount} berry(ies) to {other.name} via Monk (+{amount*2} VP)"]
+            return [f"{player.name} gave 0 berries via Monk"]
+
+        game.pending_choice = None
+        return []
 
 
 @register
@@ -231,22 +455,60 @@ class Teacher(ProductionCard):
     paired_with: str | None = "School"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Draw 2 cards, keep highest VP, give lowest to first opponent."""
+        """Draw 2 cards, choose which to keep — interactive choice."""
         deck_mgr = ctx.get("deck_mgr") if ctx else None
         if not deck_mgr:
             return
         drawn = deck_mgr.draw(2)
         if not drawn:
             return
-        drawn.sort(key=lambda c: c.base_points, reverse=True)
-        player.hand.append(drawn[0])
-        if len(drawn) > 1:
-            for other in game.players:
-                if str(other.id) != str(player.id):
-                    other.hand.append(drawn[1])
-                    break
-            else:
-                deck_mgr.discard([drawn[1]])
+        if len(drawn) == 1:
+            # Only 1 card drawn — keep it automatically
+            player.hand.append(drawn[0])
+            return
+        game.pending_choice = {
+            "choice_type": "select_card",
+            "card": "Teacher",
+            "player_id": str(player.id),
+            "step": "pick_card",
+            "prompt": "Choose a card to keep (the other goes to an opponent)",
+            "options": [
+                {"label": c.name, "value": c.name, "base_points": c.base_points}
+                for c in drawn
+            ],
+            "context": {"revealed_cards": [{"name": c.name, "base_points": c.base_points} for c in drawn]},
+        }
+        # Store actual card objects temporarily on game for resolve_choice
+        if not hasattr(game, "_teacher_drawn"):
+            game._teacher_drawn = {}
+        game._teacher_drawn[str(player.id)] = drawn
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        drawn = getattr(game, "_teacher_drawn", {}).pop(str(player.id), [])
+        if not drawn:
+            game.pending_choice = None
+            return ["ERROR: No Teacher drawn cards found"]
+
+        kept = drawn[choice_index]
+        given = drawn[1 - choice_index]
+        player.hand.append(kept)
+
+        # Give other card to first opponent
+        gave_to = None
+        for other in game.players:
+            if str(other.id) != str(player.id):
+                other.hand.append(given)
+                gave_to = other.name
+                break
+        if gave_to is None and deck_mgr:
+            deck_mgr.discard([given])
+
+        game.pending_choice = None
+        return [f"{player.name} kept {kept.name} from Teacher, gave {given.name} to {gave_to or 'discard'}"]
 
 
 @register
@@ -285,7 +547,7 @@ class Queen(DestinationCard):
     def on_worker_placed(
         self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
-        """Play any card from hand/Meadow worth <=3 pt free (auto-pick first eligible)."""
+        """Play any card from hand/Meadow worth <=3 pt free — interactive choice."""
         from ed_engine.engine.actions import MAX_CITY_SIZE
         city_size = sum(1 for c in player.city if c.occupies_city_space)
         city_names = {c.name for c in player.city}
@@ -299,22 +561,84 @@ class Queen(DestinationCard):
                 return False
             return True
 
-        # Try hand first
+        options = []
+        # Hand cards
         for i, card in enumerate(player.hand):
             if _eligible(card):
-                played = player.hand.pop(i)
-                player.city.append(played)
-                played.on_play(game, player, ctx=ctx)
-                return
-        # Try meadow
+                options.append({
+                    "label": f"{card.name} (hand)",
+                    "value": card.name,
+                    "source": "hand",
+                    "hand_index": i,
+                    "base_points": card.base_points,
+                })
+        # Meadow cards
         deck_mgr = ctx.get("deck_mgr") if ctx else None
         if deck_mgr:
             for i, card in enumerate(deck_mgr.meadow):
                 if _eligible(card):
-                    played = deck_mgr.draw_from_meadow(i)
-                    player.city.append(played)
-                    played.on_play(game, player, ctx=ctx)
-                    return
+                    options.append({
+                        "label": f"{card.name} (meadow)",
+                        "value": card.name,
+                        "source": "meadow",
+                        "meadow_index": i,
+                        "base_points": card.base_points,
+                    })
+
+        if not options:
+            return  # No eligible cards
+
+        # Add "play none" option
+        options.append({"label": "Play nothing", "value": "__none__", "source": "none", "base_points": 0})
+
+        game.pending_choice = {
+            "choice_type": "select_card",
+            "card": "Queen",
+            "player_id": str(player.id),
+            "step": "pick_card",
+            "prompt": "Choose a card to play free via Queen (VP <= 3)",
+            "options": options,
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        value = option["value"]
+        if value == "__none__":
+            game.pending_choice = None
+            return [f"{player.name} chose not to play a card via Queen"]
+
+        source = option.get("source")
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        played = None
+
+        if source == "hand":
+            for i, card in enumerate(player.hand):
+                if card.name == value:
+                    played = player.hand.pop(i)
+                    break
+        elif source == "meadow" and deck_mgr:
+            meadow_idx = option.get("meadow_index")
+            if meadow_idx is not None and 0 <= meadow_idx < len(deck_mgr.meadow):
+                if deck_mgr.meadow[meadow_idx].name == value:
+                    played = deck_mgr.draw_from_meadow(meadow_idx)
+                else:
+                    # Meadow shifted — find by name
+                    for i, card in enumerate(deck_mgr.meadow):
+                        if card.name == value:
+                            played = deck_mgr.draw_from_meadow(i)
+                            break
+
+        if played is None:
+            game.pending_choice = None
+            return [f"ERROR: Could not find {value} for Queen"]
+
+        game.pending_choice = None
+        player.city.append(played)
+        played.on_play(game, player, ctx=ctx)
+        return [f"{player.name} played {played.name} free via Queen"]
 
 
 # ---------------------------------------------------------------------------
@@ -432,15 +756,46 @@ class Fool(TravelerCard):
     paired_with: str | None = "Fair Grounds"
 
     def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Played into an opponent's city (not your own). Move from player's city to first opponent."""
-        # Card was already added to player.city by _play_card — move it
+        """Played into an opponent's city — interactive opponent selection."""
+        opponents = [p for p in game.players if str(p.id) != str(player.id)]
+        if not opponents:
+            return
+        if len(opponents) == 1:
+            # Only one opponent — move directly
+            opp = opponents[0]
+            if self in player.city:
+                player.city.remove(self)
+            opp.city.append(self)
+            return
+
+        options = [
+            {"label": p.name, "value": str(p.id)}
+            for p in opponents
+        ]
+        game.pending_choice = {
+            "choice_type": "select_opponent",
+            "card": "Fool",
+            "player_id": str(player.id),
+            "step": "pick_opponent",
+            "prompt": "Choose an opponent to receive the Fool (-2 VP for them!)",
+            "options": options,
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        opponent_id = option["value"]
         for other in game.players:
-            if str(other.id) != str(player.id):
-                # Remove from player's city, add to opponent's
+            if str(other.id) == opponent_id:
                 if self in player.city:
                     player.city.remove(self)
                 other.city.append(self)
-                return
+                game.pending_choice = None
+                return [f"{player.name} sent Fool to {other.name}'s city"]
+        game.pending_choice = None
+        return ["ERROR: Could not find opponent for Fool"]
 
 
 @register
@@ -454,29 +809,84 @@ class PostalPigeon(TravelerCard):
     paired_with: str | None = "Post Office"
 
     def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Reveal 2 from deck, play 1 worth <=3 pt free, discard other."""
+        """Reveal 2 from deck, choose 1 worth <=3 pt to play free — interactive choice."""
         deck_mgr = ctx.get("deck_mgr") if ctx else None
         if not deck_mgr:
             return
         drawn = deck_mgr.draw(2)
         if not drawn:
             return
+
+        from ed_engine.engine.actions import MAX_CITY_SIZE
+        city_size = sum(1 for c in player.city if c.occupies_city_space)
         city_names = {c.name for c in player.city}
-        # Find first eligible card (base_points <= 3, respects uniqueness)
-        played = None
+
+        eligible = []
         for card in drawn:
             if card.base_points <= 3:
                 if card.unique and card.name in city_names:
                     continue
-                played = card
-                break
-        if played:
-            drawn.remove(played)
-            player.city.append(played)
-            played.on_play(game, player, ctx=ctx)
-        # Discard the rest
-        if drawn:
+                if card.occupies_city_space and city_size >= MAX_CITY_SIZE:
+                    continue
+                eligible.append(card)
+
+        if not eligible:
+            # No eligible cards — discard all
             deck_mgr.discard(drawn)
+            return
+
+        options = [
+            {"label": c.name, "value": c.name, "base_points": c.base_points}
+            for c in eligible
+        ]
+        # Add "play none" option
+        options.append({"label": "Play none", "value": "__none__", "base_points": 0})
+
+        game.pending_choice = {
+            "choice_type": "select_card",
+            "card": "Postal Pigeon",
+            "player_id": str(player.id),
+            "step": "pick_card",
+            "prompt": "Choose a revealed card to play free (VP <= 3)",
+            "options": options,
+            "context": {},
+        }
+        # Store drawn cards for resolve_choice
+        if not hasattr(game, "_postal_pigeon_drawn"):
+            game._postal_pigeon_drawn = {}
+        game._postal_pigeon_drawn[str(player.id)] = drawn
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        drawn = getattr(game, "_postal_pigeon_drawn", {}).pop(str(player.id), [])
+        if not drawn:
+            game.pending_choice = None
+            return ["ERROR: No Postal Pigeon drawn cards found"]
+
+        value = option["value"]
+        events: list[str] = []
+
+        if value != "__none__":
+            played = None
+            for card in drawn:
+                if card.name == value:
+                    played = card
+                    break
+            if played:
+                drawn.remove(played)
+                player.city.append(played)
+                played.on_play(game, player, ctx=ctx)
+                events.append(f"{player.name} played {played.name} free via Postal Pigeon")
+
+        # Discard remaining
+        if drawn and deck_mgr:
+            deck_mgr.discard(drawn)
+
+        game.pending_choice = None
+        return events
 
 
 @register

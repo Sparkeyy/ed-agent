@@ -113,10 +113,20 @@ class SeasonManager:
 
     @staticmethod
     def trigger_production(game: GameState, player: Player, *, ctx: dict | None = None) -> list[str]:
-        """Activate all Green Production cards in player's city."""
+        """Activate all Green Production cards in player's city.
+
+        Pauses if any card sets a pending_choice, storing remaining cards
+        in context.production_queue for _continue_production to resume.
+        """
         events: list[str] = []
-        for card in player.city:
-            if card.card_type == CardType.GREEN_PRODUCTION:
-                card.on_production(game, player, ctx=ctx)
-                events.append(f"  Production: {card.name}")
+        green_cards = [c for c in player.city if c.card_type == CardType.GREEN_PRODUCTION]
+        for i, card in enumerate(green_cards):
+            card.on_production(game, player, ctx=ctx)
+            events.append(f"  Production: {card.name}")
+            if game.pending_choice is not None:
+                remaining = [c.name for c in green_cards[i + 1:]]
+                if remaining:
+                    game.pending_choice.setdefault("context", {})
+                    game.pending_choice["context"]["production_queue"] = remaining
+                break
         return events

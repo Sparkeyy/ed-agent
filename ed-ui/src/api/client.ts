@@ -87,6 +87,7 @@ export async function performAction(gameId: string, playerToken: string, action:
   if (action.use_paired_construction !== undefined) payload.use_paired_construction = action.use_paired_construction
   if (action.event_id !== undefined) payload.event_id = action.event_id
   if (action.discard_cards !== undefined) payload.discard_cards = action.discard_cards
+  if (action.choice_index !== undefined) payload.choice_index = action.choice_index
   body.payload = payload
 
   const resp = await request<{ status: string; game: GameStateResponse }>(`/games/${gameId}/action`, {

@@ -18,6 +18,7 @@ import DebugPanel from '../components/DebugPanel.vue'
 import StatsPanel from '../components/StatsPanel.vue'
 import CardInfoModal from '../components/CardInfoModal.vue'
 import HelpPanel from '../components/HelpPanel.vue'
+import ChoicePanel from '../components/ChoicePanel.vue'
 import { CARD_INFO, LOCATION_INFO } from '../data/card-info'
 
 const route = useRoute()
@@ -78,11 +79,16 @@ const claimableEventIds = computed<string[]>(() => {
     .map(a => a.event_id!)
 })
 
-// Pending choice (e.g., Undertaker meadow selection)
+// Pending choice (e.g., Undertaker meadow selection, Storehouse resource pick)
 const pendingChoice = computed(() => store.state?.pending_choice ?? null)
 
+// Options-based choice (new generic system) vs meadow-based (legacy Undertaker)
+const isOptionsPendingChoice = computed(() => {
+  return pendingChoice.value?.options && pendingChoice.value.options.length > 0
+})
+
 const pendingChoiceMeadowIndices = computed<number[]>(() => {
-  if (!pendingChoice.value) return []
+  if (!pendingChoice.value || isOptionsPendingChoice.value) return []
   return store.validActions
     .filter(a => a.action_type === 'resolve_choice' && a.meadow_index !== undefined)
     .map(a => a.meadow_index!)
@@ -175,6 +181,13 @@ function handleClaimEvent(eventId: string) {
 function handleResolveChoice(meadowIndex: number) {
   const action = store.validActions.find(
     a => a.action_type === 'resolve_choice' && a.meadow_index === meadowIndex
+  )
+  if (action) captureAndSubmit(action)
+}
+
+function handleChoicePanelSelect(choiceIndex: number) {
+  const action = store.validActions.find(
+    a => a.action_type === 'resolve_choice' && a.choice_index === choiceIndex
   )
   if (action) captureAndSubmit(action)
 }
@@ -462,14 +475,21 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           @location-info="handleLocationInfo"
         />
         <div class="meadow-wrapper">
-          <div v-if="pendingChoice" class="pending-choice-banner">
+          <!-- Options-based choice panel (Storehouse, Courthouse, etc.) -->
+          <ChoicePanel
+            v-if="pendingChoice && isOptionsPendingChoice"
+            :pending-choice="pendingChoice"
+            @choose="handleChoicePanelSelect"
+          />
+          <!-- Legacy meadow choice banner (Undertaker) -->
+          <div v-else-if="pendingChoice" class="pending-choice-banner">
             <span class="pending-choice-icon">&#9881;</span>
             <span class="pending-choice-text">{{ pendingChoice.prompt }}</span>
           </div>
           <MeadowDisplay
             :meadow="store.meadow"
-            :playable-indices="pendingChoice ? pendingChoiceMeadowIndices : playableMeadowIndices"
-            @play-from-meadow="pendingChoice ? handleResolveChoice($event) : handlePlayFromMeadow($event)"
+            :playable-indices="pendingChoice && !isOptionsPendingChoice ? pendingChoiceMeadowIndices : playableMeadowIndices"
+            @play-from-meadow="pendingChoice && !isOptionsPendingChoice ? handleResolveChoice($event) : handlePlayFromMeadow($event)"
             @card-info="handleCardInfo"
           />
         </div>

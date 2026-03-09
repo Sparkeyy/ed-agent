@@ -86,6 +86,8 @@ class PerspectiveFilter:
             result["event_id"] = action.event_id
         if action.discard_cards:
             result["discard_cards"] = action.discard_cards
+        if action.choice_index is not None:
+            result["choice_index"] = action.choice_index
         return result
 
     @staticmethod

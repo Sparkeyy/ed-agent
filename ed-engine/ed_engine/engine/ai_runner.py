@@ -93,6 +93,8 @@ async def run_ai_player(
                     kwargs["meadow_index"] = action.meadow_index
                 if action.use_paired_construction:
                     kwargs["use_paired_construction"] = True
+                if action.choice_index is not None:
+                    kwargs["choice_index"] = action.choice_index
 
                 gm.perform_action(gm_uuid, action.action_type, **kwargs)
                 turns += 1
@@ -150,6 +152,11 @@ def _pick_action(
     """Heuristic action selection. Difficulty affects randomness."""
     if len(valid_actions) == 1:
         return valid_actions[0]
+
+    # Always handle resolve_choice immediately (pick randomly)
+    resolve = [a for a in valid_actions if a.action_type == "resolve_choice"]
+    if resolve:
+        return random.choice(resolve)
 
     # Categorize
     play_card = [a for a in valid_actions if a.action_type == "play_card"]

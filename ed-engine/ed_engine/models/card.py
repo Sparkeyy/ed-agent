@@ -54,6 +54,19 @@ class Card(BaseModel):
         """Return bonus points beyond base_points (purple prosperity cards)."""
         return 0
 
+    def resolve_choice(
+        self,
+        game: GameState,
+        player: Player,
+        choice_index: int,
+        option: dict,
+        pending_choice: dict,
+        *,
+        ctx: dict | None = None,
+    ) -> list[str]:
+        """Handle a pending_choice resolution. Override in cards that set pending_choice."""
+        return []
+
 
 class TanTravelerCard(Card):
     """Tan traveler card — immediate effect on play."""

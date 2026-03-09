@@ -201,11 +201,13 @@ class GameManager:
         if action_type == "resolve_choice":
             meadow_index = kwargs.get("meadow_index")
             card_name = kwargs.get("card_name", "")
+            choice_index = kwargs.get("choice_index")
             action = GameAction(
                 action_type=ActionType.RESOLVE_CHOICE,
                 player_id=player_id_str,
                 meadow_index=meadow_index,
                 card_name=card_name,
+                choice_index=choice_index,
             )
         elif action_type == "place_worker":
             location_id = kwargs.get("location_id")

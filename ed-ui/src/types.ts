@@ -49,6 +49,7 @@ export interface ValidAction {
   use_paired_construction?: boolean
   event_id?: string
   discard_cards?: string[]
+  choice_index?: number
 }
 
 export interface LobbyState {
@@ -76,13 +77,32 @@ export interface GameState {
   journey_locations: LocationData[]
   game_over: boolean
   valid_actions: ValidAction[]
-  pending_choice?: {
-    card: string
-    player_id: string
-    step: 'discard' | 'draw'
-    discards_remaining?: number
-    prompt: string
-  } | null
+  pending_choice?: PendingChoice | null
+}
+
+export interface PendingChoiceOption {
+  label: string
+  value: string
+  base_points?: number
+  resource?: string
+  amount?: number
+  source?: string
+  meadow_index?: number
+  hand_index?: number
+  cost?: ResourceBank
+  opponent_id?: string
+  [key: string]: unknown
+}
+
+export interface PendingChoice {
+  choice_type?: 'select_resource' | 'select_card' | 'select_meadow' | 'select_opponent'
+  card: string
+  player_id: string
+  step: string
+  discards_remaining?: number
+  prompt: string
+  options?: PendingChoiceOption[]
+  context?: Record<string, unknown>
 }
 
 export type CardType = CardData['card_type']

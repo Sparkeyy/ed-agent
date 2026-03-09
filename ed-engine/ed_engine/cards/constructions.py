@@ -217,8 +217,31 @@ class Storehouse(ProductionCard):
     paired_with: str | None = "Woodcarver"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Place 3 twigs OR 2 resin OR 1 pebble OR 2 berries on card (auto-pick 3 twigs)."""
-        player.resources = player.resources.gain(ResourceBank(twig=3))
+        """Place 3 twigs OR 2 resin OR 1 pebble OR 2 berries — interactive choice."""
+        game.pending_choice = {
+            "choice_type": "select_resource",
+            "card": "Storehouse",
+            "player_id": str(player.id),
+            "step": "pick_resource",
+            "prompt": "Choose resources to gain from Storehouse",
+            "options": [
+                {"label": "3 Twigs", "value": "3T", "resource": "twig", "amount": 3},
+                {"label": "2 Resin", "value": "2R", "resource": "resin", "amount": 2},
+                {"label": "1 Pebble", "value": "1P", "resource": "pebble", "amount": 1},
+                {"label": "2 Berries", "value": "2B", "resource": "berry", "amount": 2},
+            ],
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        resource = option["resource"]
+        amount = option["amount"]
+        player.resources = player.resources.gain(ResourceBank(**{resource: amount}))
+        game.pending_choice = None
+        return [f"{player.name} gained {amount} {resource} from Storehouse"]
 
 
 @register
@@ -405,9 +428,31 @@ class Courthouse(GovernanceCard):
     def on_card_played(
         self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
-        """Gain 1 twig/resin/pebble when playing a Construction (auto-pick twig)."""
+        """Gain 1 twig/resin/pebble when playing a Construction — interactive choice."""
         if played_card.category == CardCategory.CONSTRUCTION:
-            player.resources = player.resources.gain(ResourceBank(twig=1))
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Courthouse",
+                "player_id": str(player.id),
+                "step": "pick_resource",
+                "prompt": "Choose a resource to gain from Courthouse",
+                "options": [
+                    {"label": "1 Twig", "value": "1T", "resource": "twig", "amount": 1},
+                    {"label": "1 Resin", "value": "1R", "resource": "resin", "amount": 1},
+                    {"label": "1 Pebble", "value": "1P", "resource": "pebble", "amount": 1},
+                ],
+                "context": {},
+            }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        resource = option["resource"]
+        amount = option["amount"]
+        player.resources = player.resources.gain(ResourceBank(**{resource: amount}))
+        game.pending_choice = None
+        return [f"{player.name} gained {amount} {resource} from Courthouse"]
 
 
 @register
@@ -462,16 +507,64 @@ class Ruins(TravelerCard):
     paired_with: str | None = "Peddler"
 
     def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Discard a Construction from city, gain its cost back, draw 2 cards."""
+        """Discard a Construction from city, gain its cost back, draw 2 cards — interactive choice."""
         deck_mgr = ctx.get("deck_mgr") if ctx else None
-        # Find cheapest construction to discard (auto-pick)
         constructions = [c for c in player.city if c.category == CardCategory.CONSTRUCTION and c is not self]
-        if constructions:
-            target = min(constructions, key=lambda c: c.base_points)
+        if not constructions:
+            # No constructions to discard, just draw 2
+            if deck_mgr:
+                drawn = deck_mgr.draw(2)
+                player.hand.extend(drawn)
+            return
+        if len(constructions) == 1:
+            # Only one option — discard it directly
+            target = constructions[0]
             player.city.remove(target)
             player.resources = player.resources.gain(target.cost)
+            if deck_mgr:
+                deck_mgr.discard([target])
+                drawn = deck_mgr.draw(2)
+                player.hand.extend(drawn)
+            return
+        game.pending_choice = {
+            "choice_type": "select_card",
+            "card": "Ruins",
+            "player_id": str(player.id),
+            "step": "pick_card",
+            "prompt": "Choose a Construction to discard (you gain its cost back + draw 2)",
+            "options": [
+                {
+                    "label": c.name,
+                    "value": c.name,
+                    "base_points": c.base_points,
+                    "cost": c.cost.to_dict(),
+                }
+                for c in constructions
+            ],
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        card_name = option["value"]
+        target = None
+        for c in player.city:
+            if c.name == card_name and c.category == CardCategory.CONSTRUCTION:
+                target = c
+                break
+        events: list[str] = []
+        if target:
+            player.city.remove(target)
+            player.resources = player.resources.gain(target.cost)
+            events.append(f"{player.name} discarded {card_name} from city, gained back its cost")
             if deck_mgr:
                 deck_mgr.discard([target])
         if deck_mgr:
             drawn = deck_mgr.draw(2)
             player.hand.extend(drawn)
+            events.append(f"{player.name} drew 2 cards from Ruins")
+        game.pending_choice = None
+        return events

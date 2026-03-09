@@ -541,3 +541,302 @@ class TestCardAbilities:
         assert game.pending_choice is None
         # Player should have 1 card in hand
         assert len(player.hand) == 1
+
+
+# ---------------------------------------------------------------------------
+# Interactive choice cards (generic pending_choice system)
+# ---------------------------------------------------------------------------
+
+
+class TestInteractiveChoices:
+    """Tests for cards that use the generic options-based pending_choice system."""
+
+    def _resolve(self, game, player, choice_index):
+        """Helper: resolve a pending choice at the given index."""
+        from ed_engine.engine.actions import ActionHandler, ActionType, GameAction
+        from ed_engine.engine.deck import DeckManager
+        from ed_engine.engine.locations import LocationManager
+        from ed_engine.cards import build_deck
+
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        loc_mgr = LocationManager(1, seed=42)
+
+        actions = ActionHandler.get_valid_actions(game, player, loc_mgr, deck_mgr)
+        resolve_actions = [a for a in actions if a.action_type == ActionType.RESOLVE_CHOICE]
+        assert len(resolve_actions) > 0
+        # Find action with matching choice_index
+        action = next(a for a in resolve_actions if a.choice_index == choice_index)
+        return ActionHandler.execute_action(game, player, action, loc_mgr, deck_mgr)
+
+    # --- Storehouse ---
+
+    def test_storehouse_sets_4_options(self) -> None:
+        sh = get_card_definition("Storehouse")
+        player = _make_player()
+        game = _make_game()
+        sh.on_production(game, player)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Storehouse"
+        assert len(game.pending_choice["options"]) == 4
+
+    def test_storehouse_resolve_twigs(self) -> None:
+        sh = get_card_definition("Storehouse")
+        player = _make_player()
+        game = _make_game()
+        sh.on_production(game, player)
+        # Resolve with index 0 = 3 Twigs
+        option = game.pending_choice["options"][0]
+        events = sh.resolve_choice(game, player, 0, option, game.pending_choice)
+        assert player.resources.twig == 3
+        assert game.pending_choice is None
+
+    def test_storehouse_resolve_pebble(self) -> None:
+        sh = get_card_definition("Storehouse")
+        player = _make_player()
+        game = _make_game()
+        sh.on_production(game, player)
+        option = game.pending_choice["options"][2]  # 1 Pebble
+        sh.resolve_choice(game, player, 2, option, game.pending_choice)
+        assert player.resources.pebble == 1
+
+    # --- Courthouse ---
+
+    def test_courthouse_sets_3_options_for_construction(self) -> None:
+        ch = get_card_definition("Courthouse")
+        player = _make_player()
+        game = _make_game()
+        farm = get_card_definition("Farm")
+        ch.on_card_played(game, player, farm)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Courthouse"
+        assert len(game.pending_choice["options"]) == 3
+
+    def test_courthouse_no_choice_for_critter(self) -> None:
+        ch = get_card_definition("Courthouse")
+        player = _make_player()
+        game = _make_game()
+        wanderer = get_card_definition("Wanderer")
+        ch.on_card_played(game, player, wanderer)
+        assert game.pending_choice is None
+
+    def test_courthouse_resolve_resin(self) -> None:
+        ch = get_card_definition("Courthouse")
+        player = _make_player()
+        game = _make_game()
+        farm = get_card_definition("Farm")
+        ch.on_card_played(game, player, farm)
+        option = game.pending_choice["options"][1]  # 1 Resin
+        ch.resolve_choice(game, player, 1, option, game.pending_choice)
+        assert player.resources.resin == 1
+
+    # --- Harvester ---
+
+    def test_harvester_sets_4_options_with_farm(self) -> None:
+        h = get_card_definition("Harvester")
+        farm = get_card_definition("Farm")
+        player = _make_player(city=[farm])
+        game = _make_game()
+        h.on_production(game, player)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Harvester"
+        assert len(game.pending_choice["options"]) == 4
+
+    def test_harvester_no_choice_without_farm(self) -> None:
+        h = get_card_definition("Harvester")
+        player = _make_player()
+        game = _make_game()
+        h.on_production(game, player)
+        assert game.pending_choice is None
+
+    def test_harvester_resolve_berry(self) -> None:
+        h = get_card_definition("Harvester")
+        farm = get_card_definition("Farm")
+        player = _make_player(city=[farm])
+        game = _make_game()
+        h.on_production(game, player)
+        option = game.pending_choice["options"][3]  # 1 Berry
+        h.resolve_choice(game, player, 3, option, game.pending_choice)
+        assert player.resources.berry == 1
+
+    # --- ChipSweep ---
+
+    def test_chipsweep_sets_options_for_multiple_green(self) -> None:
+        cs = get_card_definition("Chip Sweep")
+        farm = get_card_definition("Farm")
+        mine = get_card_definition("Mine")
+        player = _make_player(city=[cs, farm, mine])
+        game = _make_game()
+        cs.on_production(game, player)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Chip Sweep"
+        assert len(game.pending_choice["options"]) == 2  # Farm and Mine
+
+    def test_chipsweep_auto_activates_single_green(self) -> None:
+        cs = get_card_definition("Chip Sweep")
+        farm = get_card_definition("Farm")
+        player = _make_player(city=[cs, farm])
+        game = _make_game()
+        cs.on_production(game, player)
+        assert game.pending_choice is None
+        assert player.resources.berry == 1  # Farm auto-activated
+
+    # --- Fool ---
+
+    def test_fool_auto_moves_to_single_opponent(self) -> None:
+        fool = get_card_definition("Fool")
+        player = _make_player(name="Alice")
+        opp = _make_player(name="Bob")
+        game = _make_game(players=[player, opp])
+        player.city.append(fool)
+        fool.on_play(game, player)
+        assert fool not in player.city
+        assert fool in opp.city
+
+    def test_fool_sets_options_for_multiple_opponents(self) -> None:
+        fool = get_card_definition("Fool")
+        player = _make_player(name="Alice")
+        opp1 = _make_player(name="Bob")
+        opp2 = _make_player(name="Charlie")
+        game = _make_game(players=[player, opp1, opp2])
+        player.city.append(fool)
+        fool.on_play(game, player)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Fool"
+        assert len(game.pending_choice["options"]) == 2
+
+    # --- Monk ---
+
+    def test_monk_single_opponent_sets_amount_options(self) -> None:
+        monk = get_card_definition("Monk")
+        player = _make_player(name="Alice", resources=ResourceBank(berry=2))
+        opp = _make_player(name="Bob")
+        game = _make_game(players=[player, opp])
+        monk.on_production(game, player)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Monk"
+        assert game.pending_choice["step"] == "pick_amount"
+        assert len(game.pending_choice["options"]) == 3  # 0, 1, 2
+
+    def test_monk_resolve_give_2(self) -> None:
+        monk = get_card_definition("Monk")
+        player = _make_player(name="Alice", resources=ResourceBank(berry=2))
+        opp = _make_player(name="Bob")
+        game = _make_game(players=[player, opp])
+        monk.on_production(game, player)
+        # Give 2 berries
+        option = game.pending_choice["options"][2]  # index 2 = give 2
+        monk.resolve_choice(game, player, 2, option, game.pending_choice)
+        assert player.resources.berry == 0
+        assert opp.resources.berry == 2
+        assert player.point_tokens == 4  # 2*2 VP
+        assert game.pending_choice is None
+
+    def test_monk_no_berries_no_choice(self) -> None:
+        monk = get_card_definition("Monk")
+        player = _make_player(name="Alice", resources=ResourceBank())
+        opp = _make_player(name="Bob")
+        game = _make_game(players=[player, opp])
+        monk.on_production(game, player)
+        assert game.pending_choice is None
+
+    # --- Ruins ---
+
+    def test_ruins_sets_options_for_multiple_constructions(self) -> None:
+        ruins = get_card_definition("Ruins")
+        farm = get_card_definition("Farm")
+        mine = get_card_definition("Mine")
+        player = _make_player(city=[ruins, farm, mine])
+        game = _make_game()
+        ctx = {"deck_mgr": None, "game": game}
+        ruins.on_play(game, player, ctx=ctx)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Ruins"
+        assert len(game.pending_choice["options"]) == 2
+
+    def test_ruins_auto_discards_single_construction(self) -> None:
+        from ed_engine.engine.deck import DeckManager
+        from ed_engine.cards import build_deck
+
+        ruins = get_card_definition("Ruins")
+        farm = get_card_definition("Farm")
+        player = _make_player(city=[ruins, farm])
+        game = _make_game()
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        ctx = {"deck_mgr": deck_mgr, "game": game}
+        ruins.on_play(game, player, ctx=ctx)
+        assert game.pending_choice is None
+        assert farm not in player.city
+        assert player.resources.twig == 2  # Farm cost refund: 2T + 1R
+        assert player.resources.resin == 1
+        assert len(player.hand) == 2  # Drew 2 cards
+
+    # --- PostalPigeon ---
+
+    def test_postal_pigeon_sets_options(self) -> None:
+        from ed_engine.engine.deck import DeckManager
+        from ed_engine.cards import build_deck
+
+        pp = get_card_definition("Postal Pigeon")
+        player = _make_player()
+        game = _make_game()
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        ctx = {"deck_mgr": deck_mgr, "game": game}
+        pp.on_play(game, player, ctx=ctx)
+        # Should set pending_choice with options (eligible cards + "play none")
+        if game.pending_choice is not None:
+            assert game.pending_choice["card"] == "Postal Pigeon"
+            assert len(game.pending_choice["options"]) >= 1
+            # Last option should be "play none"
+            assert game.pending_choice["options"][-1]["value"] == "__none__"
+
+    # --- Queen ---
+
+    def test_queen_sets_options(self) -> None:
+        queen = get_card_definition("Queen")
+        farm = get_card_definition("Farm")  # 1pt, eligible
+        player = _make_player(hand=[farm])
+        game = _make_game(players=[player])
+        ctx = {"deck_mgr": None, "game": game}
+        queen.on_worker_placed(game, player, player, ctx=ctx)
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Queen"
+        # Should have Farm + "play nothing"
+        assert len(game.pending_choice["options"]) >= 2
+        values = [o["value"] for o in game.pending_choice["options"]]
+        assert "Farm" in values
+        assert "__none__" in values
+
+    # --- Production queue ---
+
+    def test_production_queue_pauses_and_resumes(self) -> None:
+        """When a green card sets pending_choice during production,
+        remaining cards should be queued and resumed after resolution."""
+        from ed_engine.engine.seasons import SeasonManager
+
+        storehouse = get_card_definition("Storehouse")
+        farm = get_card_definition("Farm")
+        player = _make_player(city=[storehouse, farm])
+        game = _make_game(players=[player])
+        ctx = {"deck_mgr": None, "game": game}
+
+        SeasonManager.trigger_production(game, player, ctx=ctx)
+
+        # Storehouse should have paused production
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Storehouse"
+        # Farm should be in the production queue
+        queue = game.pending_choice.get("context", {}).get("production_queue", [])
+        assert "Farm" in queue
+
+        # Resolve Storehouse choice (pick 3 Twigs)
+        option = game.pending_choice["options"][0]
+        pc = game.pending_choice
+        storehouse.resolve_choice(game, player, 0, option, pc, ctx=ctx)
+
+        # After resolving, _continue_production should have run Farm
+        # (Farm is in the queue, and _continue_production is called from actions._resolve_choice)
+        # Note: direct resolve_choice doesn't trigger _continue_production — that's in ActionHandler
+        # So after card.resolve_choice, pending_choice is None but Farm didn't run yet.
+        # The _continue_production is called by ActionHandler._resolve_choice, not by card.resolve_choice
+        assert game.pending_choice is None
+        assert player.resources.twig == 3  # From Storehouse

@@ -93,6 +93,8 @@ def _build_game_state_response(
             params["meadow_index"] = a["meadow_index"]
         if a.get("use_paired_construction"):
             params["use_paired_construction"] = True
+        if "choice_index" in a:
+            params["choice_index"] = a["choice_index"]
         valid_actions.append(
             ValidAction(
                 action_type=a["action_type"],

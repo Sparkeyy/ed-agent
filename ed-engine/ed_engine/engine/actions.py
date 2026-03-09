@@ -42,6 +42,8 @@ class GameAction(BaseModel):
     event_id: str | None = None
     # For haven/journey discard:
     discard_cards: list[str] | None = None
+    # For resolve_choice (generic choice index into pending_choice options):
+    choice_index: int | None = None
 
     model_config = {"use_enum_values": True}
 
@@ -526,16 +528,30 @@ class ActionHandler:
             return []
         player_id = str(player.id)
         actions: list[GameAction] = []
-        meadow = deck_mgr.meadow
-        for idx in range(len(meadow)):
-            actions.append(
-                GameAction(
-                    action_type=ActionType.RESOLVE_CHOICE,
-                    player_id=player_id,
-                    meadow_index=idx,
-                    card_name=meadow[idx].name,
+        options = pc.get("options")
+        if options:
+            # Generic options-based choice
+            for idx in range(len(options)):
+                actions.append(
+                    GameAction(
+                        action_type=ActionType.RESOLVE_CHOICE,
+                        player_id=player_id,
+                        choice_index=idx,
+                    )
                 )
-            )
+        else:
+            # Legacy meadow-index choice (Undertaker)
+            meadow = deck_mgr.meadow
+            for idx in range(len(meadow)):
+                actions.append(
+                    GameAction(
+                        action_type=ActionType.RESOLVE_CHOICE,
+                        player_id=player_id,
+                        meadow_index=idx,
+                        card_name=meadow[idx].name,
+                        choice_index=idx,
+                    )
+                )
         return actions
 
     @staticmethod
@@ -550,11 +566,22 @@ class ActionHandler:
             return False, "No pending choice to resolve"
         if pc.get("player_id") != str(player.id):
             return False, "Pending choice belongs to another player"
-        if action.meadow_index is None:
-            return False, "No meadow index specified"
+
+        options = pc.get("options")
+        if options:
+            if action.choice_index is None:
+                return False, "No choice_index specified"
+            if action.choice_index < 0 or action.choice_index >= len(options):
+                return False, f"choice_index {action.choice_index} out of range (0-{len(options)-1})"
+            return True, ""
+
+        # Legacy meadow-index validation (Undertaker)
+        idx = action.choice_index if action.choice_index is not None else action.meadow_index
+        if idx is None:
+            return False, "No choice_index or meadow_index specified"
         meadow = deck_mgr.meadow
-        if action.meadow_index < 0 or action.meadow_index >= len(meadow):
-            return False, f"Meadow index {action.meadow_index} out of range"
+        if idx < 0 or idx >= len(meadow):
+            return False, f"Meadow index {idx} out of range"
         return True, ""
 
     @staticmethod
@@ -564,17 +591,39 @@ class ActionHandler:
         action: GameAction,
         deck_mgr: DeckManager,
     ) -> list[str]:
-        """Resolve a pending choice (e.g., Undertaker meadow selection)."""
+        """Resolve a pending choice — dispatch to card's resolve_choice if options-based."""
         pc = game.pending_choice
         if not pc:
             return ["ERROR: No pending choice"]
 
+        options = pc.get("options")
+        if options:
+            # Generic options-based: delegate to the card
+            idx = action.choice_index
+            if idx is None or idx < 0 or idx >= len(options):
+                return ["ERROR: Invalid choice_index"]
+            option = options[idx]
+            card_name = pc.get("card")
+            from ed_engine.cards import get_card_definition
+            card = get_card_definition(card_name)
+            ctx = {"deck_mgr": deck_mgr, "game": game}
+            events = card.resolve_choice(game, player, idx, option, pc, ctx=ctx)
+
+            # After card resolves, check production queue
+            if game.pending_choice is None:
+                queue = pc.get("context", {}).get("production_queue", [])
+                if queue:
+                    _continue_production(game, player, queue, deck_mgr)
+
+            return events
+
+        # Legacy Undertaker meadow-index flow
         events: list[str] = []
         step = pc.get("step")
+        meadow_idx = action.choice_index if action.choice_index is not None else action.meadow_index
 
         if step == "discard":
-            # Discard the selected meadow card
-            card = deck_mgr.draw_from_meadow(action.meadow_index)
+            card = deck_mgr.draw_from_meadow(meadow_idx)
             deck_mgr.discard([card])
             remaining = pc.get("discards_remaining", 1) - 1
             events.append(f"{player.name} discarded {card.name} from meadow ({remaining} remaining)")
@@ -586,7 +635,6 @@ class ActionHandler:
                     "prompt": f"Select a meadow card to discard ({remaining} remaining)",
                 }
             else:
-                # Move to draw step
                 if len(deck_mgr.meadow) > 0:
                     game.pending_choice = {
                         **pc,
@@ -597,10 +645,36 @@ class ActionHandler:
                     game.pending_choice = None
 
         elif step == "draw":
-            # Draw the selected meadow card to hand
-            card = deck_mgr.draw_from_meadow(action.meadow_index)
+            card = deck_mgr.draw_from_meadow(meadow_idx)
             player.hand.append(card)
             events.append(f"{player.name} drew {card.name} from meadow")
             game.pending_choice = None
 
         return events
+
+
+def _continue_production(
+    game: GameState,
+    player: Player,
+    queue: list[str],
+    deck_mgr: DeckManager,
+) -> None:
+    """Resume production for remaining green cards after a choice is resolved."""
+    from ed_engine.cards import get_card_definition
+    ctx = {"deck_mgr": deck_mgr, "game": game}
+    for i, card_name in enumerate(queue):
+        # Find this card instance in player's city
+        card_instance = None
+        for c in player.city:
+            if c.name == card_name and c.card_type == CardType.GREEN_PRODUCTION:
+                card_instance = c
+                break
+        if card_instance is None:
+            continue
+        card_instance.on_production(game, player, ctx=ctx)
+        if game.pending_choice is not None:
+            remaining = queue[i + 1:]
+            if remaining:
+                game.pending_choice.setdefault("context", {})
+                game.pending_choice["context"]["production_queue"] = remaining
+            break

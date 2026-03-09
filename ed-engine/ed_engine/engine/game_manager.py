@@ -36,9 +36,10 @@ class GameManager:
         self._seed = seed
         self._rng = random.Random(seed)
 
-        # Create players
+        # Create players (debug mode: "debug" player gets 999 of each resource)
         players = []
         for i, name in enumerate(player_names):
+            is_debug = name.lower() == "debug"
             players.append(
                 Player(
                     id=uuid4(),
@@ -46,6 +47,9 @@ class GameManager:
                     season=Season.WINTER,
                     workers_total=2,
                     workers_placed=0,
+                    resources=ResourceBank(twig=999, resin=999, pebble=999, berry=999)
+                    if is_debug
+                    else ResourceBank(),
                 )
             )
 
@@ -58,11 +62,6 @@ class GameManager:
 
         # Initialize events
         self._event_mgr = EventManager(seed=seed)
-
-        # Debug mode: give "debug" player unlimited resources
-        for player in players:
-            if player.name.lower() == "debug":
-                player.resources = ResourceBank(twig=999, resin=999, pebble=999, berry=999)
 
         # Deal starting hands (player order determines hand size)
         for i, player in enumerate(players):

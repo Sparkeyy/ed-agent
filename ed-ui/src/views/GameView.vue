@@ -270,14 +270,19 @@ function handleLocationInfo(locationId: string) {
 }
 
 function handleEventInfo(eventData: { name: string; description?: string; required_cards?: string[]; points: number }) {
+  const reqText = eventData.required_cards?.length
+    ? `Requires: ${eventData.required_cards.join(' + ')}`
+    : ''
+  // Combine description and requirements so both always show
+  const descParts = [eventData.description, reqText].filter(Boolean)
   infoModal.value = {
     visible: true,
     title: eventData.name,
     subtitle: 'Event',
     cardType: '',
     category: '',
-    description: eventData.description || '',
-    ability: eventData.required_cards ? `Requires: ${eventData.required_cards.join(' + ')}` : '',
+    description: '',
+    ability: descParts.join('\n\n') || 'No details available for this event.',
     cost: undefined,
     points: eventData.points,
   }

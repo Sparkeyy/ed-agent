@@ -307,9 +307,14 @@ function workerTitle(workerId: string): string {
   font-style: italic;
 }
 
-.haven-grid,
-.journey-grid {
+.haven-grid {
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+
+.journey-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .exclusive-badge {

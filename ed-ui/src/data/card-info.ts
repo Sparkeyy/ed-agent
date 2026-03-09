@@ -33,9 +33,9 @@ export const CARD_INFO: Record<string, CardInfoEntry> = {
     description: "The wise ruler of the valley. Paired with Castle.",
     ability: "+1 VP per basic Event claimed, +2 VP per special Event claimed.",
   },
-  "Wife": {
-    description: "A devoted partner. Common (up to 4 in deck).",
-    ability: "+3 VP if paired with a Husband in your city.",
+  "Gatherer": {
+    description: "A resourceful forager of the woodland. Common (up to 4 in deck).",
+    ability: "+3 VP if paired with a Harvester in your city.",
   },
 
   // === GREEN / PRODUCTION ===
@@ -79,9 +79,9 @@ export const CARD_INFO: Record<string, CardInfoEntry> = {
     description: "Healer of the woodland creatures.",
     ability: "Production: Pay up to 3 berries to gain 1 VP per berry paid.",
   },
-  "Husband": {
-    description: "A hardworking partner. Common (up to 4 in deck).",
-    ability: "Production: If you have a Farm, gain 1 resource of any type. +3 VP if paired with Wife.",
+  "Harvester": {
+    description: "A tireless worker of the fields. Common (up to 4 in deck).",
+    ability: "Production: If you have a Farm, gain 1 resource of any type. +3 VP if paired with Gatherer.",
   },
   "Miner Mole": {
     description: "Always digging into others' business.",

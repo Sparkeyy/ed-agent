@@ -103,9 +103,9 @@ SPECIAL_EVENT_DEFS: list[dict] = [
     {
         "id": "se_brilliant_wedding",
         "name": "A Brilliant Wedding",
-        "description": "Have Husband and Wife in your city",
+        "description": "Have Harvester and Gatherer in your city",
         "points": 3,
-        "required_cards": ["Husband", "Wife"],
+        "required_cards": ["Harvester", "Gatherer"],
     },
     {
         "id": "se_performer_in_residence",
@@ -152,9 +152,9 @@ SPECIAL_EVENT_DEFS: list[dict] = [
     {
         "id": "se_completion_ever_tree",
         "name": "Completion of the Ever Tree",
-        "description": "Have Ever Tree, Wife, and Husband in your city",
+        "description": "Have Ever Tree, Gatherer, and Harvester in your city",
         "points": 3,
-        "required_cards": ["Ever Tree", "Wife", "Husband"],
+        "required_cards": ["Ever Tree", "Gatherer", "Harvester"],
     },
     {
         "id": "se_flying_doctor_service",
@@ -187,9 +187,9 @@ SPECIAL_EVENT_DEFS: list[dict] = [
     {
         "id": "se_great_feast",
         "name": "The Great Feast",
-        "description": "Have General Store, Farm, and Husband in your city",
+        "description": "Have General Store, Farm, and Harvester in your city",
         "points": 3,
-        "required_cards": ["General Store", "Farm", "Husband"],
+        "required_cards": ["General Store", "Farm", "Harvester"],
     },
     {
         "id": "se_remembering_fallen",
@@ -274,6 +274,7 @@ class EventManager:
         for ev in self.basic_events:
             basic_dict[ev.id] = {
                 "name": ev.name,
+                "description": ev.description,
                 "points": ev.points,
                 "claimed_by": ev.claimed_by,
             }
@@ -281,6 +282,7 @@ class EventManager:
         for ev in self.special_events:
             special_dict[ev.id] = {
                 "name": ev.name,
+                "description": ev.description,
                 "points": ev.points,
                 "required_cards": ev.required_cards,
                 "claimed_by": ev.claimed_by,

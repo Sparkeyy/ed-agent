@@ -68,8 +68,8 @@ class King(ProsperityCard):
 
 
 @register
-class Wife(ProsperityCard):
-    name: str = "Wife"
+class Gatherer(ProsperityCard):
+    name: str = "Gatherer"
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 2
@@ -78,9 +78,9 @@ class Wife(ProsperityCard):
     paired_with: str | None = "Farm"
 
     def on_score(self, game: GameState, player: Player) -> int:
-        """+3 pt if paired with Husband in city."""
-        has_husband = any(c.name == "Husband" for c in player.city)
-        return 3 if has_husband else 0
+        """+3 pt if paired with Harvester in city."""
+        has_harvester = any(c.name == "Harvester" for c in player.city)
+        return 3 if has_harvester else 0
 
 
 # ---------------------------------------------------------------------------
@@ -140,8 +140,8 @@ class Doctor(ProductionCard):
 
 
 @register
-class Husband(ProductionCard):
-    name: str = "Husband"
+class Harvester(ProductionCard):
+    name: str = "Harvester"
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=3)
     base_points: int = 2
@@ -150,7 +150,7 @@ class Husband(ProductionCard):
     paired_with: str | None = "Farm"
 
     def on_production(self, game: GameState, player: Player) -> None:
-        """If have Farm and paired with Wife, gain 1 any resource."""
+        """If have Farm and paired with Gatherer, gain 1 any resource."""
         # TODO: implement conditional resource gain
         pass
 

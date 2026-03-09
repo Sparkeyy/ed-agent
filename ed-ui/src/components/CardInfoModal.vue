@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { RESOURCE_IMAGES } from '../types'
 import type { ResourceBank } from '../types'
+import { CARD_IMAGES } from '../data/card-images'
 
 const CARD_TYPE_COLORS: Record<string, string> = {
   tan_traveler: '#a08060',
@@ -35,6 +36,8 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const cardImageUrl = computed(() => CARD_IMAGES[props.title] || null)
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
 }
@@ -60,6 +63,10 @@ function costEntries(cost: ResourceBank): Array<{ key: string; count: number }> 
         <div class="modal-type-bar" v-if="cardType" :style="{ backgroundColor: CARD_TYPE_COLORS[cardType] || '#888' }">
           <span class="type-label">{{ CARD_TYPE_NAMES[cardType] || cardType }}</span>
           <span v-if="category" class="cat-label">{{ category }}</span>
+        </div>
+
+        <div v-if="cardImageUrl" class="modal-card-image">
+          <img :src="cardImageUrl" :alt="title" class="modal-scan-img">
         </div>
 
         <div class="modal-body">
@@ -253,6 +260,18 @@ function costEntries(cost: ResourceBank): Array<{ key: string; count: number }> 
   color: var(--ink, #2c1810);
   line-height: 1.5;
   margin: 0;
+}
+
+.modal-card-image {
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.modal-scan-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  object-position: center 30%;
 }
 
 /* Transition */

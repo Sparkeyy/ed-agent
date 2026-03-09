@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { CardData, ResourceBank } from '../types'
 import { CARD_TYPE_LABELS, CARD_TYPE_IMAGES, RESOURCE_ICONS, RESOURCE_IMAGES } from '../types'
 import { CARD_INFO } from '../data/card-info'
+import { CARD_IMAGES } from '../data/card-images'
 
 const cardAbility = (name: string) => CARD_INFO[name]?.ability ?? ''
 
 const typeImgFailed = ref<Record<string, boolean>>({})
 const resImgFailed = ref<Record<string, boolean>>({})
+const cardImgFailed = ref<Record<string, boolean>>({})
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   card: CardData
   compact?: boolean
   playable?: boolean
@@ -18,6 +20,12 @@ withDefaults(defineProps<{
   compact: false,
   playable: false,
   selected: false,
+})
+
+const cardImageUrl = computed(() => {
+  const url = CARD_IMAGES[props.card.name]
+  if (url && !cardImgFailed.value[props.card.name]) return url
+  return null
 })
 
 const emit = defineEmits<{
@@ -60,40 +68,56 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
     </template>
     <template v-else>
       <button class="info-btn" @click.stop="emit('info', card.name)" title="Card info">i</button>
-      <div class="card-top-bar" :style="{ backgroundColor: cardColorVar(card.card_type) }"></div>
-      <div class="card-body">
-        <div class="card-name">{{ card.name }}</div>
-        <div class="card-meta">
-          <span class="card-category" :class="categoryCls(card.category)">{{ categoryLabel(card.category) }}</span>
-          <img
-            v-if="!typeImgFailed[card.card_type]"
-            :src="CARD_TYPE_IMAGES[card.card_type]"
-            :alt="CARD_TYPE_LABELS[card.card_type]"
-            class="card-type-icon"
-            @error="typeImgFailed[card.card_type] = true"
-          >
-          <span class="card-type-label">{{ CARD_TYPE_LABELS[card.card_type] }}</span>
-          <span v-if="card.unique" class="unique-badge">U</span>
+      <!-- Card image mode: show scan art if available -->
+      <template v-if="cardImageUrl">
+        <img
+          :src="cardImageUrl"
+          :alt="card.name"
+          class="card-scan-img"
+          @error="cardImgFailed[card.name] = true"
+        >
+        <div class="card-overlay">
+          <span class="overlay-name">{{ card.name }}</span>
+          <span class="overlay-vp"><span class="vp-badge-sm">VP</span> {{ card.base_points }}</span>
         </div>
-        <div class="card-cost">
-          <span v-for="entry in costEntries(card.cost)" :key="entry.key" class="cost-item">
+      </template>
+      <!-- Fallback: programmatic rendering -->
+      <template v-else>
+        <div class="card-top-bar" :style="{ backgroundColor: cardColorVar(card.card_type) }"></div>
+        <div class="card-body">
+          <div class="card-name">{{ card.name }}</div>
+          <div class="card-meta">
+            <span class="card-category" :class="categoryCls(card.category)">{{ categoryLabel(card.category) }}</span>
             <img
-              v-if="!resImgFailed[entry.key]"
-              :src="RESOURCE_IMAGES[entry.key as keyof typeof RESOURCE_IMAGES]"
-              :alt="entry.key"
-              class="cost-icon-img"
-              @error="resImgFailed[entry.key] = true"
+              v-if="!typeImgFailed[card.card_type]"
+              :src="CARD_TYPE_IMAGES[card.card_type]"
+              :alt="CARD_TYPE_LABELS[card.card_type]"
+              class="card-type-icon"
+              @error="typeImgFailed[card.card_type] = true"
             >
-            <span v-else>{{ entry.icon }}</span>
-            <span class="cost-num">{{ entry.count }}</span>
-          </span>
-          <span v-if="costEntries(card.cost).length === 0" class="cost-free">Free</span>
+            <span class="card-type-label">{{ CARD_TYPE_LABELS[card.card_type] }}</span>
+            <span v-if="card.unique" class="unique-badge">U</span>
+          </div>
+          <div class="card-cost">
+            <span v-for="entry in costEntries(card.cost)" :key="entry.key" class="cost-item">
+              <img
+                v-if="!resImgFailed[entry.key]"
+                :src="RESOURCE_IMAGES[entry.key as keyof typeof RESOURCE_IMAGES]"
+                :alt="entry.key"
+                class="cost-icon-img"
+                @error="resImgFailed[entry.key] = true"
+              >
+              <span v-else>{{ entry.icon }}</span>
+              <span class="cost-num">{{ entry.count }}</span>
+            </span>
+            <span v-if="costEntries(card.cost).length === 0" class="cost-free">Free</span>
+          </div>
+          <div class="card-points"><span class="vp-badge">VP</span> {{ card.base_points }}</div>
+          <div v-if="card.paired_with" class="card-paired">
+            Paired: {{ card.paired_with }}
+          </div>
         </div>
-        <div class="card-points"><span class="vp-badge">VP</span> {{ card.base_points }}</div>
-        <div v-if="card.paired_with" class="card-paired">
-          Paired: {{ card.paired_with }}
-        </div>
-      </div>
+      </template>
     </template>
   </div>
 </template>
@@ -339,6 +363,47 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   color: var(--ink-faint);
   text-align: center;
   font-style: italic;
+}
+
+/* Card scan image */
+.card-scan-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 6px 8px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0 0 inherit inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.card:hover .card-overlay {
+  opacity: 1;
+}
+
+.overlay-name {
+  font-family: var(--font-card);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.overlay-vp {
+  font-size: 0.6rem;
+  color: white;
+  flex-shrink: 0;
 }
 
 .compact-info-btn {

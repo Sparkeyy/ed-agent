@@ -49,6 +49,13 @@ export interface ValidAction {
   use_paired_construction?: boolean
 }
 
+export interface LobbyState {
+  status: 'waiting'
+  players: Record<string, string>  // player_id -> name
+  max_players: number
+  current_count: number
+}
+
 export interface GameState {
   game_id: string
   turn_number: number

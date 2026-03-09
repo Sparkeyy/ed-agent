@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { SSEManager } from '../api/sse'
 import * as api from '../api/client'
-import type { GameState, ValidAction, PlayerData, CardData } from '../types'
+import type { GameState, LobbyState, ValidAction, PlayerData, CardData } from '../types'
 
 const STORAGE_KEY = 'everdell_session'
 
@@ -23,6 +23,7 @@ export const useGameStore = defineStore('game', () => {
 
   // Game state
   const state = ref<GameState | null>(null)
+  const lobbyState = ref<LobbyState | null>(null)
 
   // SSE instance (not reactive)
   let sse: SSEManager | null = null
@@ -85,17 +86,27 @@ export const useGameStore = defineStore('game', () => {
         break
       case 'game_state':
         if (data && typeof data === 'object') {
-          state.value = data as GameState
+          if ((data as any).status === 'waiting') {
+            lobbyState.value = data as unknown as LobbyState
+            state.value = null
+          } else if ((data as any).state && (data as any).state.status === 'waiting') {
+            lobbyState.value = (data as any).state as LobbyState
+            state.value = null
+          } else {
+            lobbyState.value = null
+            state.value = data as GameState
+          }
         }
         break
       case 'player_joined':
+        refreshState()
+        break
       case 'game_started':
+        lobbyState.value = null
         refreshState()
         break
       case 'game_over':
-        if (data && typeof data === 'object') {
-          state.value = data as GameState
-        }
+        refreshState()
         break
     }
   }
@@ -164,8 +175,15 @@ export const useGameStore = defineStore('game', () => {
   async function refreshState(): Promise<void> {
     if (!gameId.value || !playerToken.value) return
     try {
-      const newState = await api.getGameState(gameId.value, playerToken.value)
-      state.value = newState
+      const resp = await api.getGameState(gameId.value, playerToken.value)
+      // Check if this is a lobby/waiting response or a full game state
+      if (resp && typeof resp === 'object' && (resp as any).status === 'waiting') {
+        lobbyState.value = resp as unknown as LobbyState
+        state.value = null
+      } else {
+        lobbyState.value = null
+        state.value = resp
+      }
     } catch (e: any) {
       error.value = e.message ?? 'Failed to refresh state'
     }
@@ -192,6 +210,7 @@ export const useGameStore = defineStore('game', () => {
 
     // Game state
     state,
+    lobbyState,
 
     // Computed
     myPlayer,

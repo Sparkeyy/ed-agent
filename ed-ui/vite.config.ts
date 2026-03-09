@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://ed-engine:4242',
+        target: 'http://localhost:4242',
         changeOrigin: true,
       },
     },

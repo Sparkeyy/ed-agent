@@ -98,8 +98,17 @@ def _build_game_state_response(
             )
         )
 
-    # Use session game_id (not the internal GameState UUID)
+    # Remap all GM UUIDs to session player IDs so frontend sees consistent IDs
+    gm_to_session: dict[str, str] = {}
+    for spid, gm_uuid in getattr(session, "_pid_to_gm_uuid", {}).items():
+        gm_to_session[gm_uuid] = spid
+
     filtered["game_id"] = session.game_id
+    if filtered.get("current_player_id") in gm_to_session:
+        filtered["current_player_id"] = gm_to_session[filtered["current_player_id"]]
+    for p in filtered.get("players", []):
+        if p.get("id") in gm_to_session:
+            p["id"] = gm_to_session[p["id"]]
 
     return GameStateResponse(
         game_id=session.game_id,

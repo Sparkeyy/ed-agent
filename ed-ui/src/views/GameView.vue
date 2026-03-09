@@ -119,13 +119,62 @@ function handleClaimEvent(_eventId: string) {
   // Placeholder for event claiming
 }
 
+function copyGameId() {
+  navigator.clipboard.writeText(gameId).catch(() => {})
+}
+
 function goToScores() {
   router.push(`/scores/${gameId}`)
 }
 </script>
 
 <template>
-  <div class="game-layout" v-if="store.state">
+  <!-- Waiting Room -->
+  <div v-if="store.lobbyState" class="waiting-room">
+    <div class="waiting-card">
+      <h1 class="waiting-title">The Valley Awaits</h1>
+      <p class="waiting-sub">Waiting for players to join...</p>
+
+      <div class="waiting-players">
+        <div class="waiting-count">
+          {{ store.lobbyState.current_count }} / {{ store.lobbyState.max_players }} players
+        </div>
+        <div class="player-list">
+          <div
+            v-for="(name, id) in store.lobbyState.players"
+            :key="id"
+            class="player-entry"
+          >
+            <span class="player-dot"></span>
+            <span class="player-name">{{ name }}</span>
+            <span v-if="id === store.myPlayerId" class="you-badge">you</span>
+          </div>
+          <div
+            v-for="i in (store.lobbyState.max_players - store.lobbyState.current_count)"
+            :key="'empty-' + i"
+            class="player-entry empty"
+          >
+            <span class="player-dot empty-dot"></span>
+            <span class="player-name empty-name">Waiting...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="share-section">
+        <label class="share-label">Share this Game ID with friends:</label>
+        <div class="share-id" @click="copyGameId">
+          <code>{{ gameId }}</code>
+          <span class="copy-hint">click to copy</span>
+        </div>
+      </div>
+
+      <div class="waiting-animation">
+        <span class="falling-leaf" v-for="i in 5" :key="i" :style="{ animationDelay: (i * 0.8) + 's', left: (10 + i * 18) + '%' }">&#127809;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-layout" v-else-if="store.state">
     <!-- Game Over Overlay -->
     <div v-if="store.gameOver" class="game-over-overlay" @click="goToScores">
       <div class="game-over-card">
@@ -414,5 +463,173 @@ function goToScores() {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Waiting Room */
+.waiting-room {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--parchment);
+  position: relative;
+  overflow: hidden;
+}
+
+.waiting-card {
+  background: white;
+  border: var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-xl) var(--gap-xl) var(--gap-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.waiting-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--forest-dark);
+  margin-bottom: var(--gap-xs);
+}
+
+.waiting-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-faint);
+  margin-bottom: var(--gap-lg);
+}
+
+.waiting-players {
+  margin-bottom: var(--gap-lg);
+}
+
+.waiting-count {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--gap-sm);
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.player-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap-md);
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--parchment-deep);
+}
+
+.player-entry.empty {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.player-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--forest-glow);
+  flex-shrink: 0;
+}
+
+.empty-dot {
+  background: var(--parchment-deep);
+}
+
+.player-name {
+  font-family: var(--font-card);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.empty-name {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.you-badge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--forest-light);
+  background: var(--green-production-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.share-section {
+  margin-top: var(--gap-md);
+}
+
+.share-label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-bottom: var(--gap-xs);
+}
+
+.share-id {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap-md);
+  background: var(--parchment);
+  border: 1px solid var(--parchment-deep);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.share-id:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-glow);
+}
+
+.share-id code {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.copy-hint {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.waiting-animation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.falling-leaf {
+  position: absolute;
+  top: -30px;
+  font-size: 1.2rem;
+  opacity: 0.3;
+  animation: leaf-fall 6s linear infinite;
 }
 </style>

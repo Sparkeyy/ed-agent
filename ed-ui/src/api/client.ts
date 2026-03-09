@@ -49,7 +49,7 @@ export interface JoinGameResponse {
 }
 
 interface GameStateResponse {
-  state: GameState
+  state: any  // Can be GameState or LobbyState depending on game status
 }
 
 export async function createGame(playerCount: number, creatorName: string): Promise<CreateGameResponse> {
@@ -66,7 +66,7 @@ export async function joinGame(gameId: string, playerName: string): Promise<Join
   })
 }
 
-export async function getGameState(gameId: string, playerToken: string): Promise<GameState> {
+export async function getGameState(gameId: string, playerToken: string): Promise<any> {
   const resp = await request<GameStateResponse>(
     `/games/${gameId}?player_token=${encodeURIComponent(playerToken)}`,
   )

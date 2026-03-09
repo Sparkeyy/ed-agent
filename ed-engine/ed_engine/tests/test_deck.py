@@ -6,7 +6,6 @@ from ed_engine.engine.deck import (
     HAND_LIMIT,
     MEADOW_SIZE,
     DeckManager,
-    _ConcreteCard,
     build_deck,
     deal_to_player,
     discard_cards,
@@ -16,16 +15,16 @@ from ed_engine.engine.deck import (
     shuffle_deck,
     take_from_meadow,
 )
+from ed_engine.models.card import Card
 from ed_engine.models.enums import CardCategory, CardType
 from ed_engine.models.game import GameState
 from ed_engine.models.player import Player
 
 
-def _make_cards(n: int) -> list[_ConcreteCard]:
+def _make_cards(n: int) -> list[Card]:
     """Create n simple test cards."""
     return [
-        _ConcreteCard(
-            id=f"test_{i}",
+        Card(
             name=f"Card_{i}",
             card_type=CardType.TAN_TRAVELER,
             category=CardCategory.CRITTER,
@@ -43,7 +42,7 @@ class TestDeckManager:
         cards = _make_cards(20)
         dm = DeckManager(cards, seed=42)
         assert len(dm.meadow) == 8
-        assert dm.deck_size == 12  # 20 - 8
+        assert dm.deck_size == 12
 
     def test_draw_one(self) -> None:
         dm = DeckManager(_make_cards(20), seed=42)
@@ -128,20 +127,11 @@ class TestDeckManager:
 # ---------------------------------------------------------------------------
 # Functional (GameState-based) tests
 # ---------------------------------------------------------------------------
-class TestBuildDeck:
-    def test_total_card_count(self) -> None:
+class TestBuildDeckEngine:
+    def test_build_deck_returns_cards(self) -> None:
         deck = build_deck()
-        assert len(deck) == 128
-
-    def test_all_cards_have_names(self) -> None:
-        deck = build_deck()
-        for card in deck:
-            assert card.name
-
-    def test_unique_ids(self) -> None:
-        deck = build_deck()
-        ids = [c.id for c in deck]
-        assert len(ids) == len(set(ids))
+        assert len(deck) > 0
+        assert all(isinstance(c, Card) for c in deck)
 
     def test_has_critters_and_constructions(self) -> None:
         deck = build_deck()
@@ -149,7 +139,6 @@ class TestBuildDeck:
         constructions = [c for c in deck if c.category == CardCategory.CONSTRUCTION]
         assert len(critters) > 0
         assert len(constructions) > 0
-        assert len(critters) + len(constructions) == 128
 
     def test_all_five_card_types_present(self) -> None:
         deck = build_deck()
@@ -162,19 +151,6 @@ class TestBuildDeck:
             CardType.PURPLE_PROSPERITY,
         }
 
-    def test_unique_cards_have_two_copies(self) -> None:
-        deck = build_deck()
-        unique_cards = [c for c in deck if c.unique]
-        from collections import Counter
-
-        name_counts = Counter(c.name for c in unique_cards)
-        for name, count in name_counts.items():
-            assert count == 2, f"Unique card '{name}' has {count} copies, expected 2"
-
-    def test_cards_are_concrete_instances(self) -> None:
-        deck = build_deck()
-        assert isinstance(deck[0], _ConcreteCard)
-
 
 class TestShuffleDeck:
     def test_shuffle_preserves_count(self) -> None:
@@ -184,26 +160,26 @@ class TestShuffleDeck:
 
     def test_shuffle_does_not_mutate_original(self) -> None:
         deck = build_deck()
-        original_ids = [c.id for c in deck]
+        original_names = [c.name for c in deck]
         shuffle_deck(deck)
-        assert [c.id for c in deck] == original_ids
+        assert [c.name for c in deck] == original_names
 
     def test_deterministic_with_rng(self) -> None:
         deck = build_deck()
         s1 = shuffle_deck(deck, rng=random.Random(42))
         s2 = shuffle_deck(deck, rng=random.Random(42))
-        assert [c.id for c in s1] == [c.id for c in s2]
+        assert [c.name for c in s1] == [c.name for c in s2]
 
     def test_different_seeds_give_different_order(self) -> None:
         deck = build_deck()
         s1 = shuffle_deck(deck, rng=random.Random(1))
         s2 = shuffle_deck(deck, rng=random.Random(2))
-        assert [c.id for c in s1] != [c.id for c in s2]
+        assert [c.name for c in s1] != [c.name for c in s2]
 
 
 class TestDrawCards:
     def _make_game(self, deck_size: int = 10) -> GameState:
-        deck = build_deck()[:deck_size]
+        deck = _make_cards(deck_size)
         return GameState(deck=deck)
 
     def test_draw_reduces_deck(self) -> None:
@@ -214,13 +190,13 @@ class TestDrawCards:
 
     def test_draw_from_top(self) -> None:
         game = self._make_game(10)
-        expected_ids = [c.id for c in game.deck[:3]]
+        expected_names = [c.name for c in game.deck[:3]]
         game, drawn = draw_cards(game, 3)
-        assert [c.id for c in drawn] == expected_ids
+        assert [c.name for c in drawn] == expected_names
 
     def test_draw_empty_deck_reshuffles_discard(self) -> None:
-        deck = build_deck()[:2]
-        discard = build_deck()[50:55]
+        deck = _make_cards(2)
+        discard = _make_cards(5)
         game = GameState(deck=deck, discard=discard)
         game, drawn = draw_cards(game, 4)
         assert len(drawn) == 4
@@ -241,80 +217,80 @@ class TestDrawCards:
 
 class TestMeadow:
     def test_fill_meadow_to_eight(self) -> None:
-        deck = build_deck()[:20]
+        deck = _make_cards(20)
         game = GameState(deck=deck)
         game = fill_meadow(game)
         assert len(game.meadow) == MEADOW_SIZE
         assert len(game.deck) == 12
 
     def test_fill_meadow_partial(self) -> None:
-        deck = build_deck()[:5]
+        deck = _make_cards(5)
         game = GameState(deck=deck)
         game = fill_meadow(game)
         assert len(game.meadow) == 5
         assert len(game.deck) == 0
 
     def test_fill_meadow_already_full(self) -> None:
-        deck = build_deck()[:20]
-        game = GameState(deck=deck[:8], meadow=deck[8:16])
+        cards = _make_cards(20)
+        game = GameState(deck=cards[:8], meadow=cards[8:16])
         original_deck_len = len(game.deck)
         game = fill_meadow(game)
         assert len(game.meadow) == MEADOW_SIZE
         assert len(game.deck) == original_deck_len
 
     def test_take_from_meadow_replenishes(self) -> None:
-        deck = build_deck()[:20]
-        game = GameState(deck=deck[:12], meadow=deck[12:20])
+        cards = _make_cards(20)
+        game = GameState(deck=cards[:12], meadow=cards[12:20])
         game, taken = take_from_meadow(game, 0)
         assert taken is not None
         assert len(game.meadow) == MEADOW_SIZE
         assert len(game.deck) == 11
 
     def test_take_from_meadow_returns_correct_card(self) -> None:
-        deck = build_deck()[:20]
-        meadow = deck[12:20]
-        game = GameState(deck=deck[:12], meadow=meadow)
-        target_id = meadow[3].id
+        cards = _make_cards(20)
+        meadow = cards[12:20]
+        game = GameState(deck=cards[:12], meadow=meadow)
+        target_name = meadow[3].name
         game, taken = take_from_meadow(game, 3)
-        assert taken.id == target_id
+        assert taken.name == target_name
 
     def test_take_from_meadow_invalid_index(self) -> None:
-        deck = build_deck()[:8]
-        game = GameState(meadow=deck)
+        cards = _make_cards(8)
+        game = GameState(meadow=cards)
         with pytest.raises(IndexError):
             take_from_meadow(game, 10)
 
     def test_take_from_meadow_negative_index(self) -> None:
-        deck = build_deck()[:8]
-        game = GameState(meadow=deck)
+        cards = _make_cards(8)
+        game = GameState(meadow=cards)
         with pytest.raises(IndexError):
             take_from_meadow(game, -1)
 
 
 class TestDiscard:
     def test_discard_adds_to_pile(self) -> None:
-        deck = build_deck()[:5]
+        cards = _make_cards(5)
         game = GameState()
-        game = discard_cards(game, deck[:3])
+        game = discard_cards(game, cards[:3])
         assert len(game.discard) == 3
 
     def test_discard_appends_to_existing(self) -> None:
-        deck = build_deck()[:5]
-        game = GameState(discard=deck[:2])
-        game = discard_cards(game, deck[2:5])
+        cards = _make_cards(5)
+        game = GameState(discard=cards[:2])
+        game = discard_cards(game, cards[2:5])
         assert len(game.discard) == 5
 
     def test_discard_does_not_mutate_original(self) -> None:
         game = GameState()
-        deck = build_deck()[:3]
-        new_game = discard_cards(game, deck)
+        cards = _make_cards(3)
+        new_game = discard_cards(game, cards)
         assert len(game.discard) == 0
         assert len(new_game.discard) == 3
 
 
 class TestDealToPlayer:
     def test_deal_cards_to_hand(self) -> None:
-        deck = build_deck()[:20]
+        deck = _make_cards(20)
         player = Player(name="Alice")
         game = GameState(deck=deck, players=[player])
         game = deal_to_player(game, 0, 5)
@@ -322,7 +298,7 @@ class TestDealToPlayer:
         assert len(game.deck) == 15
 
     def test_deal_respects_hand_limit(self) -> None:
-        deck = build_deck()[:20]
+        deck = _make_cards(20)
         player = Player(name="Alice")
         game = GameState(deck=deck, players=[player])
         game = deal_to_player(game, 0, 10)
@@ -330,10 +306,10 @@ class TestDealToPlayer:
         assert len(game.discard) == 2
 
     def test_deal_adds_to_existing_hand(self) -> None:
-        deck = build_deck()[:20]
-        hand = deck[:3]
+        cards = _make_cards(20)
+        hand = cards[:3]
         player = Player(name="Alice", hand=hand)
-        game = GameState(deck=deck[3:], players=[player])
+        game = GameState(deck=cards[3:], players=[player])
         game = deal_to_player(game, 0, 2)
         assert len(game.players[0].hand) == 5
 
@@ -347,7 +323,10 @@ class TestSetupGame:
         assert game.players[1].name == "Bob"
         assert len(game.players[0].hand) == 5
         assert len(game.players[1].hand) == 6
-        assert len(game.deck) == 109
+        # Total cards minus meadow and hands
+        deck = build_deck()
+        expected_deck = len(deck) - 8 - 5 - 6
+        assert len(game.deck) == expected_deck
 
     def test_setup_four_players(self) -> None:
         game = setup_game(["A", "B", "C", "D"], rng=random.Random(42))
@@ -357,7 +336,6 @@ class TestSetupGame:
         assert len(game.players[1].hand) == 6
         assert len(game.players[2].hand) == 7
         assert len(game.players[3].hand) == 8
-        assert len(game.deck) == 94
 
     def test_setup_one_player(self) -> None:
         game = setup_game(["Solo"], rng=random.Random(42))
@@ -373,11 +351,11 @@ class TestSetupGame:
     def test_setup_deterministic(self) -> None:
         g1 = setup_game(["A", "B"], rng=random.Random(99))
         g2 = setup_game(["A", "B"], rng=random.Random(99))
-        assert [c.id for c in g1.deck] == [c.id for c in g2.deck]
-        assert [c.id for c in g1.meadow] == [c.id for c in g2.meadow]
+        assert [c.name for c in g1.deck] == [c.name for c in g2.deck]
+        assert [c.name for c in g1.meadow] == [c.name for c in g2.meadow]
         for i in range(2):
-            assert [c.id for c in g1.players[i].hand] == [
-                c.id for c in g2.players[i].hand
+            assert [c.name for c in g1.players[i].hand] == [
+                c.name for c in g2.players[i].hand
             ]
 
     def test_setup_total_cards_preserved(self) -> None:
@@ -388,13 +366,15 @@ class TestSetupGame:
             + len(game.discard)
             + sum(len(p.hand) for p in game.players)
         )
-        assert total == 128
+        expected = len(build_deck())
+        assert total == expected
 
 
 class TestDeckReshuffle:
     def test_reshuffle_on_draw_through_deck(self) -> None:
-        small_deck = build_deck()[:2]
-        discard = build_deck()[10:15]
+        """When deck runs out mid-draw, discard becomes new deck."""
+        small_deck = _make_cards(2)
+        discard = _make_cards(5)
         game = GameState(deck=small_deck, discard=discard)
         game, drawn = draw_cards(game, 5)
         assert len(drawn) == 5

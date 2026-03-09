@@ -180,7 +180,9 @@ function workerTitle(workerId: string): string {
 }
 
 .basic-grid {
-  grid-template-columns: repeat(auto-fill, minmax(clamp(110px, 10vw, 160px), 1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .loc-info-btn {
@@ -228,6 +230,8 @@ function workerTitle(workerId: string): string {
   border: 1.5px solid var(--parchment-deep);
   border-radius: var(--radius-lg);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: clamp(100px, 10vw, 150px);
+  flex-shrink: 0;
 }
 
 .location.valid {

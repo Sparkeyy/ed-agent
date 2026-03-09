@@ -206,11 +206,16 @@ class GameManager:
             card_name = kwargs.get("card_name")
             if not card_name:
                 raise ValueError("card_name is required for play_card")
+            source = kwargs.get("source", "hand")
+            meadow_index = kwargs.get("meadow_index")
+            use_paired = kwargs.get("use_paired_construction", False)
             action = GameAction(
                 action_type=ActionType.PLAY_CARD,
                 player_id=player_id_str,
                 card_name=card_name,
-                source="hand",
+                source=source,
+                meadow_index=meadow_index,
+                use_paired_construction=use_paired,
             )
         elif action_type == "prepare_for_season":
             action = GameAction(

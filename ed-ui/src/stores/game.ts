@@ -86,15 +86,21 @@ export const useGameStore = defineStore('game', () => {
         break
       case 'game_state':
         if (data && typeof data === 'object') {
-          if ((data as any).status === 'waiting') {
-            lobbyState.value = data as unknown as LobbyState
-            state.value = null
-          } else if ((data as any).state && (data as any).state.status === 'waiting') {
-            lobbyState.value = (data as any).state as LobbyState
+          // SSE data may be flat (from AI runner) or wrapped in {state: ...} (from action endpoint)
+          const inner = (data as any).state && typeof (data as any).state === 'object'
+            ? (data as any).state
+            : data
+          if (inner.status === 'waiting') {
+            lobbyState.value = inner as unknown as LobbyState
             state.value = null
           } else {
             lobbyState.value = null
-            state.value = data as GameState
+            // Merge valid_actions from wrapper if present
+            const gameState = inner as GameState
+            if ((data as any).valid_actions && !gameState.valid_actions?.length) {
+              gameState.valid_actions = (data as any).valid_actions
+            }
+            state.value = gameState
           }
         }
         break

@@ -80,9 +80,14 @@ export async function performAction(gameId: string, playerToken: string, action:
   }
   if (action.location_id !== undefined) body.location_id = action.location_id
   if (action.card_name !== undefined) body.card_name = action.card_name
-  if (action.source !== undefined) body.source = action.source
-  if (action.meadow_index !== undefined) body.meadow_index = action.meadow_index
-  if (action.use_paired_construction !== undefined) body.use_paired_construction = action.use_paired_construction
+  // Pass remaining action fields in payload for the engine
+  const payload: Record<string, unknown> = {}
+  if (action.source !== undefined) payload.source = action.source
+  if (action.meadow_index !== undefined) payload.meadow_index = action.meadow_index
+  if (action.use_paired_construction !== undefined) payload.use_paired_construction = action.use_paired_construction
+  if (action.event_id !== undefined) payload.event_id = action.event_id
+  if (action.discard_cards !== undefined) payload.discard_cards = action.discard_cards
+  body.payload = payload
 
   const resp = await request<GameStateResponse>(`/games/${gameId}/action`, {
     method: 'POST',

@@ -118,6 +118,30 @@ export async function addAiPlayer(
   })
 }
 
+// AI think — get suggested action for given state
+export async function thinkAi(
+  gameState: any, validActions: ValidAction[], difficulty: string
+): Promise<{ action: any; reasoning: string; source: string }> {
+  const res = await fetch(`${AI_BASE}/think`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ game_state: gameState, valid_actions: validActions, difficulty }),
+  })
+  if (!res.ok) { throw new ApiError(res.status, res.statusText, 'AI think failed') }
+  return res.json()
+}
+
+// AI chat — ask rules questions
+export async function chatAi(question: string, gameContext?: any): Promise<{ answer: string }> {
+  const res = await fetch(`${AI_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, game_context: gameContext }),
+  })
+  if (!res.ok) return { answer: 'Failed to reach AI assistant.' }
+  return res.json()
+}
+
 // Move evaluation (ed-ai service)
 export async function evaluateMove(
   gameState: GameState,

@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'play-from-meadow': [index: number]
+  'card-info': [cardName: string]
 }>()
 
 function isPlayable(index: number): boolean {
@@ -31,6 +32,7 @@ function isPlayable(index: number): boolean {
           :card="card"
           :playable="isPlayable(index)"
           @select="isPlayable(index) && emit('play-from-meadow', index)"
+          @info="emit('card-info', $event)"
         />
       </div>
       <!-- Fill remaining slots if less than 8 -->
@@ -74,8 +76,8 @@ function isPlayable(index: number): boolean {
 }
 
 .empty-slot {
-  width: 140px;
-  height: 190px;
+  width: clamp(100px, 11vw, 150px);
+  height: clamp(140px, 15vw, 200px);
   border: 2px dashed var(--parchment-deep);
   border-radius: var(--radius-md);
   display: flex;

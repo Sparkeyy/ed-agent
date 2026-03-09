@@ -200,6 +200,34 @@ async def evaluate(req: EvaluateRequest) -> EvaluateResponse:
     return EvaluateResponse(**result)
 
 
+class ChatRequest(BaseModel):
+    question: str
+    game_context: dict[str, Any] | None = None
+
+
+class ChatResponse(BaseModel):
+    answer: str
+
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(req: ChatRequest) -> ChatResponse:
+    """Answer rules questions about Everdell using the AI assistant."""
+    system = (
+        "You are an Everdell rules expert. Answer questions about the base game only. "
+        "Be concise and accurate. No expansion content. If asked about strategy, "
+        "give brief practical advice."
+    )
+    user_msg = req.question
+    if req.game_context:
+        import json
+        user_msg += f"\n\nCurrent game context: {json.dumps(req.game_context, default=str)[:2000]}"
+    try:
+        resp = await _ollama.generate(prompt=user_msg, system=system)
+        return ChatResponse(answer=resp)
+    except Exception:
+        return ChatResponse(answer="AI assistant is currently unavailable. Check the Rules tab for reference.")
+
+
 @app.get("/health")
 async def health() -> dict[str, Any]:
     """Health check including Ollama connectivity."""

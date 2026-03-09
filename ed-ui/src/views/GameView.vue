@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGameStore } from '../stores/game'
 import { addAiPlayer } from '../api/client'
-import type { ValidAction } from '../types'
+import type { ValidAction, ResourceBank } from '../types'
 
 import CardComponent from '../components/CardComponent.vue'
 import SeasonTracker from '../components/SeasonTracker.vue'
@@ -16,6 +16,9 @@ import ActionBar from '../components/ActionBar.vue'
 import EventsPanel from '../components/EventsPanel.vue'
 import DebugPanel from '../components/DebugPanel.vue'
 import StatsPanel from '../components/StatsPanel.vue'
+import CardInfoModal from '../components/CardInfoModal.vue'
+import HelpPanel from '../components/HelpPanel.vue'
+import { CARD_INFO, LOCATION_INFO } from '../data/card-info'
 
 const route = useRoute()
 const router = useRouter()
@@ -79,18 +82,6 @@ const workerDisplay = computed(() => {
   if (!store.myPlayer) return null
   const available = store.myPlayer.workers_total - store.myPlayer.workers_placed
   return { available, total: store.myPlayer.workers_total }
-})
-
-const leftBasicLocations = computed(() => {
-  const all = store.state?.basic_locations || []
-  const mid = Math.ceil(all.length / 2)
-  return all.slice(0, mid)
-})
-
-const rightBasicLocations = computed(() => {
-  const all = store.state?.basic_locations || []
-  const mid = Math.ceil(all.length / 2)
-  return all.slice(mid)
 })
 
 const leftForest = computed(() => {
@@ -220,6 +211,77 @@ async function handleAddAi() {
 function goToScores() {
   router.push(`/scores/${gameId}`)
 }
+
+// Info modal state
+const infoModal = ref({
+  visible: false,
+  title: '',
+  subtitle: '',
+  cardType: '',
+  category: '',
+  description: '',
+  ability: '',
+  cost: undefined as ResourceBank | undefined,
+  points: undefined as number | undefined,
+})
+
+function handleCardInfo(cardName: string) {
+  const info = CARD_INFO[cardName]
+  // Find card data from meadow, hand, or any player's city
+  let cardData: any = null
+  if (store.state) {
+    cardData = store.state.meadow.find(c => c.name === cardName)
+    if (!cardData && store.myPlayer?.hand) {
+      cardData = store.myPlayer.hand.find(c => c.name === cardName)
+    }
+    if (!cardData) {
+      for (const p of store.state.players) {
+        cardData = p.city.find(c => c.name === cardName)
+        if (cardData) break
+      }
+    }
+  }
+  infoModal.value = {
+    visible: true,
+    title: cardName,
+    subtitle: cardData ? `${cardData.unique ? 'Unique' : 'Common'} ${cardData.category}` : '',
+    cardType: cardData?.card_type || '',
+    category: cardData?.category || '',
+    description: info?.description || '',
+    ability: info?.ability || 'No ability info available.',
+    cost: cardData?.cost,
+    points: cardData?.base_points,
+  }
+}
+
+function handleLocationInfo(locationId: string) {
+  const reward = LOCATION_INFO[locationId]
+  infoModal.value = {
+    visible: true,
+    title: locationId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    subtitle: 'Location',
+    cardType: '',
+    category: '',
+    description: '',
+    ability: reward || 'No info available for this location.',
+    cost: undefined,
+    points: undefined,
+  }
+}
+
+function handleEventInfo(eventData: { name: string; description?: string; required_cards?: string[]; points: number }) {
+  infoModal.value = {
+    visible: true,
+    title: eventData.name,
+    subtitle: 'Event',
+    cardType: '',
+    category: '',
+    description: eventData.description || '',
+    ability: eventData.required_cards ? `Requires: ${eventData.required_cards.join(' + ')}` : '',
+    cost: undefined,
+    points: eventData.points,
+  }
+}
 </script>
 
 <template>
@@ -340,89 +402,85 @@ function goToScores() {
       </div>
     </div>
 
-    <!-- Board: three-column layout -->
+    <!-- Board area: single column flow -->
     <div class="board-area">
-      <!-- Left column: basic locations -->
-      <div class="board-left-locs">
+      <!-- Events at top -->
+      <EventsPanel
+        v-if="store.state.events"
+        :events="store.state.events"
+        :claimable-event-ids="claimableEventIds"
+        @claim-event="handleClaimEvent"
+        @event-info="handleEventInfo"
+      />
+
+      <!-- Basic Locations — single horizontal row -->
+      <GameBoard
+        :basic-locations="store.state.basic_locations"
+        :forest-locations="[]"
+        :haven-locations="[]"
+        :journey-locations="[]"
+        :valid-location-ids="validLocationIds"
+        :player-names="playerNamesMap"
+        :current-season="store.myPlayer?.season ?? 'winter'"
+        @place-worker="handlePlaceWorker"
+        @location-info="handleLocationInfo"
+      />
+
+      <!-- Forest Left | Meadow 4x2 | Forest Right -->
+      <div class="forest-meadow-row">
         <GameBoard
-          :basic-locations="leftBasicLocations"
-          :forest-locations="[]"
+          :basic-locations="[]"
+          :forest-locations="leftForest"
           :haven-locations="[]"
           :journey-locations="[]"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
+          @location-info="handleLocationInfo"
         />
-      </div>
-
-      <!-- Center column -->
-      <div class="board-center">
-        <!-- Special Events -->
-        <EventsPanel
-          v-if="store.state.events"
-          :events="store.state.events"
-          :claimable-event-ids="claimableEventIds"
-          @claim-event="handleClaimEvent"
-        />
-
-        <!-- Forest row -->
-        <div class="forest-row">
-          <GameBoard
-            :basic-locations="[]"
-            :forest-locations="leftForest"
-            :haven-locations="[]"
-            :journey-locations="[]"
-            :valid-location-ids="validLocationIds"
-            :player-names="playerNamesMap"
-            :current-season="store.myPlayer?.season ?? 'winter'"
-            @place-worker="handlePlaceWorker"
-          />
-          <GameBoard
-            :basic-locations="[]"
-            :forest-locations="rightForest"
-            :haven-locations="[]"
-            :journey-locations="[]"
-            :valid-location-ids="validLocationIds"
-            :player-names="playerNamesMap"
-            :current-season="store.myPlayer?.season ?? 'winter'"
-            @place-worker="handlePlaceWorker"
-          />
-        </div>
-
-        <!-- The Meadow -->
         <MeadowDisplay
           :meadow="store.meadow"
           :playable-indices="playableMeadowIndices"
           @play-from-meadow="handlePlayFromMeadow"
+          @card-info="handleCardInfo"
         />
-
-        <!-- Haven + Journey -->
-        <div class="haven-journey-row">
-          <GameBoard
-            :basic-locations="[]"
-            :forest-locations="[]"
-            :haven-locations="store.state.haven_locations || []"
-            :journey-locations="store.state.journey_locations || []"
-            :valid-location-ids="validLocationIds"
-            :player-names="playerNamesMap"
-            :current-season="store.myPlayer?.season ?? 'winter'"
-            @place-worker="handlePlaceWorker"
-          />
-        </div>
-      </div>
-
-      <!-- Right column: basic locations -->
-      <div class="board-right-locs">
         <GameBoard
-          :basic-locations="rightBasicLocations"
-          :forest-locations="[]"
+          :basic-locations="[]"
+          :forest-locations="rightForest"
           :haven-locations="[]"
           :journey-locations="[]"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
+          @location-info="handleLocationInfo"
+        />
+      </div>
+
+      <!-- Journey (left) + Haven (right) -->
+      <div class="haven-journey-row">
+        <GameBoard
+          :basic-locations="[]"
+          :forest-locations="[]"
+          :haven-locations="[]"
+          :journey-locations="store.state.journey_locations || []"
+          :valid-location-ids="validLocationIds"
+          :player-names="playerNamesMap"
+          :current-season="store.myPlayer?.season ?? 'winter'"
+          @place-worker="handlePlaceWorker"
+          @location-info="handleLocationInfo"
+        />
+        <GameBoard
+          :basic-locations="[]"
+          :forest-locations="[]"
+          :haven-locations="store.state.haven_locations || []"
+          :journey-locations="[]"
+          :valid-location-ids="validLocationIds"
+          :player-names="playerNamesMap"
+          :current-season="store.myPlayer?.season ?? 'winter'"
+          @place-worker="handlePlaceWorker"
+          @location-info="handleLocationInfo"
         />
       </div>
     </div>
@@ -444,6 +502,8 @@ function goToScores() {
         v-if="activeCityPlayer"
         :player="activeCityPlayer"
         :is-me="activeCityIsMe"
+        :game-id="gameId"
+        @card-info="handleCardInfo"
       />
     </div>
 
@@ -453,6 +513,7 @@ function goToScores() {
       :hand="store.myPlayer.hand"
       :playable-card-names="playableHandCardNames"
       @play-from-hand="handlePlayFromHand"
+      @card-info="handleCardInfo"
     />
 
     <!-- Discard Selection Mode -->
@@ -494,6 +555,21 @@ function goToScores() {
     <!-- Overlay panels -->
     <DebugPanel ref="debugPanel" />
     <StatsPanel ref="statsPanel" />
+    <HelpPanel />
+
+    <!-- Info Modal -->
+    <CardInfoModal
+      :visible="infoModal.visible"
+      :title="infoModal.title"
+      :subtitle="infoModal.subtitle"
+      :card-type="infoModal.cardType"
+      :category="infoModal.category"
+      :description="infoModal.description"
+      :ability="infoModal.ability"
+      :cost="infoModal.cost"
+      :points="infoModal.points"
+      @close="infoModal.visible = false"
+    />
 
     <!-- Error toast -->
     <div v-if="store.error" class="error-toast">
@@ -599,46 +675,31 @@ function goToScores() {
   text-transform: capitalize;
 }
 
-/* Board area: three-column layout */
+/* Board area: single-column flow */
 .board-area {
-  display: grid;
-  grid-template-columns: 180px 1fr 180px;
-  grid-template-rows: 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 8px);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 8px;
+  padding: clamp(4px, 0.5vw, 8px);
 }
 
-.board-left-locs,
-.board-right-locs {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-}
-
-.board-center {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-  min-width: 0;
-}
-
-.forest-row {
-  display: flex;
-  gap: var(--gap-sm);
-  justify-content: center;
-}
-
-.forest-row > * {
-  flex: 1;
-  min-width: 0;
+.forest-meadow-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: clamp(4px, 0.5vw, 8px);
+  width: 100%;
+  align-items: start;
 }
 
 .haven-journey-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--gap-md);
 }
 
 /* City section */

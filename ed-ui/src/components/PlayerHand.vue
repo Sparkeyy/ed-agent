@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'play-from-hand': [cardName: string]
+  'card-info': [cardName: string]
 }>()
 
 function isPlayable(cardName: string): boolean {
@@ -28,6 +29,7 @@ function isPlayable(cardName: string): boolean {
         :card="card"
         :playable="isPlayable(card.name)"
         @select="isPlayable(card.name) && emit('play-from-hand', card.name)"
+        @info="emit('card-info', $event)"
       />
       <div v-if="hand.length === 0" class="empty-hand">No cards in hand</div>
     </div>

@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'place-worker': [locationId: string]
+  'location-info': [locationId: string]
 }>()
 
 function isValid(id: string): boolean {
@@ -68,6 +69,7 @@ function workerTitle(workerId: string): string {
             >{{ workerLabel(worker) }}</span>
           </div>
           <div v-if="loc.exclusive" class="exclusive-badge">1</div>
+          <button class="loc-info-btn" @click.stop="emit('location-info', loc.id)" title="Location info">i</button>
         </div>
       </div>
     </div>
@@ -93,6 +95,7 @@ function workerTitle(workerId: string): string {
               :title="workerTitle(worker)"
             >{{ workerLabel(worker) }}</span>
           </div>
+          <button class="loc-info-btn" @click.stop="emit('location-info', loc.id)" title="Location info">i</button>
         </div>
       </div>
     </div>
@@ -118,6 +121,7 @@ function workerTitle(workerId: string): string {
               :title="workerTitle(worker)"
             >{{ workerLabel(worker) }}</span>
           </div>
+          <button class="loc-info-btn" @click.stop="emit('location-info', loc.id)" title="Location info">i</button>
         </div>
       </div>
     </div>
@@ -143,6 +147,7 @@ function workerTitle(workerId: string): string {
               :title="workerTitle(worker)"
             >{{ workerLabel(worker) }}</span>
           </div>
+          <button class="loc-info-btn" @click.stop="emit('location-info', loc.id)" title="Location info">i</button>
         </div>
       </div>
     </div>
@@ -175,7 +180,41 @@ function workerTitle(workerId: string): string {
 }
 
 .basic-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(110px, 10vw, 160px), 1fr));
+}
+
+.loc-info-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-faint);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink-faint);
+  font-size: 0.55rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1;
+}
+
+.location:hover .loc-info-btn {
+  opacity: 1;
+}
+
+.loc-info-btn:hover {
+  background: var(--gold);
+  color: white;
+  border-color: var(--gold);
 }
 
 .forest-grid {

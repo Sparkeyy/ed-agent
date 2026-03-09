@@ -1,14 +1,30 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useGameStore } from '../stores/game'
 import * as api from '../api/client'
 import type { MoveEvaluation, MoveQuality, ValidAction } from '../types'
+
+interface AiSuggestion {
+  action: any
+  reasoning: string
+  source: string
+}
+type Difficulty = 'apprentice' | 'journeyman' | 'master'
 
 const store = useGameStore()
 const visible = ref(false)
 const loading = ref(false)
 const evaluation = ref<MoveEvaluation | null>(null)
 const error = ref<string | null>(null)
+
+// Debug mode
+const isDebug = computed(() => store.myPlayer?.name?.toLowerCase() === 'debug')
+const aiSuggestions = ref<Record<Difficulty, AiSuggestion | null>>({
+  apprentice: null,
+  journeyman: null,
+  master: null,
+})
+const aiLoading = ref(false)
 
 // Track the last action for evaluation
 let lastState: any = null
@@ -44,7 +60,8 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 
-function describeAction(action: ValidAction): string {
+function describeAction(action: ValidAction | Record<string, any>): string {
+  if (!action || typeof action !== 'object') return 'Unknown action'
   if (action.action_type === 'place_worker' && action.location_id) {
     return `Place worker at ${action.location_id}`
   }
@@ -55,7 +72,10 @@ function describeAction(action: ValidAction): string {
   if (action.action_type === 'prepare_for_season') {
     return 'Prepare for season'
   }
-  return action.action_type
+  if (action.action_type === 'claim_event' && action.event_id) {
+    return `Claim event ${action.event_id}`
+  }
+  return action.action_type || JSON.stringify(action).substring(0, 60)
 }
 
 // Watch for turn changes — when it stops being my turn, evaluate the last action
@@ -76,6 +96,27 @@ watch(
     } finally {
       loading.value = false
     }
+  },
+)
+
+// Fetch AI suggestions when it becomes debug player's turn
+watch(
+  [() => store.isMyTurn, () => store.state?.turn_number],
+  async ([myTurn]) => {
+    if (!myTurn || !isDebug.value || !store.state) return
+    aiLoading.value = true
+    aiSuggestions.value = { apprentice: null, journeyman: null, master: null }
+    const difficulties: Difficulty[] = ['apprentice', 'journeyman', 'master']
+    const promises = difficulties.map(async (d) => {
+      try {
+        const result = await api.thinkAi(store.state!, store.validActions, d)
+        aiSuggestions.value[d] = result
+      } catch {
+        aiSuggestions.value[d] = { action: {}, reasoning: 'Failed to get suggestion', source: 'error' }
+      }
+    })
+    await Promise.all(promises)
+    aiLoading.value = false
   },
 )
 
@@ -145,6 +186,26 @@ defineExpose({ toggle, captureAction })
               <div class="alt-delta" :class="{ positive: alt.score_delta > 0 }">
                 {{ alt.score_delta > 0 ? '+' : '' }}{{ alt.score_delta.toFixed(1) }}
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Suggestions (debug mode) -->
+        <div v-if="isDebug && store.isMyTurn" class="ai-suggestions">
+          <h4 class="suggestions-heading">AI Suggestions</h4>
+          <div v-if="aiLoading" class="debug-loading">
+            <div class="debug-spinner"></div>
+            <span>Getting AI suggestions...</span>
+          </div>
+          <div v-else class="suggestion-cards">
+            <div v-for="diff in (['apprentice', 'journeyman', 'master'] as Difficulty[])" :key="diff" class="suggestion-card">
+              <div class="suggestion-diff" :class="`diff-${diff}`">{{ diff }}</div>
+              <template v-if="aiSuggestions[diff]">
+                <div class="suggestion-action">{{ describeAction(aiSuggestions[diff]!.action) }}</div>
+                <div class="suggestion-reasoning">{{ aiSuggestions[diff]!.reasoning.substring(0, 200) }}</div>
+                <div class="suggestion-source">via {{ aiSuggestions[diff]!.source }}</div>
+              </template>
+              <div v-else class="suggestion-empty">No suggestion</div>
             </div>
           </div>
         </div>
@@ -394,6 +455,74 @@ defineExpose({ toggle, captureAction })
   font-family: monospace;
   font-size: 0.85rem;
   font-style: normal;
+}
+
+/* AI Suggestions */
+.ai-suggestions {
+  border-top: 1px solid var(--parchment-deep);
+  padding-top: var(--gap-md);
+  margin-top: var(--gap-md);
+}
+
+.suggestions-heading {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--gap-sm);
+}
+
+.suggestion-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.suggestion-card {
+  padding: var(--gap-sm) var(--gap-md);
+  background: white;
+  border: var(--border-card);
+  border-radius: var(--radius-sm);
+}
+
+.suggestion-diff {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.diff-apprentice { color: var(--forest-light); }
+.diff-journeyman { color: var(--gold); }
+.diff-master { color: var(--purple-prosperity); }
+
+.suggestion-action {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.suggestion-reasoning {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+
+.suggestion-source {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.suggestion-empty {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  font-style: italic;
 }
 
 /* Slide transition */

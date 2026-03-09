@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 
 const emit = defineEmits<{
   select: []
+  info: [cardName: string]
 }>()
 
 const categoryLabel = (cat: string) => cat === 'critter' ? 'C' : 'B'
@@ -54,6 +55,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
       <span class="compact-points"><span class="vp-badge-sm">VP</span> {{ card.base_points }}</span>
     </template>
     <template v-else>
+      <button class="info-btn" @click.stop="emit('info', card.name)" title="Card info">i</button>
       <div class="card-top-bar" :style="{ backgroundColor: cardColorVar(card.card_type) }"></div>
       <div class="card-body">
         <div class="card-name">{{ card.name }}</div>
@@ -93,9 +95,44 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 </template>
 
 <style scoped>
+.info-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-faint);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink-faint);
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.card:hover .info-btn {
+  opacity: 1;
+}
+
+.info-btn:hover {
+  background: var(--gold);
+  color: white;
+  border-color: var(--gold);
+}
+
 .card {
-  width: 140px;
-  height: 190px;
+  width: clamp(100px, 11vw, 150px);
+  height: clamp(140px, 15vw, 200px);
   background: var(--card-bg, #fffdf8);
   border: var(--border-card);
   border-radius: var(--radius-md);
@@ -172,7 +209,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 .card-name {
   font-family: var(--font-card);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: clamp(0.65rem, 0.8vw, 0.82rem);
   color: var(--ink);
   line-height: 1.2;
   text-align: center;

@@ -59,6 +59,11 @@ class GameManager:
         # Initialize events
         self._event_mgr = EventManager(seed=seed)
 
+        # Debug mode: give "debug" player unlimited resources
+        for player in players:
+            if player.name.lower() == "debug":
+                player.resources = ResourceBank(twig=999, resin=999, pebble=999, berry=999)
+
         # Deal starting hands (player order determines hand size)
         for i, player in enumerate(players):
             hand_size = _STARTING_HAND_SIZES.get(i + 1, 5)

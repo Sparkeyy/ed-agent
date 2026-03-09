@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'claim-event': [eventId: string]
+  'event-info': [eventData: { name: string; description?: string; required_cards?: string[]; points: number }]
 }>()
 
 function isClaimable(eventId: string): boolean {
@@ -48,6 +49,22 @@ function eventPoints(eventData: any): number {
   }
   return 0
 }
+
+function eventDescription(eventData: any): string {
+  if (eventData && typeof eventData === 'object' && eventData.description) {
+    return eventData.description
+  }
+  return ''
+}
+
+function emitEventInfo(eventData: any, eventId: string) {
+  emit('event-info', {
+    name: eventName(eventData, String(eventId)),
+    description: eventDescription(eventData),
+    required_cards: eventData?.required_cards,
+    points: eventPoints(eventData),
+  })
+}
 </script>
 
 <template>
@@ -69,6 +86,7 @@ function eventPoints(eventData: any): number {
             <span class="event-card-pts">{{ eventPoints(data) }} VP</span>
             <span v-if="isClaimed(data)" class="event-card-claimed">{{ claimerName(data) }}</span>
           </div>
+          <button class="event-info-btn" @click.stop="emitEventInfo(data, String(eventId))" title="Event info">i</button>
         </div>
       </div>
     </div>
@@ -89,6 +107,7 @@ function eventPoints(eventData: any): number {
             <span class="event-card-pts">{{ eventPoints(data) }} VP</span>
             <span v-if="isClaimed(data)" class="event-card-claimed">{{ claimerName(data) }}</span>
           </div>
+          <button class="event-info-btn" @click.stop="emitEventInfo(data, String(eventId))" title="Event info">i</button>
         </div>
       </div>
     </div>
@@ -127,7 +146,41 @@ function eventPoints(eventData: any): number {
   justify-content: center;
 }
 
+.event-info-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-faint);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink-faint);
+  font-size: 0.5rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.event-card:hover .event-info-btn {
+  opacity: 1;
+}
+
+.event-info-btn:hover {
+  background: var(--gold);
+  color: white;
+  border-color: var(--gold);
+}
+
 .event-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;

@@ -53,8 +53,18 @@ class King(ProsperityCard):
 
     def on_score(self, game: GameState, player: Player) -> int:
         """+1 pt per basic Event, +2 pt per special Event."""
-        # TODO: implement event scoring (needs event tracking on player)
-        return 0
+        player_id = str(player.id)
+        basic_count = sum(
+            1 for edata in game.basic_events.values()
+            if (isinstance(edata, dict) and edata.get("claimed_by") == player_id)
+            or (hasattr(edata, "claimed_by") and getattr(edata, "claimed_by", None) == player_id)
+        )
+        special_count = sum(
+            1 for edata in game.special_events.values()
+            if (isinstance(edata, dict) and edata.get("claimed_by") == player_id)
+            or (hasattr(edata, "claimed_by") and getattr(edata, "claimed_by", None) == player_id)
+        )
+        return basic_count + 2 * special_count
 
 
 @register

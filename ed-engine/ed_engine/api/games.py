@@ -21,6 +21,7 @@ from ed_engine.api.schemas import (
     ValidAction,
 )
 from ed_engine.api.session import GameSession, store
+from ed_engine.engine.perspective import PerspectiveFilter
 
 router = APIRouter()
 
@@ -34,7 +35,7 @@ def _build_game_state_response(
     session: GameSession,
     player_token: str | None = None,
 ) -> GameStateResponse:
-    """Build a GameStateResponse from a session."""
+    """Build a GameStateResponse from a session, filtered by perspective."""
     if not session.started or session.game_manager is None:
         # Game not started yet — return lobby state
         players_info = {
@@ -54,55 +55,57 @@ def _build_game_state_response(
         )
 
     gm = session.game_manager
-    state = gm.get_state()
-    current_player = gm.get_current_player()
-    current_pid = None
-    if current_player:
-        # Reverse-map GameManager UUID to session player_id
-        for spid, gm_uuid in getattr(session, "_pid_to_gm_uuid", {}).items():
-            if gm_uuid == str(current_player.id):
-                current_pid = spid
-                break
 
-    valid_actions: list[ValidAction] = []
+    # Resolve the requesting player's GM UUID for perspective filtering
+    gm_player_id: str | None = None
     if player_token:
         session_pid = session.verify_token(player_token)
         if session_pid:
-            gm_uuid = session.get_gm_player_uuid(session_pid)
-            if gm_uuid:
-                raw_actions = gm.get_valid_actions(UUID(gm_uuid))
-                for a in raw_actions:
-                    # GameAction is a Pydantic model; extract fields
-                    if hasattr(a, "action_type"):
-                        params: dict[str, Any] = {}
-                        if a.location_id:
-                            params["location_id"] = a.location_id
-                        if a.card_name:
-                            params["card_name"] = a.card_name
-                        if a.source:
-                            params["source"] = a.source
-                        valid_actions.append(
-                            ValidAction(
-                                action_type=str(a.action_type),
-                                description="",
-                                params=params,
-                            )
-                        )
-                    elif isinstance(a, dict):
-                        valid_actions.append(
-                            ValidAction(
-                                action_type=a["action_type"],
-                                description=a.get("description", ""),
-                                params=a.get("params", {}),
-                            )
-                        )
+            gm_player_id = session.get_gm_player_uuid(session_pid)
+
+    # Use PerspectiveFilter for the full state serialization
+    filtered = PerspectiveFilter.serialize_for_api(gm, player_id=gm_player_id)
+
+    # Reverse-map current_player_id from GM UUID to session player_id
+    current_pid = None
+    gm_current = filtered.get("current_player_id")
+    if gm_current:
+        for spid, gm_uuid in getattr(session, "_pid_to_gm_uuid", {}).items():
+            if gm_uuid == gm_current:
+                current_pid = spid
+                break
+
+    # Convert valid_actions to ValidAction schema objects
+    valid_actions: list[ValidAction] = []
+    for a in filtered.get("valid_actions", []):
+        params: dict[str, Any] = {}
+        if "location_id" in a:
+            params["location_id"] = a["location_id"]
+        if "card_name" in a:
+            params["card_name"] = a["card_name"]
+        if "source" in a:
+            params["source"] = a["source"]
+        if "meadow_index" in a:
+            params["meadow_index"] = a["meadow_index"]
+        if a.get("use_paired_construction"):
+            params["use_paired_construction"] = True
+        valid_actions.append(
+            ValidAction(
+                action_type=a["action_type"],
+                description="",
+                params=params,
+            )
+        )
+
+    # Use session game_id (not the internal GameState UUID)
+    filtered["game_id"] = session.game_id
 
     return GameStateResponse(
         game_id=session.game_id,
-        state=state.model_dump(mode="json"),
+        state=filtered,
         valid_actions=valid_actions,
         current_player_id=current_pid,
-        game_over=state.game_over,
+        game_over=filtered["game_over"],
     )
 
 
@@ -208,11 +211,17 @@ async def perform_action(game_id: str, req: PerformActionRequest) -> PerformActi
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Build response
+    # Build response for the acting player
     game_resp = _build_game_state_response(session, req.player_token)
 
-    # Broadcast state update
-    session.broadcast_event("game_state", game_resp.model_dump(mode="json"))
+    # Broadcast per-player filtered state to each SSE subscriber
+    for sse_token in list(session.sse_queues.keys()):
+        player_resp = _build_game_state_response(session, sse_token)
+        event = {"event": "game_state", "data": player_resp.model_dump(mode="json")}
+        try:
+            session.sse_queues[sse_token].put_nowait(event)
+        except (asyncio.QueueFull, KeyError):
+            pass  # Drop for slow/disconnected consumers
 
     # Check for game over
     if session.game_manager.get_state().game_over:

@@ -19,3 +19,5 @@ class Player(BaseModel):
     season: Season = Season.WINTER
     score: int = 0
     has_passed: bool = False
+    point_tokens: int = 0
+    claimed_events: list[str] = Field(default_factory=list)  # event IDs

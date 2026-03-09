@@ -1,0 +1,40 @@
+services:
+  ed-engine:
+    build: ./ed-engine
+    ports:
+      - "4242:4242"
+    volumes:
+      - ./ed-engine/ed_engine:/app/ed_engine
+      - engine-data:/app/data
+    environment:
+      - ED_ENV=development
+      - ED_DB_PATH=/app/data/ed.db
+    restart: unless-stopped
+
+  ed-ai:
+    build: ./ed-ai
+    ports:
+      - "4243:4243"
+    volumes:
+      - ./ed-ai/ed_ai:/app/ed_ai
+    environment:
+      - ED_ENV=development
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - ED_ENGINE_URL=http://ed-engine:4242
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - ed-engine
+
+  ed-ui:
+    build: ./ed-ui
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./ed-ui/src:/app/src
+      - ./ed-ui/index.html:/app/index.html
+    environment:
+      - VITE_API_URL=http://localhost:4242
+    depends_on:
+      - ed-engine

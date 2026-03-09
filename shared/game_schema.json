@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Everdell Game Action",
+  "description": "Schema for actions submitted to the game engine",
+  "type": "object",
+  "required": ["action_type"],
+  "properties": {
+    "action_type": {
+      "type": "string",
+      "enum": ["place_worker", "play_card", "prepare_for_season", "pass"]
+    },
+    "card_name": {
+      "type": "string",
+      "description": "Name of the card to play (for play_card action)"
+    },
+    "location_id": {
+      "type": "string",
+      "description": "Location to place worker (for place_worker action)"
+    },
+    "payment": {
+      "type": "object",
+      "description": "Resources to spend",
+      "properties": {
+        "twig": { "type": "integer", "minimum": 0 },
+        "resin": { "type": "integer", "minimum": 0 },
+        "pebble": { "type": "integer", "minimum": 0 },
+        "berry": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "source": {
+      "type": "string",
+      "enum": ["hand", "meadow"],
+      "description": "Where the card is being played from"
+    },
+    "target": {
+      "type": "string",
+      "description": "Target for card abilities that require a choice"
+    }
+  }
+}

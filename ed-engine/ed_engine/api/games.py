@@ -11,6 +11,8 @@ from fastapi import APIRouter, HTTPException, Query
 from starlette.responses import StreamingResponse
 
 from ed_engine.api.schemas import (
+    AddAiRequest,
+    AddAiResponse,
     CreateGameRequest,
     CreateGameResponse,
     GameStateResponse,
@@ -21,6 +23,7 @@ from ed_engine.api.schemas import (
     ValidAction,
 )
 from ed_engine.api.session import GameSession, store
+from ed_engine.engine.ai_runner import start_ai
 from ed_engine.engine.perspective import PerspectiveFilter
 from ed_engine.db.elo import update_multiplayer_elo
 
@@ -162,6 +165,50 @@ async def join_game(game_id: str, req: JoinGameRequest) -> JoinGameResponse:
         session.broadcast_event("game_started", {"game_id": session.game_id})
 
     return JoinGameResponse(player_token=token, player_id=player_id)
+
+
+@router.post("/{game_id}/ai", response_model=AddAiResponse)
+async def add_ai_player(game_id: str, req: AddAiRequest) -> AddAiResponse:
+    """Add an AI opponent to the game."""
+    session = store.get(game_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if session.started:
+        raise HTTPException(status_code=400, detail="Game has already started")
+
+    if len(session.player_tokens) >= session.max_players:
+        raise HTTPException(status_code=400, detail="Game is full")
+
+    # Add AI as a regular player
+    try:
+        token, player_id = session.add_player(req.name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Mark as AI in session
+    if not hasattr(session, "ai_players"):
+        session.ai_players = {}  # type: ignore[attr-defined]
+    session.ai_players[player_id] = {"token": token, "difficulty": req.difficulty}  # type: ignore[attr-defined]
+
+    # Broadcast player_joined
+    session.broadcast_event("player_joined", {
+        "player_id": player_id,
+        "player_name": req.name,
+        "is_ai": True,
+        "difficulty": req.difficulty,
+    })
+
+    # Auto-start when full
+    if len(session.player_tokens) == session.max_players:
+        session.start_game()
+        session.broadcast_event("game_started", {"game_id": session.game_id})
+
+        # Start background tasks for all AI players
+        for ai_pid, ai_info in session.ai_players.items():  # type: ignore[attr-defined]
+            start_ai(session, ai_info["token"], ai_pid, ai_info["difficulty"])
+
+    return AddAiResponse(player_id=player_id, name=req.name, difficulty=req.difficulty)
 
 
 @router.get("/{game_id}", response_model=GameStateResponse)

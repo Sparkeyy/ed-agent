@@ -27,6 +27,8 @@ const statsPanel = ref<InstanceType<typeof StatsPanel> | null>(null)
 const aiDifficulty = ref<'apprentice' | 'journeyman' | 'master'>('journeyman')
 const addingAi = ref(false)
 const aiError = ref('')
+const aiNameIndex = ref(0)
+const AI_NAMES = ['Rugwort', 'Bramblewick', 'Thistledew', 'Mossclaw', 'Fernwhisper', 'Ashenbark']
 
 onMounted(() => {
   if (!store.gameId) {
@@ -131,7 +133,9 @@ async function handleAddAi() {
   addingAi.value = true
   aiError.value = ''
   try {
-    await addAiPlayer(gameId, aiDifficulty.value)
+    const name = AI_NAMES[aiNameIndex.value % AI_NAMES.length]
+    aiNameIndex.value++
+    await addAiPlayer(gameId, aiDifficulty.value, name)
   } catch (e: any) {
     aiError.value = e.message ?? 'Failed to add AI player'
   } finally {
@@ -190,7 +194,7 @@ function goToScores() {
           <span class="ai-divider-text">or</span>
           <span class="ai-divider-line"></span>
         </div>
-        <p class="ai-label">Add an AI Opponent</p>
+        <p class="ai-label">Add AI Opponents</p>
         <div class="ai-controls">
           <select v-model="aiDifficulty" class="ai-select">
             <option value="apprentice">Apprentice</option>
@@ -199,9 +203,10 @@ function goToScores() {
           </select>
           <button class="ai-btn" @click="handleAddAi" :disabled="addingAi">
             <span v-if="addingAi">Adding...</span>
-            <span v-else>Add AI Player</span>
+            <span v-else>+ Add AI</span>
           </button>
         </div>
+        <p class="ai-hint">You can add multiple AI players with different difficulty levels</p>
         <p v-if="aiError" class="ai-error">{{ aiError }}</p>
       </div>
 
@@ -734,6 +739,13 @@ function goToScores() {
 .ai-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.ai-hint {
+  margin-top: var(--gap-xs);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-style: italic;
 }
 
 .ai-error {

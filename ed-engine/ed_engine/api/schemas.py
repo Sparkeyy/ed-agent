@@ -50,3 +50,14 @@ class GameStateResponse(BaseModel):
 class PerformActionResponse(BaseModel):
     status: str = "ok"
     game: GameStateResponse
+
+
+class AddAiRequest(BaseModel):
+    difficulty: str = Field(default="journeyman", pattern="^(apprentice|journeyman|master)$")
+    name: str = Field(default="Rugwort", min_length=1, max_length=50)
+
+
+class AddAiResponse(BaseModel):
+    player_id: str
+    name: str
+    difficulty: str

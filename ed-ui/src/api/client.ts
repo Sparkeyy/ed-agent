@@ -101,26 +101,16 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   return request<LeaderboardEntry[]>('/leaderboard')
 }
 
-// Add AI opponent (ed-ai service)
+// Add AI opponent (via engine)
 export async function addAiPlayer(
   gameId: string,
   difficulty: 'apprentice' | 'journeyman' | 'master' = 'journeyman',
   name: string = 'Rugwort',
-): Promise<{ player_id: string; message: string }> {
-  const res = await fetch(`${AI_BASE}/join`, {
+): Promise<{ player_id: string; name: string; difficulty: string }> {
+  return request(`/games/${gameId}/ai`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ game_id: gameId, difficulty, name }),
+    body: JSON.stringify({ difficulty, name }),
   })
-  if (!res.ok) {
-    let message = `${res.status} ${res.statusText}`
-    try {
-      const body = await res.json()
-      if (body.detail) message = body.detail
-    } catch { /* no body */ }
-    throw new ApiError(res.status, res.statusText, message)
-  }
-  return res.json()
 }
 
 // Move evaluation (ed-ai service)

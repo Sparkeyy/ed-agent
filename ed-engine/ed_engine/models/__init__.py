@@ -8,9 +8,7 @@ from ed_engine.models.enums import (
 )
 from ed_engine.models.game import GameState
 from ed_engine.models.player import Player
-from ed_engine.models.resources import (
-    ResourceBank,
-)
+from ed_engine.models.resources import ResourceBank
 
 __all__ = [
     "Card",

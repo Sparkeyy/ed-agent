@@ -13,15 +13,11 @@ Rules (from rulebook):
 from __future__ import annotations
 
 import random
-from typing import Any
-from uuid import uuid4
 
-from ed_engine.cards.card_data import ALL_CARD_DEFS, CardDef
+from ed_engine.cards import build_deck as _registry_build_deck
 from ed_engine.models.card import Card
-from ed_engine.models.enums import CardCategory, CardType
 from ed_engine.models.game import GameState
 from ed_engine.models.player import Player
-from ed_engine.models.resources import ResourceBank
 
 MEADOW_SIZE = 8
 HAND_LIMIT = 8
@@ -29,50 +25,9 @@ HAND_LIMIT = 8
 STARTING_HAND_SIZES = [5, 6, 7, 8]
 
 
-class _ConcreteCard(Card):
-    """Instantiable Card with stub ability methods.
-
-    Used to populate the deck from card data definitions. Individual card
-    ability implementations will override these stubs in future work.
-    """
-
-    def on_play(self, **kwargs: Any) -> None:
-        pass
-
-    def on_trigger(self, **kwargs: Any) -> None:
-        pass
-
-    def on_score(self, **kwargs: Any) -> int:
-        return 0
-
-
-def _card_from_def(card_def: CardDef, copy_index: int) -> _ConcreteCard:
-    """Create a card instance from a card definition."""
-    return _ConcreteCard(
-        id=f"{card_def['name'].lower().replace(' ', '_')}_{copy_index}",
-        name=card_def["name"],
-        card_type=CardType(card_def["card_type"]),
-        category=CardCategory(card_def["category"]),
-        cost=ResourceBank(
-            twig=card_def["cost_twig"],
-            resin=card_def["cost_resin"],
-            pebble=card_def["cost_pebble"],
-            berry=card_def["cost_berry"],
-        ),
-        base_points=card_def["base_points"],
-        paired_with=card_def["paired_with"],
-        unique=card_def["unique"],
-        copies=card_def["copies"],
-    )
-
-
 def build_deck() -> list[Card]:
-    """Create all 128 cards (unshuffled)."""
-    deck: list[Card] = []
-    for card_def in ALL_CARD_DEFS:
-        for i in range(card_def["copies"]):
-            deck.append(_card_from_def(card_def, i))
-    return deck
+    """Create all cards from the card registry (unshuffled)."""
+    return _registry_build_deck()
 
 
 def shuffle_deck(deck: list[Card], rng: random.Random | None = None) -> list[Card]:

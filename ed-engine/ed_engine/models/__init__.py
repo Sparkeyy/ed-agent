@@ -14,6 +14,7 @@ from ed_engine.models.enums import (
     Season,
 )
 from ed_engine.models.game import GameState
+from ed_engine.models.location import Location
 from ed_engine.models.player import Player
 from ed_engine.models.resources import (
     SUPPLY_LIMITS,
@@ -28,6 +29,7 @@ __all__ = [
     "CardType",
     "GameState",
     "GreenProductionCard",
+    "Location",
     "LocationType",
     "Player",
     "PurpleProsperityCard",

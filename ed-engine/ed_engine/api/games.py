@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+from ed_engine.engine.deck import setup_game
 from ed_engine.models.game import GameState
 
 router = APIRouter()
@@ -27,7 +28,7 @@ class ActionRequest(BaseModel):
 @router.post("", response_model=GameState)
 async def create_game(req: CreateGameRequest) -> GameState:
     """Create a new game with the given players."""
-    game = GameState()
+    game = setup_game(req.player_names)
     _games[game.id] = game
     return game
 

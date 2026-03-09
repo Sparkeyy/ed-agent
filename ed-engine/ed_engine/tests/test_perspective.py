@@ -42,7 +42,7 @@ class TestSerializeCard:
             cost=ResourceBank(twig=2, resin=1),
             base_points=1,
             unique=True,
-            paired_with="Husband",
+            paired_with="Harvester",
             occupies_city_space=True,
             is_open_destination=False,
         )
@@ -53,7 +53,7 @@ class TestSerializeCard:
         assert d["cost"] == {"twig": 2, "resin": 1, "pebble": 0, "berry": 0}
         assert d["base_points"] == 1
         assert d["unique"] is True
-        assert d["paired_with"] == "Husband"
+        assert d["paired_with"] == "Harvester"
         assert d["occupies_city_space"] is True
         assert d["is_open_destination"] is False
 

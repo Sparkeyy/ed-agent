@@ -34,19 +34,19 @@ class Card(BaseModel):
 
     # --- lifecycle hooks (override in subclasses) ---
 
-    def on_play(self, game: GameState, player: Player) -> None:
+    def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Called when this card is played into a city."""
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Called during green production triggers (spring/autumn Prepare for Season)."""
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Called when a worker is placed on this red destination card."""
 
     def on_card_played(
-        self, game: GameState, player: Player, played_card: Card
+        self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
         """Called for blue governance triggers when *any* card is played."""
 

@@ -43,7 +43,7 @@ class _TestGreenCard(ProductionCard):
     copies_in_deck: int = 3
     cost: ResourceBank = ResourceBank(twig=1, resin=1)
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         player.resources = player.resources.gain(ResourceBank(berry=1))
 
 

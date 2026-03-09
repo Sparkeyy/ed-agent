@@ -22,7 +22,7 @@ from ed_engine.cards.critters import (
     Bard,
     Doctor,
     Historian,
-    Husband,
+    Harvester,
     Innkeeper,
     Judge,
     King,
@@ -31,7 +31,7 @@ from ed_engine.cards.critters import (
     Shepherd,
     Shopkeeper,
     Teacher,
-    Wife,
+    Gatherer,
     Woodcarver,
 )
 from ed_engine.engine.events import (
@@ -145,7 +145,7 @@ class TestSpecialEventCardRequirements:
         assert all(e.id != "se_brilliant_wedding" for e in avail)
 
         # Add both required cards
-        p.city = [Husband(), Wife()]
+        p.city = [Harvester(), Gatherer()]
         avail = mgr.get_available_events(p)
         wedding = [e for e in avail if e.id == "se_brilliant_wedding"]
         assert len(wedding) == 1
@@ -175,7 +175,7 @@ class TestSpecialEventCardRequirements:
         wedding_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_brilliant_wedding")
         mgr.special_events = [SpecialEvent(**wedding_def)]
 
-        p.city = [Husband(), Wife()]
+        p.city = [Harvester(), Gatherer()]
         assert mgr.claim_event("se_brilliant_wedding", pid) is True
         assert mgr.claim_event("se_brilliant_wedding", pid) is False  # already claimed
 
@@ -224,8 +224,8 @@ class TestEventCanOnlyBeClaimedOnce:
         wedding_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_brilliant_wedding")
         mgr.special_events = [SpecialEvent(**wedding_def)]
 
-        p1.city = [Husband(), Wife()]
-        p2.city = [Husband(), Wife()]
+        p1.city = [Harvester(), Gatherer()]
+        p2.city = [Harvester(), Gatherer()]
         assert mgr.claim_event("se_brilliant_wedding", str(p1.id)) is True
         assert mgr.claim_event("se_brilliant_wedding", str(p2.id)) is False
 

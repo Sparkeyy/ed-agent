@@ -95,7 +95,7 @@ class SeasonManager:
 
         # 4. Trigger season bonuses
         if next_season in (Season.SPRING, Season.AUTUMN):
-            prod_events = SeasonManager.trigger_production(game, player)
+            prod_events = SeasonManager.trigger_production(game, player, ctx={"deck_mgr": deck_mgr, "game": game})
             events.extend(prod_events)
         elif next_season == Season.SUMMER:
             # Draw up to 2 Meadow cards
@@ -112,11 +112,11 @@ class SeasonManager:
         return events
 
     @staticmethod
-    def trigger_production(game: GameState, player: Player) -> list[str]:
+    def trigger_production(game: GameState, player: Player, *, ctx: dict | None = None) -> list[str]:
         """Activate all Green Production cards in player's city."""
         events: list[str] = []
         for card in player.city:
             if card.card_type == CardType.GREEN_PRODUCTION:
-                card.on_production(game, player)
+                card.on_production(game, player, ctx=ctx)
                 events.append(f"  Production: {card.name}")
         return events

@@ -59,7 +59,7 @@ class ThinkResponse(BaseModel):
 
 
 class EvaluateRequest(BaseModel):
-    game_state: str
+    game_state: dict[str, Any]
     action_taken: dict[str, Any]
     valid_actions: list[dict[str, Any]] = Field(default_factory=list)
     difficulty: str = Field(default="journeyman", pattern="^(apprentice|journeyman|master)$")
@@ -68,6 +68,7 @@ class EvaluateRequest(BaseModel):
 class AlternativeAction(BaseModel):
     action: dict[str, Any]
     reason: str
+    score_delta: float = 0.0
 
 
 class EvaluateResponse(BaseModel):

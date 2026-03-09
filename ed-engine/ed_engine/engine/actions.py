@@ -98,10 +98,21 @@ class ActionHandler:
         # 2. Play card actions
         city_size = sum(1 for c in player.city if c.occupies_city_space)
         has_city_space = city_size < MAX_CITY_SIZE
+        city_names = {c.name for c in player.city}
 
-        if has_city_space:
+        def _can_place(card) -> bool:
+            """Check if card can be placed in city (uniqueness + space)."""
+            if card.unique and card.name in city_names:
+                return False
+            if card.occupies_city_space and not has_city_space:
+                return False
+            return True
+
+        if has_city_space or any(not c.occupies_city_space for c in player.hand):
             # From hand
             for card in player.hand:
+                if not _can_place(card):
+                    continue
                 # Check if can afford normally
                 if player.resources.can_afford(card.cost):
                     actions.append(
@@ -118,8 +129,6 @@ class ActionHandler:
                         c.name == card.paired_with for c in player.city
                     )
                     if has_pair:
-                        # Check we haven't already used this pairing
-                        # (unique construction can only pair once)
                         actions.append(
                             GameAction(
                                 action_type=ActionType.PLAY_CARD,
@@ -132,6 +141,8 @@ class ActionHandler:
 
             # From meadow
             for idx, card in enumerate(deck_mgr.meadow):
+                if not _can_place(card):
+                    continue
                 if player.resources.can_afford(card.cost):
                     actions.append(
                         GameAction(
@@ -392,9 +403,10 @@ class ActionHandler:
             player.workers_placed += 1
             player.workers_deployed.append(action.location_id)
             # Activate destination card
+            ctx = {"deck_mgr": deck_mgr, "game": game} if deck_mgr else None
             for card in player.city:
                 if card.name == card_name:
-                    card.on_worker_placed(game, player)
+                    card.on_worker_placed(game, player, player, ctx=ctx)
                     break
             return [f"{player.name} placed a worker on destination {card_name}"]
 
@@ -445,7 +457,8 @@ class ActionHandler:
         player.city.append(card)
 
         # Trigger on_play
-        card.on_play(game, player)
+        ctx = {"deck_mgr": deck_mgr, "game": game}
+        card.on_play(game, player, ctx=ctx)
 
         # Trigger blue governance cards in city
         for city_card in player.city:
@@ -453,7 +466,7 @@ class ActionHandler:
                 city_card.card_type == CardType.BLUE_GOVERNANCE
                 and city_card is not card
             ):
-                city_card.on_card_played(game, player, card)
+                city_card.on_card_played(game, player, card, ctx=ctx)
 
         return events
 
@@ -475,7 +488,7 @@ class ActionHandler:
                 event_name = event_data.get("name", event_id)
             game.basic_events[event_id] = {
                 **event_data,
-                "claimed_by": player.name,
+                "claimed_by": str(player.id),
             }
         elif event_id in game.special_events:
             event_data = game.special_events[event_id]
@@ -484,10 +497,10 @@ class ActionHandler:
                 event_name = event_data.get("name", event_id)
             game.special_events[event_id] = {
                 **event_data,
-                "claimed_by": player.name,
+                "claimed_by": str(player.id),
             }
 
-        # Add event points to player
-        player.point_tokens = getattr(player, "point_tokens", 0) + points
+        # Track claimed event for tiebreaker
+        player.claimed_events.append(event_id)
 
         return [f"{player.name} claimed {event_name} (+{points} VP)"]

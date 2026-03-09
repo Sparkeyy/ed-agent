@@ -13,10 +13,10 @@ from ed_engine.cards.constructions import (
 )
 from ed_engine.cards.critters import (
     Architect,
-    Husband,
+    Harvester,
     King,
     Teacher,
-    Wife,
+    Gatherer,
 )
 from ed_engine.engine.scoring import ScoreBreakdown, ScoringEngine
 from ed_engine.models.enums import CardCategory, CardType, Season
@@ -92,24 +92,24 @@ class TestPurpleProsperityBonusScoring:
     def test_school_bonus(self):
         """School: +1 pt per common Critter."""
         p = _make_player()
-        p.city = [School(), Husband(), Husband(), Teacher()]
+        p.city = [School(), Harvester(), Harvester(), Teacher()]
         game = _make_game([p])
         bd = ScoringEngine.score_player(game, p)
-        # Husband x2 + Teacher = 3 common critters
+        # Harvester x2 + Teacher = 3 common critters
         assert bd.bonus_card_points == 3
 
-    def test_wife_bonus_with_husband(self):
-        """Wife: +3 pt if Husband in city."""
+    def test_gatherer_bonus_with_harvester(self):
+        """Gatherer: +3 pt if Harvester in city."""
         p = _make_player()
-        p.city = [Wife(), Husband()]
+        p.city = [Gatherer(), Harvester()]
         game = _make_game([p])
         bd = ScoringEngine.score_player(game, p)
         assert bd.bonus_card_points == 3
 
-    def test_wife_bonus_without_husband(self):
-        """Wife: 0 extra if no Husband."""
+    def test_gatherer_bonus_without_harvester(self):
+        """Gatherer: 0 extra if no Harvester."""
         p = _make_player()
-        p.city = [Wife()]
+        p.city = [Gatherer()]
         game = _make_game([p])
         bd = ScoringEngine.score_player(game, p)
         assert bd.bonus_card_points == 0
@@ -194,7 +194,7 @@ class TestTotalScore:
     def test_total_is_sum_of_all(self):
         p = _make_player(resources=ResourceBank(resin=2, pebble=2))
         pid = str(p.id)
-        p.city = [Farm(), Castle(), Wife(), Husband()]
+        p.city = [Farm(), Castle(), Gatherer(), Harvester()]
         p.point_tokens = 5
         p.workers_deployed = ["journey_3pt"]
         game = _make_game([p])
@@ -203,8 +203,8 @@ class TestTotalScore:
         }
 
         bd = ScoringEngine.score_player(game, p)
-        expected_base = 1 + 4 + 2 + 2  # Farm(1) + Castle(4) + Wife(2) + Husband(2)
-        expected_bonus = 1 + 3  # Castle(Farm is common construction=1) + Wife(has Husband=3)
+        expected_base = 1 + 4 + 2 + 2  # Farm(1) + Castle(4) + Gatherer(2) + Harvester(2)
+        expected_bonus = 1 + 3  # Castle(Farm is common construction=1) + Gatherer(has Harvester=3)
         expected_events = 3
         expected_journey = 3
         expected_tokens = 5

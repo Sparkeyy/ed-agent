@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import type { CardData, ResourceBank } from '../types'
 import { CARD_TYPE_LABELS, CARD_TYPE_IMAGES, RESOURCE_ICONS, RESOURCE_IMAGES } from '../types'
+import { CARD_INFO } from '../data/card-info'
+
+const cardAbility = (name: string) => CARD_INFO[name]?.ability ?? ''
 
 const typeImgFailed = ref<Record<string, boolean>>({})
 const resImgFailed = ref<Record<string, boolean>>({})
@@ -51,7 +54,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
     @click="emit('select')"
   >
     <template v-if="compact">
-      <span class="compact-name">{{ card.name }}</span>
+      <span class="compact-name" :title="cardAbility(card.name)">{{ card.name }}</span>
       <span class="compact-points"><span class="vp-badge-sm">VP</span> {{ card.base_points }}</span>
     </template>
     <template v-else>

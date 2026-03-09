@@ -46,16 +46,17 @@ The action_index refers to the position in the valid_actions list (1-based).
 
 
 def _build_eval_prompt(
-    game_state: str,
+    game_state: dict[str, Any] | str,
     action_taken: dict[str, Any],
     valid_actions: list[dict[str, Any]],
     difficulty: str,
 ) -> str:
     """Build the user prompt for move evaluation."""
+    state_str = game_state if isinstance(game_state, str) else json.dumps(game_state, indent=2, default=str)
     lines = [
         f"Difficulty level: {difficulty}",
         "",
-        game_state,
+        state_str,
         "",
         "ACTION TAKEN BY PLAYER:",
         json.dumps(action_taken, indent=2),
@@ -100,6 +101,7 @@ def _parse_eval_response(
             alternatives.append({
                 "action": valid_actions[idx - 1],
                 "reason": reason,
+                "score_delta": 0,
             })
 
     return {
@@ -113,7 +115,7 @@ def _parse_eval_response(
 def heuristic_evaluate(
     action_taken: dict[str, Any],
     valid_actions: list[dict[str, Any]],
-    game_state: str,
+    game_state: dict[str, Any] | str,
 ) -> dict[str, Any]:
     """Fallback heuristic evaluation when Ollama is unavailable."""
     action_type = action_taken.get("action_type", action_taken.get("type", ""))
@@ -134,7 +136,7 @@ def heuristic_evaluate(
                 "quality": "inaccuracy",
                 "score": QUALITY_SCORES["inaccuracy"],
                 "alternatives": [
-                    {"action": a, "reason": "Playing a card builds your city"}
+                    {"action": a, "reason": "Playing a card builds your city", "score_delta": 0}
                     for a in card_alts
                 ],
                 "explanation": (
@@ -174,7 +176,7 @@ def heuristic_evaluate(
         "quality": "inaccuracy",
         "score": QUALITY_SCORES["inaccuracy"],
         "alternatives": [
-            {"action": valid_actions[0], "reason": "Consider this alternative"}
+            {"action": valid_actions[0], "reason": "Consider this alternative", "score_delta": 0}
         ] if valid_actions else [],
         "explanation": "Move quality unclear without deeper analysis.",
     }
@@ -182,7 +184,7 @@ def heuristic_evaluate(
 
 async def evaluate_move(
     ollama: OllamaClient,
-    game_state: str,
+    game_state: dict[str, Any] | str,
     action_taken: dict[str, Any],
     valid_actions: list[dict[str, Any]],
     difficulty: str = "journeyman",

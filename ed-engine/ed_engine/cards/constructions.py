@@ -136,10 +136,12 @@ class FairGrounds(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Fool"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Draw 2 cards."""
-        # TODO: implement draw from deck
-        pass
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        if deck_mgr:
+            drawn = deck_mgr.draw(2)
+            player.hand.extend(drawn)
 
 
 @register
@@ -150,9 +152,9 @@ class Farm(ProductionCard):
     base_points: int = 1
     unique: bool = False
     copies_in_deck: int = 8
-    paired_with: str | None = "Husband"
+    paired_with: str | None = "Harvester"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Gain 1 berry."""
         player.resources = player.resources.gain(ResourceBank(berry=1))
 
@@ -167,7 +169,7 @@ class GeneralStore(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Shopkeeper"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Gain 1 berry, or 2 if player has a Farm."""
         has_farm = any(c.name == "Farm" for c in player.city)
         amount = 2 if has_farm else 1
@@ -184,7 +186,7 @@ class Mine(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Miner Mole"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Gain 1 pebble."""
         player.resources = player.resources.gain(ResourceBank(pebble=1))
 
@@ -199,7 +201,7 @@ class ResinRefinery(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Chip Sweep"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Gain 1 resin."""
         player.resources = player.resources.gain(ResourceBank(resin=1))
 
@@ -214,10 +216,9 @@ class Storehouse(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Woodcarver"
 
-    def on_production(self, game: GameState, player: Player) -> None:
-        """Place 3 twigs OR 2 resin OR 1 pebble OR 2 berries on card."""
-        # TODO: implement resource storage choice + worker location
-        pass
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
+        """Place 3 twigs OR 2 resin OR 1 pebble OR 2 berries on card (auto-pick 3 twigs)."""
+        player.resources = player.resources.gain(ResourceBank(twig=3))
 
 
 @register
@@ -230,7 +231,7 @@ class TwigBarge(ProductionCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Barge Toad"
 
-    def on_production(self, game: GameState, player: Player) -> None:
+    def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Gain 2 twigs."""
         player.resources = player.resources.gain(ResourceBank(twig=2))
 
@@ -251,7 +252,7 @@ class Cemetery(DestinationCard):
     paired_with: str | None = "Undertaker"
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Reveal 4 from deck/discard, play 1 free."""
         # TODO: implement reveal + play logic
@@ -269,7 +270,7 @@ class Chapel(DestinationCard):
     paired_with: str | None = "Shepherd"
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Place 1 VP token on Chapel, draw 2 cards per VP token on it."""
         # TODO: implement VP token tracking + draw
@@ -288,7 +289,7 @@ class Inn(DestinationCard):
     is_open_destination: bool = True
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Play Critter/Construction from Meadow for 3 less any resource."""
         # TODO: implement meadow discount play
@@ -306,7 +307,7 @@ class Lookout(DestinationCard):
     paired_with: str | None = "Wanderer"
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Copy any basic or Forest location."""
         # TODO: implement location copy
@@ -324,7 +325,7 @@ class Monastery(DestinationCard):
     paired_with: str | None = "Monk"
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Give 2 resources to opponent, gain 4 points. Permanent worker."""
         # TODO: implement resource gift + points + permanent worker
@@ -343,7 +344,7 @@ class PostOffice(DestinationCard):
     is_open_destination: bool = True
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Give opponent 2 cards, discard any, draw to hand limit."""
         # TODO: implement card exchange
@@ -361,7 +362,7 @@ class University(DestinationCard):
     paired_with: str | None = "Doctor"
 
     def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
+        self, game: GameState, player: Player, visitor: Player, *, ctx: dict | None = None
     ) -> None:
         """Discard 1 card from city, get cost back, +1 any resource +1 point. Permanent worker."""
         # TODO: implement city card discard + refund + bonus
@@ -384,7 +385,7 @@ class ClockTower(GovernanceCard):
     paired_with: str | None = "Historian"
 
     def on_card_played(
-        self, game: GameState, player: Player, played_card: Card
+        self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
         """3 VP tokens; before Prepare for Season remove 1 and activate a location."""
         # TODO: implement token / season mechanic
@@ -402,11 +403,11 @@ class Courthouse(GovernanceCard):
     paired_with: str | None = "Judge"
 
     def on_card_played(
-        self, game: GameState, player: Player, played_card: Card
+        self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
-        """Gain 1 twig/resin/pebble when playing a Construction."""
-        # TODO: implement resource choice on construction play
-        pass
+        """Gain 1 twig/resin/pebble when playing a Construction (auto-pick twig)."""
+        if played_card.category == CardCategory.CONSTRUCTION:
+            player.resources = player.resources.gain(ResourceBank(twig=1))
 
 
 @register
@@ -420,7 +421,7 @@ class Crane(GovernanceCard):
     paired_with: str | None = "Architect"
 
     def on_card_played(
-        self, game: GameState, player: Player, played_card: Card
+        self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
         """Discard Crane to decrease Construction cost by 3 any resource."""
         # TODO: implement self-discard discount
@@ -438,7 +439,7 @@ class Dungeon(GovernanceCard):
     paired_with: str | None = "Ranger"
 
     def on_card_played(
-        self, game: GameState, player: Player, played_card: Card
+        self, game: GameState, player: Player, played_card: Card, *, ctx: dict | None = None
     ) -> None:
         """Place city Critter beneath to decrease played card cost by 3."""
         # TODO: implement prisoner mechanic
@@ -460,7 +461,17 @@ class Ruins(TravelerCard):
     copies_in_deck: int = 3
     paired_with: str | None = "Peddler"
 
-    def on_play(self, game: GameState, player: Player) -> None:
+    def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """Discard a Construction from city, gain its cost back, draw 2 cards."""
-        # TODO: implement construction discard + refund + draw
-        pass
+        deck_mgr = ctx.get("deck_mgr") if ctx else None
+        # Find cheapest construction to discard (auto-pick)
+        constructions = [c for c in player.city if c.category == CardCategory.CONSTRUCTION and c is not self]
+        if constructions:
+            target = min(constructions, key=lambda c: c.base_points)
+            player.city.remove(target)
+            player.resources = player.resources.gain(target.cost)
+            if deck_mgr:
+                deck_mgr.discard([target])
+        if deck_mgr:
+            drawn = deck_mgr.draw(2)
+            player.hand.extend(drawn)

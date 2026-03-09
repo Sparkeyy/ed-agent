@@ -23,9 +23,9 @@ class ProductionCard(Card):
 
     card_type: CardType = CardType.GREEN_PRODUCTION
 
-    def on_play(self, game: GameState, player: Player) -> None:
+    def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
         """By default, playing a production card fires its production hook."""
-        self.on_production(game, player)
+        self.on_production(game, player, ctx=ctx)
 
     # Override on_production in concrete card subclasses.
 

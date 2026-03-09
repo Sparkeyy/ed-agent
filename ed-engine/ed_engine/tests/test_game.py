@@ -306,24 +306,24 @@ class TestPlayCard:
         alice = gm.current_player
         player_id = str(alice.id)
 
-        # Manually set up a pairing: put Farm in city, Husband in hand
+        # Manually set up a pairing: put Farm in city, Harvester in hand
         from ed_engine.cards.constructions import Farm
-        from ed_engine.cards.critters import Husband
+        from ed_engine.cards.critters import Harvester
 
         farm = Farm()
         alice.city.append(farm)
 
-        husband = Husband()
-        alice.hand.append(husband)
+        harvester = Harvester()
+        alice.hand.append(harvester)
 
-        # Alice should not need berries to play Husband via Farm pairing
+        # Alice should not need berries to play Harvester via Farm pairing
         alice.resources = ResourceBank()  # zero resources
 
         actions = gm.get_valid_actions()
         paired_actions = [
             a for a in actions
             if a.action_type == ActionType.PLAY_CARD
-            and a.card_name == "Husband"
+            and a.card_name == "Harvester"
             and a.use_paired_construction
         ]
         assert len(paired_actions) >= 1
@@ -331,10 +331,13 @@ class TestPlayCard:
         before_resources = alice.resources.model_copy()
         gm.perform_action(paired_actions[0])
 
-        # Resources should be unchanged (free play)
-        assert alice.resources == before_resources
-        # Husband should be in city
-        assert any(c.name == "Husband" for c in alice.city)
+        # No berry cost paid (free play), but Harvester's on_production
+        # triggers on play and gains 1 berry since Farm is in city
+        assert alice.resources.twig == before_resources.twig
+        assert alice.resources.resin == before_resources.resin
+        assert alice.resources.pebble == before_resources.pebble
+        # Harvester should be in city
+        assert any(c.name == "Harvester" for c in alice.city)
 
 
 # ---------------------------------------------------------------------------

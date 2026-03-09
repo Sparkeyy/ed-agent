@@ -48,7 +48,7 @@ class TestCardCreation:
         assert farm.base_points == 1
         assert farm.unique is False
         assert farm.copies_in_deck == 8
-        assert farm.paired_with == "Husband"
+        assert farm.paired_with == "Harvester"
         assert farm.occupies_city_space is True
 
     def test_wanderer_no_city_space(self) -> None:
@@ -87,9 +87,9 @@ class TestCardCreation:
                     )
 
     def test_common_card_copies(self) -> None:
-        """Common cards have specific copy counts: Farm=8, Husband=4, Wife=4,
+        """Common cards have specific copy counts: Farm=8, Harvester=4, Gatherer=4,
         others=3."""
-        special_counts = {"Farm": 8, "Husband": 4, "Wife": 4}
+        special_counts = {"Farm": 8, "Harvester": 4, "Gatherer": 4}
         for name, cls in CardRegistry.all().items():
             instance = cls()
             if not instance.unique:
@@ -209,15 +209,15 @@ class TestBuildDeck:
         farm_count = sum(1 for c in deck if c.name == "Farm")
         assert farm_count == 8
 
-    def test_husband_has_4_copies(self) -> None:
+    def test_harvester_has_4_copies(self) -> None:
         deck = build_deck()
-        husband_count = sum(1 for c in deck if c.name == "Husband")
-        assert husband_count == 4
+        harvester_count = sum(1 for c in deck if c.name == "Harvester")
+        assert harvester_count == 4
 
-    def test_wife_has_4_copies(self) -> None:
+    def test_gatherer_has_4_copies(self) -> None:
         deck = build_deck()
-        wife_count = sum(1 for c in deck if c.name == "Wife")
-        assert wife_count == 4
+        gatherer_count = sum(1 for c in deck if c.name == "Gatherer")
+        assert gatherer_count == 4
 
     def test_deck_has_constructions_and_critters(self) -> None:
         deck = build_deck()
@@ -239,11 +239,11 @@ class TestBuildDeck:
     def test_correct_pairings_bidirectional(self) -> None:
         """Every pairing should be bidirectional: if A pairs with B, B pairs with A.
 
-        Special case: Farm pairs with Husband (primary), but Wife also pairs
+        Special case: Farm pairs with Harvester (primary), but Gatherer also pairs
         with Farm. This many-to-one relationship is expected.
         """
         # Cards where multiple critters pair with one construction
-        many_to_one = {"Wife": "Farm"}  # Wife->Farm is valid even though Farm->Husband
+        many_to_one = {"Gatherer": "Farm"}  # Gatherer->Farm is valid even though Farm->Harvester
 
         all_cards = CardRegistry.all()
         for name, cls in all_cards.items():
@@ -291,12 +291,12 @@ class TestCardTypes:
         po = get_card_definition("Post Office")
         assert po.unique is False
 
-    def test_husband_is_common(self) -> None:
-        h = get_card_definition("Husband")
+    def test_harvester_is_common(self) -> None:
+        h = get_card_definition("Harvester")
         assert h.unique is False
 
-    def test_wife_is_common(self) -> None:
-        w = get_card_definition("Wife")
+    def test_gatherer_is_common(self) -> None:
+        w = get_card_definition("Gatherer")
         assert w.unique is False
 
     def test_woodcarver_is_common(self) -> None:
@@ -433,10 +433,10 @@ class TestCardAbilities:
     def test_ever_tree_scores_prosperity_cards(self) -> None:
         et = get_card_definition("Ever Tree")
         castle = get_card_definition("Castle")
-        wife = get_card_definition("Wife")
-        player = _make_player(city=[et, castle, wife])
+        gatherer = get_card_definition("Gatherer")
+        player = _make_player(city=[et, castle, gatherer])
         game = _make_game()
-        # et + castle + wife = 3 purple prosperity cards
+        # et + castle + gatherer = 3 purple prosperity cards
         assert et.on_score(game, player) == 3
 
     def test_architect_scores_resin_pebble(self) -> None:
@@ -451,18 +451,18 @@ class TestCardAbilities:
         game = _make_game()
         assert arch.on_score(game, player) == 6
 
-    def test_wife_scores_with_husband(self) -> None:
-        wife = get_card_definition("Wife")
-        husband = get_card_definition("Husband")
-        player = _make_player(city=[wife, husband])
+    def test_gatherer_scores_with_harvester(self) -> None:
+        gatherer = get_card_definition("Gatherer")
+        harvester = get_card_definition("Harvester")
+        player = _make_player(city=[gatherer, harvester])
         game = _make_game()
-        assert wife.on_score(game, player) == 3
+        assert gatherer.on_score(game, player) == 3
 
-    def test_wife_scores_without_husband(self) -> None:
-        wife = get_card_definition("Wife")
-        player = _make_player(city=[wife])
+    def test_gatherer_scores_without_harvester(self) -> None:
+        gatherer = get_card_definition("Gatherer")
+        player = _make_player(city=[gatherer])
         game = _make_game()
-        assert wife.on_score(game, player) == 0
+        assert gatherer.on_score(game, player) == 0
 
     def test_base_card_on_score_returns_zero(self) -> None:
         """Non-prosperity cards return 0 from on_score."""

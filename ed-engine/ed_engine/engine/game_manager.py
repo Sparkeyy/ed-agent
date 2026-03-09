@@ -287,15 +287,9 @@ class GameManager:
 
     def calculate_scores(self) -> dict[str, int]:
         """Calculate final scores for all players."""
-        scores: dict[str, int] = {}
-        for player in self._game.players:
-            total = 0
-            for card in player.city:
-                total += card.base_points
-                total += card.on_score(self._game, player)
-            player.score = total
-            scores[player.name] = total
-        return scores
+        from ed_engine.engine.scoring import ScoringEngine
+        breakdowns = ScoringEngine.calculate_final_scores(self._game)
+        return {name: bd.total for name, bd in breakdowns.items()}
 
     def _find_player(self, player_id: str) -> Player | None:
         for p in self._game.players:

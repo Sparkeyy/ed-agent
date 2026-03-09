@@ -153,7 +153,7 @@ export async function evaluateMove(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       game_state: gameState,
-      action,
+      action_taken: action,
       valid_actions: validActions,
     }),
   })

@@ -5,6 +5,7 @@ import { useGameStore } from '../stores/game'
 import { addAiPlayer } from '../api/client'
 import type { ValidAction } from '../types'
 
+import CardComponent from '../components/CardComponent.vue'
 import SeasonTracker from '../components/SeasonTracker.vue'
 import ResourceDisplay from '../components/ResourceDisplay.vue'
 import GameBoard from '../components/GameBoard.vue'
@@ -29,6 +30,9 @@ const addingAi = ref(false)
 const aiError = ref('')
 const aiNameIndex = ref(0)
 const AI_NAMES = ['Rugwort', 'Bramblewick', 'Thistledew', 'Mossclaw', 'Fernwhisper', 'Ashenbark']
+const discardMode = ref(false)
+const selectedDiscards = ref<string[]>([])
+const discardTarget = ref<{ locationId: string; required: number } | null>(null)
 
 onMounted(() => {
   if (!store.gameId) {
@@ -66,8 +70,37 @@ const canPrepareForSeason = computed(() => {
 })
 
 const claimableEventIds = computed<string[]>(() => {
-  // Events would be claim_event actions if the backend supports them
-  return []
+  return store.validActions
+    .filter(a => a.action_type === 'claim_event' && a.event_id)
+    .map(a => a.event_id!)
+})
+
+const workerDisplay = computed(() => {
+  if (!store.myPlayer) return null
+  const available = store.myPlayer.workers_total - store.myPlayer.workers_placed
+  return { available, total: store.myPlayer.workers_total }
+})
+
+const leftForest = computed(() => {
+  const all = store.state?.forest_locations || []
+  const mid = Math.ceil(all.length / 2)
+  return all.slice(0, mid)
+})
+
+const rightForest = computed(() => {
+  const all = store.state?.forest_locations || []
+  const mid = Math.ceil(all.length / 2)
+  return all.slice(mid)
+})
+
+const playerNamesMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  if (store.state) {
+    for (const p of store.state.players) {
+      map[p.id] = p.name
+    }
+  }
+  return map
 })
 
 // City tabs: me first, then opponents
@@ -121,8 +154,37 @@ function handlePrepareForSeason() {
   captureAndSubmit(action)
 }
 
-function handleClaimEvent(_eventId: string) {
-  // Placeholder for event claiming
+function handleClaimEvent(eventId: string) {
+  const action: ValidAction = { action_type: 'claim_event', event_id: eventId }
+  captureAndSubmit(action)
+}
+
+function toggleDiscardCard(cardName: string) {
+  const idx = selectedDiscards.value.indexOf(cardName)
+  if (idx >= 0) {
+    selectedDiscards.value.splice(idx, 1)
+  } else {
+    selectedDiscards.value.push(cardName)
+  }
+}
+
+function confirmDiscard() {
+  if (!discardTarget.value) return
+  const action: ValidAction = {
+    action_type: 'place_worker',
+    location_id: discardTarget.value.locationId,
+    discard_cards: [...selectedDiscards.value],
+  }
+  captureAndSubmit(action)
+  discardMode.value = false
+  selectedDiscards.value = []
+  discardTarget.value = null
+}
+
+function cancelDiscard() {
+  discardMode.value = false
+  selectedDiscards.value = []
+  discardTarget.value = null
 }
 
 function copyGameId() {
@@ -232,6 +294,10 @@ function goToScores() {
         :turn-number="store.state.turn_number"
       />
       <div class="top-info">
+        <div class="deck-info" v-if="workerDisplay">
+          <span class="info-label">Workers</span>
+          <span class="info-value">{{ workerDisplay.available }}/{{ workerDisplay.total }}</span>
+        </div>
         <div class="deck-info">
           <span class="info-label">Deck</span>
           <span class="info-value">{{ store.state.deck_size }}</span>
@@ -248,29 +314,88 @@ function goToScores() {
       />
     </div>
 
-    <!-- Middle: Board + Meadow + Events -->
+    <!-- Player worker indicators -->
+    <div class="player-workers-bar">
+      <div
+        v-for="p in store.state.players"
+        :key="'w-' + p.id"
+        class="player-worker-indicator"
+        :class="{ 'is-current': p.id === store.state.current_player_id }"
+      >
+        <span class="pw-name">{{ p.name }}</span>
+        <span class="pw-workers">{{ p.workers_total - p.workers_placed }}/{{ p.workers_total }}</span>
+        <span class="pw-season">{{ p.season }}</span>
+      </div>
+    </div>
+
+    <!-- Middle: Events → Locations → Forest|Meadow|Forest → Haven/Journey -->
     <div class="middle-area">
-      <div class="board-column">
-        <GameBoard
-          :basic-locations="store.state.basic_locations"
-          :forest-locations="store.state.forest_locations"
-          :valid-location-ids="validLocationIds"
-          @place-worker="handlePlaceWorker"
-        />
+      <!-- Events row -->
+      <EventsPanel
+        v-if="store.state.events"
+        :events="store.state.events"
+        :claimable-event-ids="claimableEventIds"
+        @claim-event="handleClaimEvent"
+      />
+
+      <!-- Basic locations row -->
+      <GameBoard
+        :basic-locations="store.state.basic_locations"
+        :forest-locations="[]"
+        :haven-locations="[]"
+        :journey-locations="[]"
+        :valid-location-ids="validLocationIds"
+        :player-names="playerNamesMap"
+        :current-season="store.myPlayer?.season ?? 'winter'"
+        @place-worker="handlePlaceWorker"
+      />
+
+      <!-- Forest | Meadow | Forest row -->
+      <div class="meadow-row">
+        <div class="forest-side">
+          <GameBoard
+            :basic-locations="[]"
+            :forest-locations="leftForest"
+            :haven-locations="[]"
+            :journey-locations="[]"
+            :valid-location-ids="validLocationIds"
+            :player-names="playerNamesMap"
+            :current-season="store.myPlayer?.season ?? 'winter'"
+            @place-worker="handlePlaceWorker"
+          />
+        </div>
+        <div class="meadow-center">
+          <MeadowDisplay
+            :meadow="store.meadow"
+            :playable-indices="playableMeadowIndices"
+            @play-from-meadow="handlePlayFromMeadow"
+          />
+        </div>
+        <div class="forest-side">
+          <GameBoard
+            :basic-locations="[]"
+            :forest-locations="rightForest"
+            :haven-locations="[]"
+            :journey-locations="[]"
+            :valid-location-ids="validLocationIds"
+            :player-names="playerNamesMap"
+            :current-season="store.myPlayer?.season ?? 'winter'"
+            @place-worker="handlePlaceWorker"
+          />
+        </div>
       </div>
-      <div class="meadow-column">
-        <MeadowDisplay
-          :meadow="store.meadow"
-          :playable-indices="playableMeadowIndices"
-          @play-from-meadow="handlePlayFromMeadow"
-        />
-        <EventsPanel
-          v-if="store.state.events"
-          :events="store.state.events"
-          :claimable-event-ids="claimableEventIds"
-          @claim-event="handleClaimEvent"
-        />
-      </div>
+
+      <!-- Haven + Journey row -->
+      <GameBoard
+        :basic-locations="[]"
+        :forest-locations="[]"
+        :haven-locations="store.state.haven_locations || []"
+        :journey-locations="store.state.journey_locations || []"
+        :valid-location-ids="validLocationIds"
+        :player-names="playerNamesMap"
+        :current-season="store.myPlayer?.season ?? 'winter'"
+        @place-worker="handlePlaceWorker"
+      />
     </div>
 
     <!-- City tabs -->
@@ -295,11 +420,38 @@ function goToScores() {
 
     <!-- Hand -->
     <PlayerHand
-      v-if="store.myPlayer?.hand"
+      v-if="store.myPlayer?.hand && !discardMode"
       :hand="store.myPlayer.hand"
       :playable-card-names="playableHandCardNames"
       @play-from-hand="handlePlayFromHand"
     />
+
+    <!-- Discard Selection Mode -->
+    <div v-if="discardMode && store.myPlayer?.hand" class="discard-panel">
+      <div class="discard-header">
+        <span class="discard-title">Select {{ discardTarget?.required }} card(s) to discard</span>
+        <span class="discard-count">{{ selectedDiscards.length }} / {{ discardTarget?.required }}</span>
+      </div>
+      <div class="discard-hand">
+        <div
+          v-for="(card, index) in store.myPlayer.hand"
+          :key="card.name + '-' + index"
+          class="discard-card-wrapper"
+          :class="{ 'discard-selected': selectedDiscards.includes(card.name) }"
+          @click="toggleDiscardCard(card.name)"
+        >
+          <CardComponent :card="card" :selected="selectedDiscards.includes(card.name)" />
+        </div>
+      </div>
+      <div class="discard-actions">
+        <button class="discard-btn cancel" @click="cancelDiscard">Cancel</button>
+        <button
+          class="discard-btn confirm"
+          :disabled="selectedDiscards.length !== discardTarget?.required"
+          @click="confirmDiscard"
+        >Confirm Discard</button>
+      </div>
+    </div>
 
     <!-- Action bar -->
     <ActionBar
@@ -373,27 +525,80 @@ function goToScores() {
   color: var(--ink);
 }
 
+/* Player workers bar */
+.player-workers-bar {
+  display: flex;
+  gap: var(--gap-sm);
+  padding: var(--gap-xs) var(--gap-md);
+  background: var(--parchment);
+  border-bottom: 1px solid var(--parchment-deep);
+  flex-shrink: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.player-worker-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  padding: 3px 10px;
+  background: var(--parchment-dark);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--parchment-deep);
+  font-size: 0.75rem;
+}
+
+.player-worker-indicator.is-current {
+  border-color: var(--gold);
+  background: rgba(201, 169, 110, 0.1);
+}
+
+.pw-name {
+  font-family: var(--font-card);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pw-workers {
+  font-weight: 700;
+  color: var(--forest-light);
+}
+
+.pw-season {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  text-transform: capitalize;
+}
+
 /* Middle area */
 .middle-area {
-  display: flex;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
-}
-
-.board-column {
-  flex: 1;
-  overflow-y: auto;
-  border-right: 1px solid var(--parchment-deep);
-}
-
-.meadow-column {
-  width: 340px;
-  flex-shrink: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: var(--gap-sm);
   gap: var(--gap-sm);
+}
+
+/* Forest | Meadow | Forest row */
+.meadow-row {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+.forest-side {
+  flex: 0 0 200px;
+  min-width: 160px;
+}
+
+.meadow-center {
+  flex: 0 1 auto;
+  min-width: 300px;
 }
 
 /* City section */
@@ -768,5 +973,82 @@ function goToScores() {
   font-size: 1.2rem;
   opacity: 0.3;
   animation: leaf-fall 6s linear infinite;
+}
+
+/* Discard panel */
+.discard-panel {
+  padding: var(--gap-sm) var(--gap-md);
+  background: rgba(168, 56, 50, 0.05);
+  border-top: 2px solid var(--red-destination, #a83832);
+}
+
+.discard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--gap-sm);
+}
+
+.discard-title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--red-destination, #a83832);
+}
+
+.discard-count {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.discard-hand {
+  display: flex;
+  gap: var(--gap-sm);
+  overflow-x: auto;
+  padding-bottom: var(--gap-sm);
+}
+
+.discard-card-wrapper {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.discard-card-wrapper:hover {
+  transform: translateY(-2px);
+}
+
+.discard-card-wrapper.discard-selected {
+  transform: translateY(-4px);
+}
+
+.discard-actions {
+  display: flex;
+  gap: var(--gap-sm);
+  justify-content: flex-end;
+}
+
+.discard-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.discard-btn.cancel {
+  background: var(--parchment-deep);
+  color: var(--ink-light);
+}
+
+.discard-btn.confirm {
+  background: var(--red-destination, #a83832);
+  color: white;
+}
+
+.discard-btn.confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

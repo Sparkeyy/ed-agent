@@ -82,6 +82,10 @@ class PerspectiveFilter:
             result["meadow_index"] = action.meadow_index
         if action.use_paired_construction:
             result["use_paired_construction"] = True
+        if action.event_id:
+            result["event_id"] = action.event_id
+        if action.discard_cards:
+            result["discard_cards"] = action.discard_cards
         return result
 
     @staticmethod
@@ -115,6 +119,8 @@ class PerspectiveFilter:
         location_mgr = game_manager._location_mgr
         forest_locations = []
         basic_locations = []
+        haven_locations = []
+        journey_locations = []
         for loc in location_mgr.all_locations:
             loc_dict = {
                 "id": loc.id,
@@ -123,10 +129,16 @@ class PerspectiveFilter:
                 "exclusive": loc.exclusive,
                 "workers": list(loc.workers),
             }
-            if loc.location_type.value == "forest":
+            loc_type_val = loc.location_type.value if hasattr(loc.location_type, "value") else str(loc.location_type)
+            if loc_type_val == "forest":
                 forest_locations.append(loc_dict)
-            elif loc.location_type.value == "basic":
+            elif loc_type_val == "basic":
                 basic_locations.append(loc_dict)
+            elif loc_type_val == "haven":
+                haven_locations.append(loc_dict)
+            elif loc_type_val == "journey":
+                loc_dict["point_value"] = getattr(loc, "point_value", 0)
+                journey_locations.append(loc_dict)
 
         # Valid actions — only for the requesting player, and only if it's their turn
         valid_actions: list[dict[str, Any]] = []
@@ -148,6 +160,8 @@ class PerspectiveFilter:
             "events": events,
             "forest_locations": forest_locations,
             "basic_locations": basic_locations,
+            "haven_locations": haven_locations,
+            "journey_locations": journey_locations,
             "game_over": game.game_over,
             "valid_actions": valid_actions,
         }
@@ -307,4 +321,6 @@ def _describe_action(action: GameAction, player: Player, game: Any) -> str:
         return f"PLAY_CARD \"{action.card_name}\" {source_str}{cost_str}"
     elif at == "prepare_for_season":
         return "PREPARE_FOR_SEASON"
+    elif at == "claim_event":
+        return f"CLAIM_EVENT \"{action.event_id}\""
     return str(action.action_type)

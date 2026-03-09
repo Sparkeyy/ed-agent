@@ -17,7 +17,8 @@ const emit = defineEmits<{
   select: []
 }>()
 
-const categoryIcon = (cat: string) => cat === 'critter' ? '\u{1F43F}\u{FE0F}' : '\u{1F3D7}\u{FE0F}'
+const categoryLabel = (cat: string) => cat === 'critter' ? 'C' : 'B'
+const categoryCls = (cat: string) => cat === 'critter' ? 'cat-critter' : 'cat-construction'
 
 function cardColorVar(cardType: string): string {
   return `var(--${cardType.replace('_', '-')})`
@@ -46,16 +47,16 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   >
     <template v-if="compact">
       <span class="compact-name">{{ card.name }}</span>
-      <span class="compact-points">\u2B50 {{ card.base_points }}</span>
+      <span class="compact-points"><span class="vp-badge-sm">VP</span> {{ card.base_points }}</span>
     </template>
     <template v-else>
       <div class="card-top-bar" :style="{ backgroundColor: cardColorVar(card.card_type) }"></div>
       <div class="card-body">
         <div class="card-name">{{ card.name }}</div>
         <div class="card-meta">
-          <span class="card-category">{{ categoryIcon(card.category) }}</span>
+          <span class="card-category" :class="categoryCls(card.category)">{{ categoryLabel(card.category) }}</span>
           <span class="card-type-label">{{ CARD_TYPE_LABELS[card.card_type] }}</span>
-          <span v-if="card.unique" class="unique-badge">\u2726</span>
+          <span v-if="card.unique" class="unique-badge">U</span>
         </div>
         <div class="card-cost">
           <span v-for="entry in costEntries(card.cost)" :key="entry.key" class="cost-item">
@@ -63,7 +64,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
           </span>
           <span v-if="costEntries(card.cost).length === 0" class="cost-free">Free</span>
         </div>
-        <div class="card-points">\u2B50 {{ card.base_points }}</div>
+        <div class="card-points"><span class="vp-badge">VP</span> {{ card.base_points }}</div>
         <div v-if="card.paired_with" class="card-paired">
           Paired: {{ card.paired_with }}
         </div>
@@ -168,7 +169,23 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 }
 
 .card-category {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: white;
+}
+
+.card-category.cat-critter {
+  background: #8b6914;
+}
+
+.card-category.cat-construction {
+  background: #5a6b7a;
 }
 
 .card-type-label {
@@ -179,8 +196,35 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 }
 
 .unique-badge {
-  color: var(--gold);
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  background: var(--gold, #c9a96e);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 700;
+  border-radius: 3px;
+}
+
+.vp-badge,
+.vp-badge-sm {
+  display: inline-block;
+  background: #b8860b;
+  color: white;
+  font-size: 0.5rem;
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 2px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.vp-badge-sm {
+  font-size: 0.45rem;
+  padding: 0 2px;
 }
 
 .card-cost {

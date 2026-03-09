@@ -4,9 +4,17 @@ import type { LocationData } from '../types'
 const props = withDefaults(defineProps<{
   basicLocations: LocationData[]
   forestLocations: LocationData[]
+  havenLocations?: LocationData[]
+  journeyLocations?: LocationData[]
   validLocationIds?: string[]
+  playerNames?: Record<string, string>
+  currentSeason?: string
 }>(), {
+  havenLocations: () => [],
+  journeyLocations: () => [],
   validLocationIds: () => [],
+  playerNames: () => ({}),
+  currentSeason: 'winter',
 })
 
 const emit = defineEmits<{
@@ -17,18 +25,28 @@ function isValid(id: string): boolean {
   return props.validLocationIds.includes(id)
 }
 
-// Simple color hash for worker dots
+// Simple color hash for worker tokens
+const WORKER_COLORS = ['#4a7c59', '#a83832', '#3a6b8c', '#6b4c7a']
 function workerColor(workerId: string): string {
-  const colors = ['#4a7c59', '#a83832', '#3a6b8c', '#6b4c7a']
   let hash = 0
   for (const ch of workerId) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffffff
-  return colors[hash % colors.length]
+  return WORKER_COLORS[hash % WORKER_COLORS.length]
+}
+
+function workerLabel(workerId: string): string {
+  const name = props.playerNames[workerId]
+  if (name) return name.substring(0, 2).toUpperCase()
+  return workerId.substring(0, 2).toUpperCase()
+}
+
+function workerTitle(workerId: string): string {
+  return props.playerNames[workerId] || workerId
 }
 </script>
 
 <template>
   <div class="game-board">
-    <div class="board-section">
+    <div v-if="basicLocations.length > 0" class="board-section">
       <h3 class="section-title">Basic Locations</h3>
       <div class="locations-grid basic-grid">
         <div
@@ -39,21 +57,22 @@ function workerColor(workerId: string): string {
           @click="isValid(loc.id) && emit('place-worker', loc.id)"
         >
           <div class="location-name">{{ loc.name }}</div>
-          <div class="location-type">{{ loc.location_type }}</div>
+          <div class="location-type">{{ loc.exclusive ? 'Closed' : 'Open' }}</div>
           <div v-if="loc.workers.length > 0" class="location-workers">
             <span
               v-for="(worker, wi) in loc.workers"
               :key="wi"
-              class="worker-circle"
+              class="worker-token"
               :style="{ backgroundColor: workerColor(worker) }"
-            ></span>
+              :title="workerTitle(worker)"
+            >{{ workerLabel(worker) }}</span>
           </div>
           <div v-if="loc.exclusive" class="exclusive-badge">1</div>
         </div>
       </div>
     </div>
 
-    <div class="board-section">
+    <div v-if="forestLocations.length > 0" class="board-section">
       <h3 class="section-title">Forest Locations</h3>
       <div class="locations-grid forest-grid">
         <div
@@ -64,14 +83,65 @@ function workerColor(workerId: string): string {
           @click="isValid(loc.id) && emit('place-worker', loc.id)"
         >
           <div class="location-name">{{ loc.name }}</div>
-          <div class="location-type">{{ loc.location_type }}</div>
+          <div class="location-type">Exclusive</div>
           <div v-if="loc.workers.length > 0" class="location-workers">
             <span
               v-for="(worker, wi) in loc.workers"
               :key="wi"
-              class="worker-circle"
+              class="worker-token"
               :style="{ backgroundColor: workerColor(worker) }"
-            ></span>
+              :title="workerTitle(worker)"
+            >{{ workerLabel(worker) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="havenLocations.length > 0" class="board-section">
+      <h3 class="section-title">Haven</h3>
+      <div class="locations-grid haven-grid">
+        <div
+          v-for="loc in havenLocations"
+          :key="loc.id"
+          class="location haven-location"
+          :class="{ valid: isValid(loc.id) }"
+          @click="isValid(loc.id) && emit('place-worker', loc.id)"
+        >
+          <div class="location-name">{{ loc.name }}</div>
+          <div class="location-type">Discard 2 cards → 1 any resource</div>
+          <div v-if="loc.workers.length > 0" class="location-workers">
+            <span
+              v-for="(worker, wi) in loc.workers"
+              :key="wi"
+              class="worker-token"
+              :style="{ backgroundColor: workerColor(worker) }"
+              :title="workerTitle(worker)"
+            >{{ workerLabel(worker) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="journeyLocations.length > 0" class="board-section">
+      <h3 class="section-title">Journey <span class="journey-note">(Autumn only)</span></h3>
+      <div class="locations-grid journey-grid">
+        <div
+          v-for="loc in journeyLocations"
+          :key="loc.id"
+          class="location journey-location"
+          :class="{ valid: isValid(loc.id), disabled: currentSeason !== 'autumn' }"
+          @click="isValid(loc.id) && emit('place-worker', loc.id)"
+        >
+          <div class="location-name">{{ loc.name }}</div>
+          <div class="location-type">{{ loc.exclusive ? 'Exclusive' : 'Open' }}</div>
+          <div v-if="loc.workers.length > 0" class="location-workers">
+            <span
+              v-for="(worker, wi) in loc.workers"
+              :key="wi"
+              class="worker-token"
+              :style="{ backgroundColor: workerColor(worker) }"
+              :title="workerTitle(worker)"
+            >{{ workerLabel(worker) }}</span>
           </div>
         </div>
       </div>
@@ -155,13 +225,48 @@ function workerColor(workerId: string): string {
   display: flex;
   gap: 3px;
   margin-top: var(--gap-xs);
+  flex-wrap: wrap;
 }
 
-.worker-circle {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+.worker-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.02em;
+}
+
+.haven-location {
+  background: var(--parchment);
+  border-color: rgba(100, 140, 180, 0.4);
+}
+
+.journey-location {
+  background: rgba(180, 140, 60, 0.1);
+  border-color: rgba(180, 140, 60, 0.4);
+}
+
+.journey-location.disabled {
+  opacity: 0.4;
+}
+
+.journey-note {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.haven-grid,
+.journey-grid {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
 }
 
 .exclusive-badge {

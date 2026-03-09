@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from ed_engine.cards import build_deck
 from ed_engine.engine.actions import ActionHandler, ActionType, GameAction
 from ed_engine.engine.deck import DeckManager
+from ed_engine.engine.events import EventManager
 from ed_engine.engine.locations import LocationManager
 from ed_engine.engine.seasons import SeasonManager
 from ed_engine.models.enums import Season
@@ -55,18 +56,24 @@ class GameManager:
         # Initialize locations
         self._location_mgr = LocationManager(len(player_names), seed=seed)
 
+        # Initialize events
+        self._event_mgr = EventManager(seed=seed)
+
         # Deal starting hands (player order determines hand size)
         for i, player in enumerate(players):
             hand_size = _STARTING_HAND_SIZES.get(i + 1, 5)
             player.hand = self._deck_mgr.draw(hand_size)
 
-        # Build game state
+        # Build game state with events
+        basic_events, special_events = self._event_mgr.to_game_state_dicts()
         self._game = GameState(
             players=players,
             meadow=list(self._deck_mgr.meadow),
             current_player_idx=0,
             turn_number=1,
             seed=seed,
+            basic_events=basic_events,
+            special_events=special_events,
         )
 
     @property
@@ -209,6 +216,15 @@ class GameManager:
             action = GameAction(
                 action_type=ActionType.PREPARE_FOR_SEASON,
                 player_id=player_id_str,
+            )
+        elif action_type == "claim_event":
+            event_id = kwargs.get("event_id")
+            if not event_id:
+                raise ValueError("event_id is required for claim_event")
+            action = GameAction(
+                action_type=ActionType.CLAIM_EVENT,
+                player_id=player_id_str,
+                event_id=event_id,
             )
         else:
             raise ValueError(f"Unknown action type: {action_type}")

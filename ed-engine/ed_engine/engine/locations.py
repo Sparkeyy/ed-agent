@@ -6,10 +6,24 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field
 
 from ed_engine.models.enums import LocationType, Season
+from ed_engine.models.resources import ResourceBank
 
 if TYPE_CHECKING:
+    from ed_engine.engine.deck import DeckManager
     from ed_engine.models.game import GameState
     from ed_engine.models.player import Player
+
+# Hand limit for drawing cards
+HAND_LIMIT = 8
+
+
+def _draw_cards_for_player(player: Any, deck_mgr: Any, count: int) -> None:
+    """Draw cards from deck into player's hand, respecting hand limit."""
+    space = HAND_LIMIT - len(player.hand)
+    to_draw = min(count, space)
+    if to_draw > 0:
+        cards = deck_mgr.draw(to_draw)
+        player.hand.extend(cards)
 
 
 class Location(BaseModel):
@@ -37,22 +51,78 @@ class Location(BaseModel):
         if player_id in self.workers:
             self.workers.remove(player_id)
 
-    def on_activate(self, game: Any, player: Any) -> None:
+    def on_activate(self, game: Any, player: Any, deck_mgr: Any = None) -> None:
         """Override in subclasses to define what happens when a worker is placed."""
         pass
 
 
 class BasicLocation(Location):
-    """Standard board spaces."""
+    """Standard board spaces with resource rewards."""
 
     location_type: LocationType = LocationType.BASIC
 
+    def on_activate(self, game: Any, player: Any, deck_mgr: Any = None) -> None:
+        """Grant resources/cards based on location id."""
+        if self.id == "basic_3twigs":
+            player.resources = player.resources.gain(ResourceBank(twig=3))
+        elif self.id == "basic_2twigs_1card":
+            player.resources = player.resources.gain(ResourceBank(twig=2))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "basic_2resin":
+            player.resources = player.resources.gain(ResourceBank(resin=2))
+        elif self.id == "basic_1resin_1card":
+            player.resources = player.resources.gain(ResourceBank(resin=1))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "basic_2cards_1point":
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 2)
+            player.point_tokens = getattr(player, 'point_tokens', 0) + 1
+        elif self.id == "basic_1pebble":
+            player.resources = player.resources.gain(ResourceBank(pebble=1))
+        elif self.id == "basic_1berry_1card":
+            player.resources = player.resources.gain(ResourceBank(berry=1))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "basic_1berry":
+            player.resources = player.resources.gain(ResourceBank(berry=1))
+
 
 class ForestLocation(Location):
-    """Variable per player count."""
+    """Variable per player count. Grants resources/cards on activation."""
 
     location_type: LocationType = LocationType.FOREST
     exclusive: bool = True
+
+    def on_activate(self, game: Any, player: Any, deck_mgr: Any = None) -> None:
+        """Grant resources/cards based on forest location id."""
+        if self.id == "forest_01":  # 2 twigs + 2 resin
+            player.resources = player.resources.gain(ResourceBank(twig=2, resin=2))
+        elif self.id == "forest_02":  # 2 resin + 1 card
+            player.resources = player.resources.gain(ResourceBank(resin=2))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "forest_03":  # 1 twig + 1 resin + 1 pebble
+            player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, pebble=1))
+        elif self.id == "forest_04":  # 2 twigs + 1 pebble
+            player.resources = player.resources.gain(ResourceBank(twig=2, pebble=1))
+        elif self.id == "forest_05":  # 1 pebble + 1 berry
+            player.resources = player.resources.gain(ResourceBank(pebble=1, berry=1))
+        elif self.id == "forest_06":  # 2 berries + 1 card
+            player.resources = player.resources.gain(ResourceBank(berry=2))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "forest_07":  # 3 twigs + 1 card
+            player.resources = player.resources.gain(ResourceBank(twig=3))
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 1)
+        elif self.id == "forest_08":  # 1 twig + 1 resin + 1 berry
+            player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, berry=1))
+        elif self.id == "forest_09":  # 3 berries
+            player.resources = player.resources.gain(ResourceBank(berry=3))
+        # forest_10 (Copy basic/forest) and forest_11 (discard for any) need interactive choices
+        # These are handled at the action level, not here
 
 
 class HavenLocation(Location):
@@ -109,17 +179,14 @@ class LocationManager:
     def _setup_basic_locations(self, player_count: int) -> None:
         basics = [
             BasicLocation(id="basic_3twigs", name="3 Twigs", exclusive=True),
-            BasicLocation(id="basic_2twigs_1card", name="2 Twigs + 1 Card", exclusive=True),
+            BasicLocation(id="basic_2twigs_1card", name="2 Twigs + 1 Card", exclusive=False),
             BasicLocation(id="basic_2resin", name="2 Resin", exclusive=True),
-            BasicLocation(id="basic_1pebble_1card", name="1 Pebble + 1 Card", exclusive=True),
-            BasicLocation(id="basic_1berry_1card", name="1 Berry + 1 Card", exclusive=False),
-            BasicLocation(id="basic_1any", name="1 Any Resource", exclusive=False),
-            BasicLocation(id="basic_2cards", name="2 Cards", exclusive=False),
+            BasicLocation(id="basic_1resin_1card", name="1 Resin + 1 Card", exclusive=False),
+            BasicLocation(id="basic_2cards_1point", name="2 Cards + 1 Point", exclusive=False),
+            BasicLocation(id="basic_1pebble", name="1 Pebble", exclusive=True),
+            BasicLocation(id="basic_1berry_1card", name="1 Berry + 1 Card", exclusive=True),
+            BasicLocation(id="basic_1berry", name="1 Berry", exclusive=False),
         ]
-        # 2 any resource: exclusive, but 4-player has 2 copies
-        basics.append(BasicLocation(id="basic_2any_1", name="2 Any Resources", exclusive=True))
-        if player_count >= 4:
-            basics.append(BasicLocation(id="basic_2any_2", name="2 Any Resources (2nd)", exclusive=True))
 
         for loc in basics:
             self._locations[loc.id] = loc
@@ -129,7 +196,7 @@ class LocationManager:
         count = 3 if player_count <= 2 else 4
         chosen = rng.sample(ALL_FOREST_LOCATIONS, count)
         for loc in chosen:
-            copy = loc.model_copy()
+            copy = loc.model_copy(deep=True)
             self._locations[copy.id] = copy
 
     def _setup_haven(self) -> None:

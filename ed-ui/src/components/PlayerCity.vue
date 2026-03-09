@@ -12,7 +12,15 @@ const props = withDefaults(defineProps<{
 const MAX_CITY_SIZE = 15
 
 function workerDotsForCard(cardName: string): number {
-  return props.player.workers_deployed.filter(loc => loc === cardName).length
+  return props.player.workers_deployed.filter(loc => loc === `destination:${cardName}`).length
+}
+
+function isDestination(card: any): boolean {
+  return card?.is_open_destination === true
+}
+
+function destinationVisited(cardName: string): boolean {
+  return props.player.workers_deployed.includes(`destination:${cardName}`)
 }
 </script>
 
@@ -34,6 +42,9 @@ function workerDotsForCard(cardName: string): number {
             :card="player.city[i - 1]"
             :compact="true"
           />
+          <div v-if="isDestination(player.city[i - 1])" class="destination-marker" :class="{ visited: destinationVisited(player.city[i - 1].name) }">
+            <span class="dest-icon">W</span>
+          </div>
           <div
             v-if="workerDotsForCard(player.city[i - 1].name) > 0"
             class="worker-dots"
@@ -121,5 +132,30 @@ function workerDotsForCard(cardName: string): number {
   border-radius: 50%;
   background: var(--forest-light);
   border: 1px solid white;
+}
+
+.destination-marker {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--red-destination, #a83832);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid white;
+}
+
+.destination-marker.visited {
+  background: var(--ink-faint);
+  opacity: 0.5;
+}
+
+.dest-icon {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: white;
 }
 </style>

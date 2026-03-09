@@ -41,12 +41,14 @@ export interface LocationData {
 }
 
 export interface ValidAction {
-  action_type: 'place_worker' | 'play_card' | 'prepare_for_season'
+  action_type: 'place_worker' | 'play_card' | 'prepare_for_season' | 'claim_event'
   location_id?: string
   card_name?: string
   source?: 'hand' | 'meadow'
   meadow_index?: number
   use_paired_construction?: boolean
+  event_id?: string
+  discard_cards?: string[]
 }
 
 export interface LobbyState {
@@ -70,6 +72,8 @@ export interface GameState {
   }
   forest_locations: LocationData[]
   basic_locations: LocationData[]
+  haven_locations: LocationData[]
+  journey_locations: LocationData[]
   game_over: boolean
   valid_actions: ValidAction[]
 }

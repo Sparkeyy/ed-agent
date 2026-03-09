@@ -77,6 +77,9 @@ async def run_ai_player(
             # Pick action
             action = _pick_action(valid_actions, game, difficulty)
 
+            # Delay before executing so humans can see the board state
+            await asyncio.sleep(1.2 if difficulty == "master" else 0.8)
+
             # Execute
             try:
                 kwargs: dict[str, Any] = {}
@@ -99,9 +102,6 @@ async def run_ai_player(
 
             except (ValueError, Exception) as exc:
                 logger.warning("AI action failed: %s — %s", action, exc)
-
-            # Small delay so humans can see moves
-            await asyncio.sleep(1.2 if difficulty == "master" else 0.8)
 
     except asyncio.CancelledError:
         logger.info("AI cancelled: game=%s", game_id)

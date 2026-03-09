@@ -20,6 +20,7 @@ class ActionType(str, Enum):
     PLACE_WORKER = "place_worker"
     PLAY_CARD = "play_card"
     PREPARE_FOR_SEASON = "prepare_for_season"
+    CLAIM_EVENT = "claim_event"
 
 
 class GameAction(BaseModel):
@@ -36,6 +37,10 @@ class GameAction(BaseModel):
     payment: ResourceBank | None = None
     # For free critter via paired construction:
     use_paired_construction: bool = False
+    # For claim_event:
+    event_id: str | None = None
+    # For haven/journey discard:
+    discard_cards: list[str] | None = None
 
     model_config = {"use_enum_values": True}
 
@@ -75,6 +80,20 @@ class ActionHandler:
                         location_id=loc.id,
                     )
                 )
+
+            # Destination cards in player's city as worker spots
+            for card in player.city:
+                if card.is_open_destination:
+                    dest_id = f"destination:{card.name}"
+                    # Check not already visited this season
+                    if dest_id not in player.workers_deployed:
+                        actions.append(
+                            GameAction(
+                                action_type=ActionType.PLACE_WORKER,
+                                player_id=player_id,
+                                location_id=dest_id,
+                            )
+                        )
 
         # 2. Play card actions
         city_size = sum(1 for c in player.city if c.occupies_city_space)
@@ -149,6 +168,46 @@ class ActionHandler:
                 )
             )
 
+        # 4. Claim event actions (only events the player qualifies for)
+        player_card_names = {c.name for c in player.city}
+        player_card_types = {}
+        for c in player.city:
+            ct = c.card_type.value if hasattr(c.card_type, "value") else str(c.card_type)
+            player_card_types[ct] = player_card_types.get(ct, 0) + 1
+
+        for event_id, event_data in game.basic_events.items():
+            if isinstance(event_data, dict) and not event_data.get("claimed_by"):
+                # Basic events require 3+ of a card type
+                qualified = False
+                if "governance" in event_id and player_card_types.get("blue_governance", 0) >= 3:
+                    qualified = True
+                elif "destination" in event_id and player_card_types.get("red_destination", 0) >= 3:
+                    qualified = True
+                elif "traveler" in event_id and player_card_types.get("tan_traveler", 0) >= 3:
+                    qualified = True
+                elif "production" in event_id and player_card_types.get("green_production", 0) >= 3:
+                    qualified = True
+                if qualified:
+                    actions.append(
+                        GameAction(
+                            action_type=ActionType.CLAIM_EVENT,
+                            player_id=player_id,
+                            event_id=event_id,
+                        )
+                    )
+        for event_id, event_data in game.special_events.items():
+            if isinstance(event_data, dict) and not event_data.get("claimed_by"):
+                # Special events require specific cards in city
+                required = event_data.get("required_cards", [])
+                if required and all(name in player_card_names for name in required):
+                    actions.append(
+                        GameAction(
+                            action_type=ActionType.CLAIM_EVENT,
+                            player_id=player_id,
+                            event_id=event_id,
+                        )
+                    )
+
         return actions
 
     @staticmethod
@@ -180,6 +239,22 @@ class ActionHandler:
             if not SeasonManager.can_prepare_for_season(player):
                 return False, "Cannot prepare for season (workers still available or already passed)"
             return True, ""
+        elif action.action_type == ActionType.CLAIM_EVENT:
+            if not action.event_id:
+                return False, "No event specified"
+            # Check basic events
+            if action.event_id in game.basic_events:
+                data = game.basic_events[action.event_id]
+                if isinstance(data, dict) and data.get("claimed_by"):
+                    return False, f"Event {action.event_id} already claimed"
+                return True, ""
+            # Check special events
+            if action.event_id in game.special_events:
+                data = game.special_events[action.event_id]
+                if isinstance(data, dict) and data.get("claimed_by"):
+                    return False, f"Event {action.event_id} already claimed"
+                return True, ""
+            return False, f"Unknown event: {action.event_id}"
 
         return False, f"Unknown action type: {action.action_type}"
 
@@ -196,6 +271,18 @@ class ActionHandler:
 
         if not action.location_id:
             return False, "No location specified"
+
+        # Destination card placement
+        if action.location_id.startswith("destination:"):
+            card_name = action.location_id[len("destination:"):]
+            has_card = any(
+                c.name == card_name and c.is_open_destination for c in player.city
+            )
+            if not has_card:
+                return False, f"No open destination card {card_name} in city"
+            if action.location_id in player.workers_deployed:
+                return False, f"Already visited {card_name} this season"
+            return True, ""
 
         loc = location_mgr.get_location(action.location_id)
         if loc is None:
@@ -277,13 +364,15 @@ class ActionHandler:
     ) -> list[str]:
         """Execute the action. Returns list of event descriptions."""
         if action.action_type == ActionType.PLACE_WORKER:
-            return ActionHandler._place_worker(game, player, action, location_mgr)
+            return ActionHandler._place_worker(game, player, action, location_mgr, deck_mgr)
         elif action.action_type == ActionType.PLAY_CARD:
             return ActionHandler._play_card(game, player, action, deck_mgr)
         elif action.action_type == ActionType.PREPARE_FOR_SEASON:
             return SeasonManager.prepare_for_season(
                 game, player, location_mgr, deck_mgr
             )
+        elif action.action_type == ActionType.CLAIM_EVENT:
+            return ActionHandler._claim_event(game, player, action)
         return []
 
     @staticmethod
@@ -292,17 +381,31 @@ class ActionHandler:
         player: Player,
         action: GameAction,
         location_mgr: LocationManager,
+        deck_mgr: DeckManager | None = None,
     ) -> list[str]:
         """Place a worker on a location."""
         player_id = str(player.id)
+
+        # Destination card placement
+        if action.location_id and action.location_id.startswith("destination:"):
+            card_name = action.location_id[len("destination:"):]
+            player.workers_placed += 1
+            player.workers_deployed.append(action.location_id)
+            # Activate destination card
+            for card in player.city:
+                if card.name == card_name:
+                    card.on_worker_placed(game, player)
+                    break
+            return [f"{player.name} placed a worker on destination {card_name}"]
+
         location_mgr.place_worker(action.location_id, player_id)
         player.workers_placed += 1
         player.workers_deployed.append(action.location_id)
 
-        # Activate the location
+        # Activate the location (grants resources/cards)
         loc = location_mgr.get_location(action.location_id)
         if loc is not None:
-            loc.on_activate(game, player)
+            loc.on_activate(game, player, deck_mgr=deck_mgr)
 
         return [f"{player.name} placed a worker at {action.location_id}"]
 
@@ -353,3 +456,38 @@ class ActionHandler:
                 city_card.on_card_played(game, player, card)
 
         return events
+
+    @staticmethod
+    def _claim_event(
+        game: GameState,
+        player: Player,
+        action: GameAction,
+    ) -> list[str]:
+        """Claim a basic or special event."""
+        event_id = action.event_id
+        points = 0
+        event_name = event_id
+
+        if event_id in game.basic_events:
+            event_data = game.basic_events[event_id]
+            if isinstance(event_data, dict):
+                points = event_data.get("points", 3)
+                event_name = event_data.get("name", event_id)
+            game.basic_events[event_id] = {
+                **event_data,
+                "claimed_by": player.name,
+            }
+        elif event_id in game.special_events:
+            event_data = game.special_events[event_id]
+            if isinstance(event_data, dict):
+                points = event_data.get("points", 3)
+                event_name = event_data.get("name", event_id)
+            game.special_events[event_id] = {
+                **event_data,
+                "claimed_by": player.name,
+            }
+
+        # Add event points to player
+        player.point_tokens = getattr(player, "point_tokens", 0) + points
+
+        return [f"{player.name} claimed {event_name} (+{points} VP)"]

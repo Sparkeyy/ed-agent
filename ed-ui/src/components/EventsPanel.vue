@@ -31,6 +31,32 @@ function claimerName(eventData: any): string {
   }
   return ''
 }
+
+function eventName(eventData: any, fallback: string): string {
+  if (eventData && typeof eventData === 'object' && eventData.name) {
+    return eventData.name
+  }
+  return fallback
+}
+
+function eventDescription(eventData: any): string {
+  if (eventData && typeof eventData === 'object') {
+    if (eventData.required_cards) {
+      return `Requires: ${eventData.required_cards.join(' + ')}`
+    }
+    if (eventData.description) {
+      return eventData.description
+    }
+  }
+  return ''
+}
+
+function eventPoints(eventData: any): number {
+  if (eventData && typeof eventData === 'object' && eventData.points) {
+    return eventData.points
+  }
+  return 0
+}
 </script>
 
 <template>
@@ -41,19 +67,6 @@ function claimerName(eventData: any): string {
     </button>
     <div v-if="!collapsed" class="events-content">
       <div class="event-section">
-        <h4 class="event-section-title">Basic Events</h4>
-        <div
-          v-for="(data, eventId) in events.basic_events"
-          :key="'basic-' + eventId"
-          class="event-item"
-          :class="{ claimable: isClaimable(String(eventId)), claimed: isClaimed(data) }"
-          @click="isClaimable(String(eventId)) && emit('claim-event', String(eventId))"
-        >
-          <span class="event-name">{{ eventId }}</span>
-          <span v-if="isClaimed(data)" class="claimed-badge">\u2713 {{ claimerName(data) }}</span>
-        </div>
-      </div>
-      <div class="event-section">
         <h4 class="event-section-title">Special Events</h4>
         <div
           v-for="(data, eventId) in events.special_events"
@@ -62,8 +75,33 @@ function claimerName(eventData: any): string {
           :class="{ claimable: isClaimable(String(eventId)), claimed: isClaimed(data) }"
           @click="isClaimable(String(eventId)) && emit('claim-event', String(eventId))"
         >
-          <span class="event-name">{{ eventId }}</span>
-          <span v-if="isClaimed(data)" class="claimed-badge">\u2713 {{ claimerName(data) }}</span>
+          <div class="event-info">
+            <span class="event-name">{{ eventName(data, String(eventId)) }}</span>
+            <span class="event-desc">{{ eventDescription(data) }}</span>
+          </div>
+          <div class="event-right">
+            <span class="event-points">{{ eventPoints(data) }} VP</span>
+            <span v-if="isClaimed(data)" class="claimed-badge">{{ claimerName(data) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="event-section">
+        <h4 class="event-section-title">Basic Events</h4>
+        <div
+          v-for="(data, eventId) in events.basic_events"
+          :key="'basic-' + eventId"
+          class="event-item"
+          :class="{ claimable: isClaimable(String(eventId)), claimed: isClaimed(data) }"
+          @click="isClaimable(String(eventId)) && emit('claim-event', String(eventId))"
+        >
+          <div class="event-info">
+            <span class="event-name">{{ eventName(data, String(eventId)) }}</span>
+            <span class="event-desc">{{ eventPoints(data) }} VP</span>
+          </div>
+          <div class="event-right">
+            <span v-if="isClaimed(data)" class="claimed-badge">{{ claimerName(data) }}</span>
+            <span v-else class="event-status">Open</span>
+          </div>
         </div>
       </div>
     </div>
@@ -76,6 +114,8 @@ function claimerName(eventData: any): string {
   border: var(--border-card);
   border-radius: var(--radius-md);
   overflow: hidden;
+  width: 100%;
+  max-width: 800px;
 }
 
 .panel-toggle {
@@ -104,10 +144,12 @@ function claimerName(eventData: any): string {
 
 .events-content {
   padding: 0 var(--gap-md) var(--gap-md);
+  display: flex;
+  gap: var(--gap-md);
 }
 
 .event-section {
-  margin-bottom: var(--gap-sm);
+  flex: 1;
 }
 
 .event-section-title {
@@ -143,17 +185,51 @@ function claimerName(eventData: any): string {
 }
 
 .event-item.claimed {
-  opacity: 0.6;
+  opacity: 0.5;
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .event-name {
   font-family: var(--font-card);
+  font-weight: 600;
   color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.event-desc {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+}
+
+.event-right {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  flex-shrink: 0;
+}
+
+.event-points {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold, #c9a96e);
 }
 
 .claimed-badge {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--forest-light);
   font-weight: 600;
+  background: var(--green-production-bg, rgba(74, 124, 89, 0.1));
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.event-status {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
 }
 </style>

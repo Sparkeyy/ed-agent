@@ -1,59 +1,68 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const BASE = '/api/v1'
+const MAX_RECONNECT_DELAY = 30_000
 
-export type SSEHandler = (event: string, data: unknown) => void
+export type SSEHandler = (event: string, data: any) => void
 
 export class SSEManager {
   private gameId: string
+  private playerToken: string
   private handler: SSEHandler
   private source: EventSource | null = null
+  private reconnectTimer: number | null = null
+  private reconnectDelay = 1000
 
-  constructor(gameId: string, handler: SSEHandler) {
+  constructor(gameId: string, playerToken: string, handler: SSEHandler) {
     this.gameId = gameId
+    this.playerToken = playerToken
     this.handler = handler
   }
 
-  connect() {
+  connect(): void {
     this.disconnect()
 
-    const url = `${BASE_URL}/games/${this.gameId}/events`
+    const url = `${BASE}/games/${this.gameId}/events?player_token=${encodeURIComponent(this.playerToken)}`
     this.source = new EventSource(url)
 
-    this.source.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        this.handler('state', data)
-      } catch {
-        // ignore parse errors
-      }
+    const events = ['game_state', 'player_joined', 'game_started', 'game_over', 'connected']
+    for (const eventName of events) {
+      this.source.addEventListener(eventName, (ev) => {
+        try {
+          const data = JSON.parse((ev as MessageEvent).data)
+          this.handler(eventName, data)
+        } catch {
+          // ignore parse errors
+        }
+      })
     }
 
-    this.source.addEventListener('state', (event) => {
-      try {
-        const data = JSON.parse((event as MessageEvent).data)
-        this.handler('state', data)
-      } catch {
-        // ignore
-      }
-    })
-
-    this.source.addEventListener('action', (event) => {
-      try {
-        const data = JSON.parse((event as MessageEvent).data)
-        this.handler('action', data)
-      } catch {
-        // ignore
-      }
-    })
+    this.source.onopen = () => {
+      this.reconnectDelay = 1000
+    }
 
     this.source.onerror = () => {
-      // EventSource auto-reconnects; no manual handling needed
+      this.source?.close()
+      this.source = null
+      this.scheduleReconnect()
     }
   }
 
-  disconnect() {
+  disconnect(): void {
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     if (this.source) {
       this.source.close()
       this.source = null
     }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer !== null) return
+    this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectTimer = null
+      this.reconnectDelay = Math.min(this.reconnectDelay * 2, MAX_RECONNECT_DELAY)
+      this.connect()
+    }, this.reconnectDelay)
   }
 }

@@ -1,87 +1,265 @@
+"""Core AI player that polls the game engine and submits actions."""
+
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
 import random
 from typing import Any
+
+import httpx
 
 from ed_ai.ollama_client import OllamaClient
 from ed_ai.parser import ResponseParser
 from ed_ai.prompts.personas import get_system_prompt
 from ed_ai.prompts.serializer import GameStateSerializer
 
+logger = logging.getLogger("ed_ai.agent")
 
-class AIAgent:
-    """AI opponent that uses Ollama to choose Everdell actions."""
+# Season ordering for heuristic decisions
+_SEASON_ORDER = {"spring": 0, "summer": 1, "autumn": 2, "winter": 3}
+
+
+class AIPlayer:
+    """AI opponent that polls the game engine, thinks via Ollama, and submits actions."""
 
     MAX_RETRIES = 3
-    MODEL = "qwen2.5-coder:7b"
+    POLL_INTERVAL = 1.0  # seconds between game state polls
 
-    def __init__(self, ollama_url: str = "http://localhost:11434") -> None:
-        self.client = OllamaClient(base_url=ollama_url)
+    def __init__(
+        self,
+        game_id: str,
+        player_token: str,
+        player_id: str,
+        difficulty: str = "journeyman",
+        engine_url: str | None = None,
+        ollama_client: OllamaClient | None = None,
+    ) -> None:
+        self.game_id = game_id
+        self.player_token = player_token
+        self.player_id = player_id
+        self.difficulty = difficulty
+        self.engine_url = (engine_url or os.environ.get("ED_ENGINE_URL", "http://localhost:4242")).rstrip("/")
+        self.ollama = ollama_client or OllamaClient()
         self.parser = ResponseParser()
         self.serializer = GameStateSerializer()
+        self.system_prompt = get_system_prompt(difficulty)
+        self.is_running = False
+        self.game_over = False
+        self.turns_played = 0
+        self.last_error: str | None = None
 
-    async def think(
-        self, game_state: dict[str, Any], *, persona: str = "journeyman"
-    ) -> dict[str, Any]:
-        """Given a game state, return a chosen action dict.
+    async def play_game(self) -> None:
+        """Main loop: poll for game state, think when it's our turn, submit action."""
+        self.is_running = True
+        logger.info("AI player started: game=%s difficulty=%s", self.game_id, self.difficulty)
 
-        Reasoning loop: serialize -> prompt Ollama -> parse -> validate.
-        Retries up to MAX_RETRIES, then falls back to a random legal action.
+        try:
+            while not self.game_over:
+                try:
+                    state = await self.get_game_state()
+                except httpx.HTTPError as exc:
+                    logger.warning("Failed to get game state: %s", exc)
+                    self.last_error = str(exc)
+                    await asyncio.sleep(self.POLL_INTERVAL * 2)
+                    continue
+
+                # Check if game is over
+                if state.get("game_over") or state.get("status") == "finished":
+                    self.game_over = True
+                    logger.info("Game over: game=%s turns=%d", self.game_id, self.turns_played)
+                    break
+
+                # Check if it's our turn and we have valid actions
+                valid_actions = state.get("valid_actions", [])
+                current_player = state.get("current_player_id", state.get("current_player"))
+                is_our_turn = (
+                    str(current_player) == str(self.player_id)
+                    if current_player is not None
+                    else bool(valid_actions)
+                )
+
+                if is_our_turn and valid_actions:
+                    action = await self.think(state)
+                    try:
+                        await self.submit_action(action)
+                        self.turns_played += 1
+                        self.last_error = None
+                    except httpx.HTTPError as exc:
+                        logger.warning("Failed to submit action: %s", exc)
+                        self.last_error = str(exc)
+
+                await asyncio.sleep(self.POLL_INTERVAL)
+        except asyncio.CancelledError:
+            logger.info("AI player cancelled: game=%s", self.game_id)
+        except Exception:
+            logger.exception("AI player crashed: game=%s", self.game_id)
+        finally:
+            self.is_running = False
+
+    async def get_game_state(self) -> dict[str, Any]:
+        """Fetch current game state from the engine."""
+        url = f"{self.engine_url}/api/v1/games/{self.game_id}"
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url, params={"player_token": self.player_token})
+            resp.raise_for_status()
+            return resp.json()
+
+    async def submit_action(self, action: dict[str, Any]) -> dict[str, Any]:
+        """Submit an action to the game engine."""
+        url = f"{self.engine_url}/api/v1/games/{self.game_id}/action"
+        payload = {"player_token": self.player_token, **action}
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+            return resp.json()
+
+    async def think(self, state: dict[str, Any]) -> dict[str, Any]:
+        """AI reasoning: serialize state, prompt Ollama, parse, validate, fallback.
+
+        Returns a valid action dict ready for submission.
         """
-        system_prompt = get_system_prompt(persona)
-        user_prompt = self.serializer.serialize(game_state)
+        valid_actions = state.get("valid_actions", [])
+        user_prompt = self.serializer.serialize(state)
 
-        last_error = ""
-        for attempt in range(self.MAX_RETRIES):
-            retry_hint = f"\n\nPrevious attempt failed: {last_error}" if last_error else ""
-            raw = await self.client.generate(
-                model=self.MODEL,
-                prompt=user_prompt + retry_hint,
-                system=system_prompt,
-            )
-            action = self.parser.parse(raw)
-            if action is not None and self._validate(action, game_state):
-                return {"action": action, "reasoning": raw, "retries": attempt}
-            last_error = "could not parse valid action from response"
+        # Try Ollama if available
+        ollama_available = await self.ollama.is_available()
+        if ollama_available:
+            last_error = ""
+            for attempt in range(self.MAX_RETRIES):
+                retry_hint = f"\n\nPrevious attempt failed: {last_error}" if last_error else ""
+                try:
+                    raw = await self.ollama.generate(
+                        prompt=user_prompt + retry_hint,
+                        system=self.system_prompt,
+                    )
+                    action = self.parser.parse(raw, valid_actions=valid_actions)
+                    if action is not None and self._is_valid(action, valid_actions):
+                        logger.info(
+                            "Ollama chose action (attempt %d): %s", attempt + 1, action
+                        )
+                        return action
+                    last_error = f"parsed action not in valid_actions (got: {action})"
+                except Exception as exc:
+                    last_error = str(exc)
+                    logger.warning("Ollama attempt %d failed: %s", attempt + 1, exc)
 
-        # Fallback: pick a random legal action
-        action = self._random_legal_action(game_state)
-        return {"action": action, "reasoning": "fallback: random legal action", "retries": self.MAX_RETRIES}
+            logger.info("Ollama failed after %d retries, using heuristic", self.MAX_RETRIES)
+        else:
+            logger.info("Ollama unavailable, using heuristic fallback")
 
-    async def evaluate(
-        self, game_state: dict[str, Any], action: dict[str, Any]
+        return self.heuristic_fallback(valid_actions, state)
+
+    def heuristic_fallback(
+        self, valid_actions: list[dict[str, Any]], state: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        """Evaluate the quality of an action given a game state."""
-        prompt = (
-            f"Rate this Everdell action from 0.0 (terrible) to 1.0 (optimal).\n"
-            f"State:\n{self.serializer.serialize(game_state)}\n"
-            f"Action: {action}\n"
-            f"Reply with JSON: {{\"quality\": <float>, \"explanation\": \"<text>\"}}"
-        )
-        raw = await self.client.generate(
-            model=self.MODEL, prompt=prompt, system="You are an Everdell expert."
-        )
-        parsed = self.parser.parse(raw)
-        if parsed and "quality" in parsed:
-            return {
-                "quality": max(0.0, min(1.0, float(parsed["quality"]))),
-                "explanation": parsed.get("explanation", ""),
-            }
-        return {"quality": 0.5, "explanation": "could not evaluate"}
+        """When Ollama fails, pick action by simple heuristics.
 
-    def _validate(self, action: dict[str, Any], game_state: dict[str, Any]) -> bool:
-        """Check that the action is in the valid_actions list, if provided."""
-        valid = game_state.get("valid_actions")
-        if valid is None:
-            return True  # No validation info available
-        # Simple membership check by action type
-        action_type = action.get("type")
-        return any(va.get("type") == action_type for va in valid)
+        Priority:
+        - Prefer play_card over place_worker (cards = points)
+        - Prefer higher base_points cards
+        - Prefer production cards early, prosperity cards late
+        - Place workers on resource locations matching needed resources
+        - Prepare for season when no good moves left
+        """
+        if not valid_actions:
+            return {"action_type": "prepare_for_season"}
+
+        # Categorize actions
+        play_card_actions = []
+        place_worker_actions = []
+        prepare_actions = []
+        other_actions = []
+
+        for action in valid_actions:
+            action_type = action.get("action_type", action.get("type", ""))
+            if action_type == "play_card":
+                play_card_actions.append(action)
+            elif action_type == "place_worker":
+                place_worker_actions.append(action)
+            elif action_type == "prepare_for_season":
+                prepare_actions.append(action)
+            else:
+                other_actions.append(action)
+
+        # Determine game phase from season
+        season = (state or {}).get("season", "spring")
+        season_idx = _SEASON_ORDER.get(season.lower() if isinstance(season, str) else "spring", 0)
+        is_late_game = season_idx >= 2  # autumn or winter
+
+        # Prefer play_card actions, sorted by base_points
+        if play_card_actions:
+            def card_score(a: dict) -> float:
+                pts = a.get("base_points", a.get("points", 0)) or 0
+                card_type = a.get("card_type", "").lower()
+                # Free plays are always great
+                bonus = 10 if a.get("is_free") else 0
+                # Production cards better early, prosperity cards better late
+                if card_type == "production" and not is_late_game:
+                    bonus += 3
+                elif card_type == "prosperity" and is_late_game:
+                    bonus += 3
+                return pts + bonus
+
+            play_card_actions.sort(key=card_score, reverse=True)
+            return play_card_actions[0]
+
+        # Place workers on resource locations
+        if place_worker_actions:
+            # Prefer locations that give more resources or have strategic value
+            # Simple shuffle to add variety
+            random.shuffle(place_worker_actions)
+            return place_worker_actions[0]
+
+        # Other actions
+        if other_actions:
+            return other_actions[0]
+
+        # Prepare for season as last resort
+        if prepare_actions:
+            return prepare_actions[0]
+
+        # Absolute fallback
+        return valid_actions[0]
 
     @staticmethod
-    def _random_legal_action(game_state: dict[str, Any]) -> dict[str, Any]:
-        """Pick a random action from valid_actions, or a pass action."""
-        valid = game_state.get("valid_actions", [])
-        if valid:
-            return random.choice(valid)
-        return {"type": "pass"}
+    def _is_valid(action: dict[str, Any], valid_actions: list[dict[str, Any]]) -> bool:
+        """Check if the parsed action matches one of the valid actions."""
+        if valid_actions is None:
+            return True
+        if not valid_actions:
+            return False
+
+        action_type = action.get("action_type", action.get("type", ""))
+        if not action_type:
+            return False
+
+        # Check action type matches any valid action
+        for va in valid_actions:
+            va_type = va.get("action_type", va.get("type", ""))
+            if action_type != va_type:
+                continue
+            # If types match, check key fields
+            match = True
+            for key in ("card_name", "location_id", "meadow_index", "source"):
+                if key in action and key in va:
+                    if action[key] != va[key]:
+                        match = False
+                        break
+            if match:
+                return True
+
+        return False
+
+    def status(self) -> dict[str, Any]:
+        """Return current status for monitoring."""
+        return {
+            "game_id": self.game_id,
+            "player_id": self.player_id,
+            "difficulty": self.difficulty,
+            "is_running": self.is_running,
+            "game_over": self.game_over,
+            "turns_played": self.turns_played,
+            "last_error": self.last_error,
+        }

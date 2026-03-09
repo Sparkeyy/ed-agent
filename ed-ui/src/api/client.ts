@@ -89,11 +89,11 @@ export async function performAction(gameId: string, playerToken: string, action:
   if (action.discard_cards !== undefined) payload.discard_cards = action.discard_cards
   body.payload = payload
 
-  const resp = await request<GameStateResponse>(`/games/${gameId}/action`, {
+  const resp = await request<{ status: string; game: GameStateResponse }>(`/games/${gameId}/action`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
-  return resp.state
+  return resp.game.state
 }
 
 // Player profile

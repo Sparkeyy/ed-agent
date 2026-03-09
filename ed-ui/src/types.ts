@@ -41,7 +41,7 @@ export interface LocationData {
 }
 
 export interface ValidAction {
-  action_type: 'place_worker' | 'play_card' | 'prepare_for_season' | 'claim_event'
+  action_type: 'place_worker' | 'play_card' | 'prepare_for_season' | 'claim_event' | 'resolve_choice'
   location_id?: string
   card_name?: string
   source?: 'hand' | 'meadow'
@@ -76,6 +76,13 @@ export interface GameState {
   journey_locations: LocationData[]
   game_over: boolean
   valid_actions: ValidAction[]
+  pending_choice?: {
+    card: string
+    player_id: string
+    step: 'discard' | 'draw'
+    discards_remaining?: number
+    prompt: string
+  } | null
 }
 
 export type CardType = CardData['card_type']

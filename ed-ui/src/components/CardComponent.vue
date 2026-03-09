@@ -54,6 +54,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
     @click="emit('select')"
   >
     <template v-if="compact">
+      <button class="compact-info-btn" @click.stop="emit('info', card.name)" title="Card info">i</button>
       <span class="compact-name" :title="cardAbility(card.name)">{{ card.name }}</span>
       <span class="compact-points"><span class="vp-badge-sm">VP</span> {{ card.base_points }}</span>
     </template>
@@ -338,5 +339,37 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   color: var(--ink-faint);
   text-align: center;
   font-style: italic;
+}
+
+.compact-info-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-faint);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink-faint);
+  font-size: 0.5rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.card.compact:hover .compact-info-btn {
+  opacity: 1;
+}
+
+.compact-info-btn:hover {
+  background: var(--gold);
+  color: white;
+  border-color: var(--gold);
 }
 </style>

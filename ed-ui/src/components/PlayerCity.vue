@@ -167,6 +167,7 @@ function destinationVisited(cardName: string): boolean {
           <CardComponent
             :card="player.city[i - 1]"
             :compact="true"
+            @info="emit('card-info', $event)"
           />
           <div v-if="isDestination(player.city[i - 1])" class="destination-marker" :class="{ visited: destinationVisited(player.city[i - 1].name) }">
             <span class="dest-icon">W</span>

@@ -470,3 +470,74 @@ class TestCardAbilities:
         player = _make_player()
         game = _make_game()
         assert farm.on_score(game, player) == 0
+
+    def test_undertaker_sets_pending_choice(self) -> None:
+        """Undertaker on_play sets pending_choice instead of auto-resolving."""
+        from ed_engine.engine.deck import DeckManager
+        from ed_engine.cards import build_deck
+
+        undertaker = get_card_definition("Undertaker")
+        player = _make_player()
+        game = _make_game()
+
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        assert len(deck_mgr.meadow) == 8
+
+        ctx = {"deck_mgr": deck_mgr, "game": game}
+        undertaker.on_play(game, player, ctx=ctx)
+
+        # Should set pending_choice, NOT auto-discard
+        assert game.pending_choice is not None
+        assert game.pending_choice["card"] == "Undertaker"
+        assert game.pending_choice["step"] == "discard"
+        assert game.pending_choice["discards_remaining"] == 3
+        # Meadow should be untouched
+        assert len(deck_mgr.meadow) == 8
+
+    def test_undertaker_resolve_choice_flow(self) -> None:
+        """Full Undertaker resolve_choice flow: discard 3, draw 1."""
+        from ed_engine.engine.deck import DeckManager
+        from ed_engine.engine.actions import ActionHandler, ActionType, GameAction
+        from ed_engine.cards import build_deck
+
+        player = _make_player(resources=ResourceBank(berry=999))
+        game = _make_game(players=[player])
+
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        initial_meadow_names = [c.name for c in deck_mgr.meadow]
+        assert len(initial_meadow_names) == 8
+
+        # Set up pending choice as Undertaker would
+        game.pending_choice = {
+            "card": "Undertaker",
+            "player_id": str(player.id),
+            "step": "discard",
+            "discards_remaining": 3,
+            "prompt": "Select a meadow card to discard (3 remaining)",
+        }
+
+        from ed_engine.engine.locations import LocationManager
+        loc_mgr = LocationManager(1, seed=42)
+
+        # Resolve 3 discards
+        for i in range(3):
+            actions = ActionHandler.get_valid_actions(game, player, loc_mgr, deck_mgr)
+            resolve_actions = [a for a in actions if a.action_type == ActionType.RESOLVE_CHOICE]
+            assert len(resolve_actions) > 0, f"No resolve actions at step {i}"
+            # Pick first meadow card
+            ActionHandler.execute_action(game, player, resolve_actions[0], loc_mgr, deck_mgr)
+
+        # After 3 discards, should be in "draw" step
+        assert game.pending_choice is not None
+        assert game.pending_choice["step"] == "draw"
+
+        # Resolve draw
+        actions = ActionHandler.get_valid_actions(game, player, loc_mgr, deck_mgr)
+        resolve_actions = [a for a in actions if a.action_type == ActionType.RESOLVE_CHOICE]
+        assert len(resolve_actions) > 0
+        ActionHandler.execute_action(game, player, resolve_actions[0], loc_mgr, deck_mgr)
+
+        # Pending choice should be cleared
+        assert game.pending_choice is None
+        # Player should have 1 card in hand
+        assert len(player.hand) == 1

@@ -21,6 +21,7 @@ class ActionType(str, Enum):
     PLAY_CARD = "play_card"
     PREPARE_FOR_SEASON = "prepare_for_season"
     CLAIM_EVENT = "claim_event"
+    RESOLVE_CHOICE = "resolve_choice"
 
 
 class GameAction(BaseModel):
@@ -65,6 +66,10 @@ class ActionHandler:
 
         if player.has_passed:
             return actions
+
+        # If there's a pending choice, only resolve_choice actions are valid
+        if game.pending_choice and game.pending_choice.get("player_id") == player_id:
+            return ActionHandler._get_pending_choice_actions(game, player, deck_mgr)
 
         # 1. Place worker actions
         available_workers = player.workers_total - player.workers_placed
@@ -266,6 +271,8 @@ class ActionHandler:
                     return False, f"Event {action.event_id} already claimed"
                 return True, ""
             return False, f"Unknown event: {action.event_id}"
+        elif action.action_type == ActionType.RESOLVE_CHOICE:
+            return ActionHandler._validate_resolve_choice(game, player, action, deck_mgr)
 
         return False, f"Unknown action type: {action.action_type}"
 
@@ -384,6 +391,8 @@ class ActionHandler:
             )
         elif action.action_type == ActionType.CLAIM_EVENT:
             return ActionHandler._claim_event(game, player, action)
+        elif action.action_type == ActionType.RESOLVE_CHOICE:
+            return ActionHandler._resolve_choice(game, player, action, deck_mgr)
         return []
 
     @staticmethod
@@ -504,3 +513,94 @@ class ActionHandler:
         player.claimed_events.append(event_id)
 
         return [f"{player.name} claimed {event_name} (+{points} VP)"]
+
+    @staticmethod
+    def _get_pending_choice_actions(
+        game: GameState,
+        player: Player,
+        deck_mgr: DeckManager,
+    ) -> list[GameAction]:
+        """Return resolve_choice actions for the current pending choice."""
+        pc = game.pending_choice
+        if not pc:
+            return []
+        player_id = str(player.id)
+        actions: list[GameAction] = []
+        meadow = deck_mgr.meadow
+        for idx in range(len(meadow)):
+            actions.append(
+                GameAction(
+                    action_type=ActionType.RESOLVE_CHOICE,
+                    player_id=player_id,
+                    meadow_index=idx,
+                    card_name=meadow[idx].name,
+                )
+            )
+        return actions
+
+    @staticmethod
+    def _validate_resolve_choice(
+        game: GameState,
+        player: Player,
+        action: GameAction,
+        deck_mgr: DeckManager,
+    ) -> tuple[bool, str]:
+        pc = game.pending_choice
+        if not pc:
+            return False, "No pending choice to resolve"
+        if pc.get("player_id") != str(player.id):
+            return False, "Pending choice belongs to another player"
+        if action.meadow_index is None:
+            return False, "No meadow index specified"
+        meadow = deck_mgr.meadow
+        if action.meadow_index < 0 or action.meadow_index >= len(meadow):
+            return False, f"Meadow index {action.meadow_index} out of range"
+        return True, ""
+
+    @staticmethod
+    def _resolve_choice(
+        game: GameState,
+        player: Player,
+        action: GameAction,
+        deck_mgr: DeckManager,
+    ) -> list[str]:
+        """Resolve a pending choice (e.g., Undertaker meadow selection)."""
+        pc = game.pending_choice
+        if not pc:
+            return ["ERROR: No pending choice"]
+
+        events: list[str] = []
+        step = pc.get("step")
+
+        if step == "discard":
+            # Discard the selected meadow card
+            card = deck_mgr.draw_from_meadow(action.meadow_index)
+            deck_mgr.discard([card])
+            remaining = pc.get("discards_remaining", 1) - 1
+            events.append(f"{player.name} discarded {card.name} from meadow ({remaining} remaining)")
+
+            if remaining > 0 and len(deck_mgr.meadow) > 0:
+                game.pending_choice = {
+                    **pc,
+                    "discards_remaining": remaining,
+                    "prompt": f"Select a meadow card to discard ({remaining} remaining)",
+                }
+            else:
+                # Move to draw step
+                if len(deck_mgr.meadow) > 0:
+                    game.pending_choice = {
+                        **pc,
+                        "step": "draw",
+                        "prompt": "Select a meadow card to add to your hand",
+                    }
+                else:
+                    game.pending_choice = None
+
+        elif step == "draw":
+            # Draw the selected meadow card to hand
+            card = deck_mgr.draw_from_meadow(action.meadow_index)
+            player.hand.append(card)
+            events.append(f"{player.name} drew {card.name} from meadow")
+            game.pending_choice = None
+
+        return events

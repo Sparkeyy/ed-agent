@@ -164,6 +164,7 @@ class PerspectiveFilter:
             "journey_locations": journey_locations,
             "game_over": game.game_over,
             "valid_actions": valid_actions,
+            "pending_choice": game.pending_choice,
         }
 
     @staticmethod

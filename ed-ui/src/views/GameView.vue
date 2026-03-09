@@ -78,6 +78,16 @@ const claimableEventIds = computed<string[]>(() => {
     .map(a => a.event_id!)
 })
 
+// Pending choice (e.g., Undertaker meadow selection)
+const pendingChoice = computed(() => store.state?.pending_choice ?? null)
+
+const pendingChoiceMeadowIndices = computed<number[]>(() => {
+  if (!pendingChoice.value) return []
+  return store.validActions
+    .filter(a => a.action_type === 'resolve_choice' && a.meadow_index !== undefined)
+    .map(a => a.meadow_index!)
+})
+
 const workerDisplay = computed(() => {
   if (!store.myPlayer) return null
   const available = store.myPlayer.workers_total - store.myPlayer.workers_placed
@@ -160,6 +170,13 @@ function handlePrepareForSeason() {
 function handleClaimEvent(eventId: string) {
   const action: ValidAction = { action_type: 'claim_event', event_id: eventId }
   captureAndSubmit(action)
+}
+
+function handleResolveChoice(meadowIndex: number) {
+  const action = store.validActions.find(
+    a => a.action_type === 'resolve_choice' && a.meadow_index === meadowIndex
+  )
+  if (action) captureAndSubmit(action)
 }
 
 function toggleDiscardCard(cardName: string) {
@@ -444,12 +461,18 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           @place-worker="handlePlaceWorker"
           @location-info="handleLocationInfo"
         />
-        <MeadowDisplay
-          :meadow="store.meadow"
-          :playable-indices="playableMeadowIndices"
-          @play-from-meadow="handlePlayFromMeadow"
-          @card-info="handleCardInfo"
-        />
+        <div class="meadow-wrapper">
+          <div v-if="pendingChoice" class="pending-choice-banner">
+            <span class="pending-choice-icon">&#9881;</span>
+            <span class="pending-choice-text">{{ pendingChoice.prompt }}</span>
+          </div>
+          <MeadowDisplay
+            :meadow="store.meadow"
+            :playable-indices="pendingChoice ? pendingChoiceMeadowIndices : playableMeadowIndices"
+            @play-from-meadow="pendingChoice ? handleResolveChoice($event) : handlePlayFromMeadow($event)"
+            @card-info="handleCardInfo"
+          />
+        </div>
         <GameBoard
           :basic-locations="[]"
           :forest-locations="rightForest"
@@ -1156,5 +1179,35 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
 .discard-btn.confirm:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Pending choice banner */
+.meadow-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.pending-choice-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+  padding: 6px 12px;
+  background: rgba(201, 169, 110, 0.15);
+  border: 1.5px solid var(--gold);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.pending-choice-icon {
+  font-size: 0.9rem;
+}
+
+.pending-choice-text {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 </style>

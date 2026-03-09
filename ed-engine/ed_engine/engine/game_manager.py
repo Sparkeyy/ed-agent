@@ -173,8 +173,9 @@ class GameManager:
         # Sync state from managers
         self._sync_state()
 
-        # Advance turn
-        self.advance_turn()
+        # Only advance turn if no pending choice (e.g., Undertaker meadow selection)
+        if not self._game.pending_choice:
+            self.advance_turn()
 
         return events
 
@@ -197,7 +198,16 @@ class GameManager:
 
         player_id_str = str(current.id)
 
-        if action_type == "place_worker":
+        if action_type == "resolve_choice":
+            meadow_index = kwargs.get("meadow_index")
+            card_name = kwargs.get("card_name", "")
+            action = GameAction(
+                action_type=ActionType.RESOLVE_CHOICE,
+                player_id=player_id_str,
+                meadow_index=meadow_index,
+                card_name=card_name,
+            )
+        elif action_type == "place_worker":
             location_id = kwargs.get("location_id")
             if not location_id:
                 raise ValueError("location_id is required for place_worker")
@@ -259,7 +269,8 @@ class GameManager:
         )
 
         self._sync_state()
-        self.advance_turn()
+        if not self._game.pending_choice:
+            self.advance_turn()
         return self._game
 
     def advance_turn(self) -> None:

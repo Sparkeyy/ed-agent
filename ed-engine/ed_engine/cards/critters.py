@@ -520,21 +520,18 @@ class Undertaker(TravelerCard):
     paired_with: str | None = "Cemetery"
 
     def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Discard 3 Meadow cards, replenish, draw 1 Meadow card to hand."""
+        """Set up interactive meadow selection: discard 3, then draw 1."""
         deck_mgr = ctx.get("deck_mgr") if ctx else None
-        if not deck_mgr:
+        if not deck_mgr or not deck_mgr.meadow:
             return
-        # Discard up to 3 from meadow
-        discarded = 0
-        for _ in range(3):
-            if deck_mgr.meadow:
-                card = deck_mgr.draw_from_meadow(0)
-                deck_mgr.discard([card])
-                discarded += 1
-        # Draw 1 meadow card to hand
-        if deck_mgr.meadow:
-            card = deck_mgr.draw_from_meadow(0)
-            player.hand.append(card)
+        # Set pending choice — player must select meadow cards interactively
+        game.pending_choice = {
+            "card": "Undertaker",
+            "player_id": str(player.id),
+            "step": "discard",
+            "discards_remaining": 3,
+            "prompt": "Select a meadow card to discard (3 remaining)",
+        }
 
 
 @register

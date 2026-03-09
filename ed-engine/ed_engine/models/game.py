@@ -24,3 +24,4 @@ class GameState(BaseModel):
     seed: int | None = None
     action_log: list[dict] = Field(default_factory=list)
     passed_players: list[str] = Field(default_factory=list)
+    pending_choice: dict[str, Any] | None = None

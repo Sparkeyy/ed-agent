@@ -1,7 +1,7 @@
 import type { GameState, ValidAction, PlayerProfile, LeaderboardEntry, MoveEvaluation } from '../types'
 
 const BASE = '/api/v1'
-const AI_BASE = 'http://localhost:4243'
+const AI_BASE = '/ai'
 
 export class ApiError extends Error {
   status: number
@@ -99,6 +99,28 @@ export async function getProfile(username: string): Promise<PlayerProfile> {
 // Leaderboard
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   return request<LeaderboardEntry[]>('/leaderboard')
+}
+
+// Add AI opponent (ed-ai service)
+export async function addAiPlayer(
+  gameId: string,
+  difficulty: 'apprentice' | 'journeyman' | 'master' = 'journeyman',
+  name: string = 'Rugwort',
+): Promise<{ player_id: string; message: string }> {
+  const res = await fetch(`${AI_BASE}/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ game_id: gameId, difficulty, name }),
+  })
+  if (!res.ok) {
+    let message = `${res.status} ${res.statusText}`
+    try {
+      const body = await res.json()
+      if (body.detail) message = body.detail
+    } catch { /* no body */ }
+    throw new ApiError(res.status, res.statusText, message)
+  }
+  return res.json()
 }
 
 // Move evaluation (ed-ai service)

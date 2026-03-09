@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGameStore } from '../stores/game'
+import { addAiPlayer } from '../api/client'
 import type { ValidAction } from '../types'
 
 import SeasonTracker from '../components/SeasonTracker.vue'
@@ -23,6 +24,9 @@ const gameId = route.params.id as string
 const activeCityTab = ref<string | null>(null)
 const debugPanel = ref<InstanceType<typeof DebugPanel> | null>(null)
 const statsPanel = ref<InstanceType<typeof StatsPanel> | null>(null)
+const aiDifficulty = ref<'apprentice' | 'journeyman' | 'master'>('journeyman')
+const addingAi = ref(false)
+const aiError = ref('')
 
 onMounted(() => {
   if (!store.gameId) {
@@ -123,6 +127,18 @@ function copyGameId() {
   navigator.clipboard.writeText(gameId).catch(() => {})
 }
 
+async function handleAddAi() {
+  addingAi.value = true
+  aiError.value = ''
+  try {
+    await addAiPlayer(gameId, aiDifficulty.value)
+  } catch (e: any) {
+    aiError.value = e.message ?? 'Failed to add AI player'
+  } finally {
+    addingAi.value = false
+  }
+}
+
 function goToScores() {
   router.push(`/scores/${gameId}`)
 }
@@ -166,6 +182,27 @@ function goToScores() {
           <code>{{ gameId }}</code>
           <span class="copy-hint">click to copy</span>
         </div>
+      </div>
+
+      <div class="ai-section" v-if="store.lobbyState && store.lobbyState.current_count < store.lobbyState.max_players">
+        <div class="ai-divider">
+          <span class="ai-divider-line"></span>
+          <span class="ai-divider-text">or</span>
+          <span class="ai-divider-line"></span>
+        </div>
+        <p class="ai-label">Add an AI Opponent</p>
+        <div class="ai-controls">
+          <select v-model="aiDifficulty" class="ai-select">
+            <option value="apprentice">Apprentice</option>
+            <option value="journeyman">Journeyman</option>
+            <option value="master">Master</option>
+          </select>
+          <button class="ai-btn" @click="handleAddAi" :disabled="addingAi">
+            <span v-if="addingAi">Adding...</span>
+            <span v-else>Add AI Player</span>
+          </button>
+        </div>
+        <p v-if="aiError" class="ai-error">{{ aiError }}</p>
       </div>
 
       <div class="waiting-animation">
@@ -615,6 +652,94 @@ function goToScores() {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex-shrink: 0;
+}
+
+/* AI opponent section */
+.ai-section {
+  margin-top: var(--gap-md);
+}
+
+.ai-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-md);
+}
+
+.ai-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--parchment-deep);
+}
+
+.ai-divider-text {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ai-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: var(--gap-sm);
+}
+
+.ai-controls {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.ai-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--parchment-deep);
+  border-radius: var(--radius-md);
+  background: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ai-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.ai-btn {
+  padding: 8px 20px;
+  background: var(--purple-prosperity);
+  color: white;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.ai-btn:hover:not(:disabled) {
+  background: var(--forest-mid);
+}
+
+.ai-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-error {
+  margin-top: var(--gap-xs);
+  font-size: 0.8rem;
+  color: var(--red-destination);
 }
 
 .waiting-animation {

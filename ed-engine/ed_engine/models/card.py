@@ -53,3 +53,28 @@ class Card(BaseModel):
     def on_score(self, game: GameState, player: Player) -> int:
         """Return bonus points beyond base_points (purple prosperity cards)."""
         return 0
+
+
+class TanTravelerCard(Card):
+    """Tan traveler card — immediate effect on play."""
+    pass
+
+
+class GreenProductionCard(Card):
+    """Green production card — triggered during Prepare for Season."""
+    pass
+
+
+class RedDestinationCard(Card):
+    """Red destination card — worker can be placed on it."""
+    pass
+
+
+class BlueGovernanceCard(Card):
+    """Blue governance card — triggered when any card is played."""
+    pass
+
+
+class PurpleProsperityCard(Card):
+    """Purple prosperity card — scored at end of game."""
+    pass

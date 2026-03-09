@@ -15,5 +15,7 @@ class Player(BaseModel):
     hand: list[Card] = Field(default_factory=list)
     workers_total: int = 2
     workers_placed: int = 0
+    workers_deployed: list[str] = Field(default_factory=list)  # location IDs
     season: Season = Season.WINTER
     score: int = 0
+    has_passed: bool = False

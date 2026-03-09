@@ -14,8 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(games_router, prefix="/games", tags=["games"])
-app.include_router(players_router, prefix="/players", tags=["players"])
+app.include_router(games_router, prefix="/api/v1/games", tags=["games"])
+app.include_router(players_router, prefix="/api/v1/players", tags=["players"])
 
 
 @app.get("/health")

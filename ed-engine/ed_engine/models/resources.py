@@ -78,3 +78,20 @@ class ResourceBank(BaseModel):
             pebble=data.get("pebble", 0),
             berry=data.get("berry", 0),
         )
+
+
+SUPPLY_LIMITS = {
+    "twig": SUPPLY_TWIGS,
+    "resin": SUPPLY_RESIN,
+    "pebble": SUPPLY_PEBBLES,
+    "berry": SUPPLY_BERRIES,
+}
+
+
+class SupplyPool(BaseModel):
+    """Shared supply of resources for the game."""
+
+    twig: int = SUPPLY_TWIGS
+    resin: int = SUPPLY_RESIN
+    pebble: int = SUPPLY_PEBBLES
+    berry: int = SUPPLY_BERRIES

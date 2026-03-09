@@ -16,6 +16,7 @@ from ed_engine.models.enums import CardCategory, CardType
 from ed_engine.models.resources import ResourceBank
 
 if TYPE_CHECKING:
+    from ed_engine.models.card import Card
     from ed_engine.models.game import GameState
     from ed_engine.models.player import Player
 
@@ -32,7 +33,7 @@ class Castle(ProsperityCard):
     cost: ResourceBank = ResourceBank(twig=2, resin=3, pebble=3)
     base_points: int = 4
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "King"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -51,7 +52,7 @@ class EverTree(ProsperityCard):
     cost: ResourceBank = ResourceBank(twig=3, resin=3, pebble=3)
     base_points: int = 5
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = None  # grants free Critter; no single pair
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -70,7 +71,7 @@ class Palace(ProsperityCard):
     cost: ResourceBank = ResourceBank(twig=2, resin=3, pebble=3)
     base_points: int = 4
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Queen"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -89,7 +90,7 @@ class School(ProsperityCard):
     cost: ResourceBank = ResourceBank(twig=2, resin=2)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Teacher"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -108,7 +109,7 @@ class Theater(ProsperityCard):
     cost: ResourceBank = ResourceBank(twig=3, resin=1, pebble=1)
     base_points: int = 3
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Bard"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -129,9 +130,9 @@ class Theater(ProsperityCard):
 class FairGrounds(ProductionCard):
     name: str = "Fair Grounds"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=1, resin=1, pebble=1)
+    cost: ResourceBank = ResourceBank(twig=1, resin=2, pebble=1)
     base_points: int = 3
-    unique: bool = False
+    unique: bool = True
     copies_in_deck: int = 3
     paired_with: str | None = "Fool"
 
@@ -148,7 +149,7 @@ class Farm(ProductionCard):
     cost: ResourceBank = ResourceBank(twig=2, resin=1)
     base_points: int = 1
     unique: bool = False
-    copies_in_deck: int = 3
+    copies_in_deck: int = 8
     paired_with: str | None = "Husband"
 
     def on_production(self, game: GameState, player: Player) -> None:
@@ -160,7 +161,7 @@ class Farm(ProductionCard):
 class GeneralStore(ProductionCard):
     name: str = "General Store"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=1, resin=1)
+    cost: ResourceBank = ResourceBank(resin=1, pebble=1)
     base_points: int = 1
     unique: bool = False
     copies_in_deck: int = 3
@@ -192,7 +193,7 @@ class Mine(ProductionCard):
 class ResinRefinery(ProductionCard):
     name: str = "Resin Refinery"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=1, resin=1)
+    cost: ResourceBank = ResourceBank(resin=1, pebble=1)
     base_points: int = 1
     unique: bool = False
     copies_in_deck: int = 3
@@ -207,11 +208,11 @@ class ResinRefinery(ProductionCard):
 class Storehouse(ProductionCard):
     name: str = "Storehouse"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=1, resin=1)
-    base_points: int = 0
+    cost: ResourceBank = ResourceBank(twig=1, resin=1, pebble=1)
+    base_points: int = 2
     unique: bool = False
     copies_in_deck: int = 3
-    paired_with: str | None = None  # no critter pair
+    paired_with: str | None = "Woodcarver"
 
     def on_production(self, game: GameState, player: Player) -> None:
         """Place 3 twigs OR 2 resin OR 1 pebble OR 2 berries on card."""
@@ -246,7 +247,7 @@ class Cemetery(DestinationCard):
     cost: ResourceBank = ResourceBank(pebble=2)
     base_points: int = 0
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Undertaker"
 
     def on_worker_placed(
@@ -264,7 +265,7 @@ class Chapel(DestinationCard):
     cost: ResourceBank = ResourceBank(twig=2, resin=1, pebble=1)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Shepherd"
 
     def on_worker_placed(
@@ -276,31 +277,13 @@ class Chapel(DestinationCard):
 
 
 @register
-class Dungeon(DestinationCard):
-    name: str = "Dungeon"
-    category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(resin=1, pebble=2)
-    base_points: int = 0
-    unique: bool = True
-    copies_in_deck: int = 1
-    paired_with: str | None = "Ranger"
-
-    def on_worker_placed(
-        self, game: GameState, player: Player, visitor: Player
-    ) -> None:
-        """Place city Critter beneath to decrease played card cost by 3."""
-        # TODO: implement prisoner mechanic
-        pass
-
-
-@register
 class Inn(DestinationCard):
     name: str = "Inn"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=2, resin=1, pebble=1)
+    cost: ResourceBank = ResourceBank(twig=2, resin=1)
     base_points: int = 2
-    unique: bool = True
-    copies_in_deck: int = 1
+    unique: bool = False
+    copies_in_deck: int = 3
     paired_with: str | None = "Innkeeper"
     is_open_destination: bool = True
 
@@ -319,8 +302,8 @@ class Lookout(DestinationCard):
     cost: ResourceBank = ResourceBank(twig=1, resin=1, pebble=1)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
-    paired_with: str | None = None  # TODO: confirm pairing
+    copies_in_deck: int = 2
+    paired_with: str | None = "Wanderer"
 
     def on_worker_placed(
         self, game: GameState, player: Player, visitor: Player
@@ -335,9 +318,9 @@ class Monastery(DestinationCard):
     name: str = "Monastery"
     category: CardCategory = CardCategory.CONSTRUCTION
     cost: ResourceBank = ResourceBank(twig=1, resin=1, pebble=1)
-    base_points: int = 0
+    base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Monk"
 
     def on_worker_placed(
@@ -352,10 +335,10 @@ class Monastery(DestinationCard):
 class PostOffice(DestinationCard):
     name: str = "Post Office"
     category: CardCategory = CardCategory.CONSTRUCTION
-    cost: ResourceBank = ResourceBank(twig=1, pebble=2)
+    cost: ResourceBank = ResourceBank(twig=1, resin=2)
     base_points: int = 2
-    unique: bool = True
-    copies_in_deck: int = 1
+    unique: bool = False
+    copies_in_deck: int = 3
     paired_with: str | None = "Postal Pigeon"
     is_open_destination: bool = True
 
@@ -374,7 +357,7 @@ class University(DestinationCard):
     cost: ResourceBank = ResourceBank(resin=1, pebble=2)
     base_points: int = 3
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Doctor"
 
     def on_worker_placed(
@@ -397,8 +380,8 @@ class ClockTower(GovernanceCard):
     cost: ResourceBank = ResourceBank(twig=3, pebble=1)
     base_points: int = 0
     unique: bool = True
-    copies_in_deck: int = 1
-    paired_with: str | None = None  # TODO: confirm pairing
+    copies_in_deck: int = 3
+    paired_with: str | None = "Historian"
 
     def on_card_played(
         self, game: GameState, player: Player, played_card: Card
@@ -415,7 +398,7 @@ class Courthouse(GovernanceCard):
     cost: ResourceBank = ResourceBank(twig=1, resin=1, pebble=2)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Judge"
 
     def on_card_played(
@@ -433,7 +416,7 @@ class Crane(GovernanceCard):
     cost: ResourceBank = ResourceBank(pebble=1)
     base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 3
     paired_with: str | None = "Architect"
 
     def on_card_played(
@@ -441,6 +424,24 @@ class Crane(GovernanceCard):
     ) -> None:
         """Discard Crane to decrease Construction cost by 3 any resource."""
         # TODO: implement self-discard discount
+        pass
+
+
+@register
+class Dungeon(GovernanceCard):
+    name: str = "Dungeon"
+    category: CardCategory = CardCategory.CONSTRUCTION
+    cost: ResourceBank = ResourceBank(resin=1, pebble=2)
+    base_points: int = 0
+    unique: bool = True
+    copies_in_deck: int = 2
+    paired_with: str | None = "Ranger"
+
+    def on_card_played(
+        self, game: GameState, player: Player, played_card: Card
+    ) -> None:
+        """Place city Critter beneath to decrease played card cost by 3."""
+        # TODO: implement prisoner mechanic
         pass
 
 
@@ -457,7 +458,7 @@ class Ruins(TravelerCard):
     base_points: int = 0
     unique: bool = False
     copies_in_deck: int = 3
-    paired_with: str | None = None  # no critter pair
+    paired_with: str | None = "Peddler"
 
     def on_play(self, game: GameState, player: Player) -> None:
         """Discard a Construction from city, gain its cost back, draw 2 cards."""

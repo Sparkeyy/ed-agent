@@ -47,7 +47,7 @@ class TestCardCreation:
         assert farm.cost == ResourceBank(twig=2, resin=1)
         assert farm.base_points == 1
         assert farm.unique is False
-        assert farm.copies_in_deck == 3
+        assert farm.copies_in_deck == 8
         assert farm.paired_with == "Husband"
         assert farm.occupies_city_space is True
 
@@ -67,15 +67,36 @@ class TestCardCreation:
         fool = get_card_definition("Fool")
         assert fool.base_points == -2
 
-    def test_unique_card_one_copy(self) -> None:
-        castle = get_card_definition("Castle")
-        assert castle.unique is True
-        assert castle.copies_in_deck == 1
+    def test_unique_card_correct_copies(self) -> None:
+        """Unique cards have 2 copies, except Clock Tower/Crane/Fair Grounds/
+        Historian/Innkeeper/Shopkeeper which have 3."""
+        three_copy_uniques = {
+            "Clock Tower", "Crane", "Fair Grounds",
+            "Historian", "Innkeeper", "Shopkeeper",
+        }
+        for name, cls in CardRegistry.all().items():
+            instance = cls()
+            if instance.unique:
+                if name in three_copy_uniques:
+                    assert instance.copies_in_deck == 3, (
+                        f"{name} should have 3 copies"
+                    )
+                else:
+                    assert instance.copies_in_deck == 2, (
+                        f"{name} should have 2 copies"
+                    )
 
-    def test_common_card_three_copies(self) -> None:
-        farm = get_card_definition("Farm")
-        assert farm.unique is False
-        assert farm.copies_in_deck == 3
+    def test_common_card_copies(self) -> None:
+        """Common cards have specific copy counts: Farm=8, Husband=4, Wife=4,
+        others=3."""
+        special_counts = {"Farm": 8, "Husband": 4, "Wife": 4}
+        for name, cls in CardRegistry.all().items():
+            instance = cls()
+            if not instance.unique:
+                expected = special_counts.get(name, 3)
+                assert instance.copies_in_deck == expected, (
+                    f"{name} should have {expected} copies, got {instance.copies_in_deck}"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -158,20 +179,45 @@ class TestCardRegistry:
 
 
 class TestBuildDeck:
-    def test_deck_size(self) -> None:
-        """Deck should contain exactly the sum of all copies_in_deck values.
-
-        The standard Everdell base game has 128 cards. If this count differs,
-        card definitions need copy-count adjustments or missing cards need adding.
-        """
+    def test_deck_size_128(self) -> None:
+        """Deck should contain exactly 128 cards (standard Everdell base game)."""
         deck = build_deck()
-        # Verify deck matches our definitions
-        from ed_engine.cards import CardRegistry
+        assert len(deck) == 128, f"Deck has {len(deck)} cards, expected 128"
 
-        expected = sum(cls().copies_in_deck for cls in CardRegistry.all().values())
-        assert len(deck) == expected
-        # Track progress toward the full 128-card deck
-        assert len(deck) >= 80, f"Deck too small: {len(deck)} cards"
+    def test_construction_copies_total_65(self) -> None:
+        """All constructions should sum to 65 copies."""
+        deck = build_deck()
+        construction_count = sum(
+            1 for c in deck if c.category == CardCategory.CONSTRUCTION
+        )
+        assert construction_count == 65, (
+            f"Constructions: {construction_count}, expected 65"
+        )
+
+    def test_critter_copies_total_63(self) -> None:
+        """All critters should sum to 63 copies."""
+        deck = build_deck()
+        critter_count = sum(
+            1 for c in deck if c.category == CardCategory.CRITTER
+        )
+        assert critter_count == 63, (
+            f"Critters: {critter_count}, expected 63"
+        )
+
+    def test_farm_has_8_copies(self) -> None:
+        deck = build_deck()
+        farm_count = sum(1 for c in deck if c.name == "Farm")
+        assert farm_count == 8
+
+    def test_husband_has_4_copies(self) -> None:
+        deck = build_deck()
+        husband_count = sum(1 for c in deck if c.name == "Husband")
+        assert husband_count == 4
+
+    def test_wife_has_4_copies(self) -> None:
+        deck = build_deck()
+        wife_count = sum(1 for c in deck if c.name == "Wife")
+        assert wife_count == 4
 
     def test_deck_has_constructions_and_critters(self) -> None:
         deck = build_deck()
@@ -190,17 +236,76 @@ class TestBuildDeck:
             CardType.PURPLE_PROSPERITY,
         }
 
-    def test_unique_cards_appear_once(self) -> None:
-        deck = build_deck()
-        unique_names = [c.name for c in deck if c.unique]
-        for name in set(unique_names):
-            assert unique_names.count(name) == 1, f"{name} appears more than once"
+    def test_correct_pairings_bidirectional(self) -> None:
+        """Every pairing should be bidirectional: if A pairs with B, B pairs with A.
 
-    def test_common_cards_appear_three_times(self) -> None:
-        deck = build_deck()
-        common_names = [c.name for c in deck if not c.unique]
-        for name in set(common_names):
-            assert common_names.count(name) == 3, f"{name} should appear 3 times"
+        Special case: Farm pairs with Husband (primary), but Wife also pairs
+        with Farm. This many-to-one relationship is expected.
+        """
+        # Cards where multiple critters pair with one construction
+        many_to_one = {"Wife": "Farm"}  # Wife->Farm is valid even though Farm->Husband
+
+        all_cards = CardRegistry.all()
+        for name, cls in all_cards.items():
+            instance = cls()
+            if instance.paired_with is not None:
+                partner_name = instance.paired_with
+                # Ever Tree pairs with any critter — skip
+                if partner_name not in all_cards:
+                    continue
+                # Skip known many-to-one pairings
+                if name in many_to_one:
+                    assert many_to_one[name] == partner_name, (
+                        f"{name} should pair with {many_to_one[name]}, "
+                        f"got {partner_name}"
+                    )
+                    continue
+                partner_cls = all_cards[partner_name]
+                partner = partner_cls()
+                assert partner.paired_with == name, (
+                    f"{name} pairs with {partner_name}, but {partner_name} "
+                    f"pairs with {partner.paired_with!r} (expected {name!r})"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Card type correctness
+# ---------------------------------------------------------------------------
+
+
+class TestCardTypes:
+    def test_dungeon_is_governance(self) -> None:
+        """Dungeon should be Blue/Governance, not Red/Destination."""
+        dungeon = get_card_definition("Dungeon")
+        assert dungeon.card_type == CardType.BLUE_GOVERNANCE
+
+    def test_fair_grounds_is_unique(self) -> None:
+        fg = get_card_definition("Fair Grounds")
+        assert fg.unique is True
+
+    def test_inn_is_common(self) -> None:
+        inn = get_card_definition("Inn")
+        assert inn.unique is False
+
+    def test_post_office_is_common(self) -> None:
+        po = get_card_definition("Post Office")
+        assert po.unique is False
+
+    def test_husband_is_common(self) -> None:
+        h = get_card_definition("Husband")
+        assert h.unique is False
+
+    def test_wife_is_common(self) -> None:
+        w = get_card_definition("Wife")
+        assert w.unique is False
+
+    def test_woodcarver_is_common(self) -> None:
+        wc = get_card_definition("Woodcarver")
+        assert wc.unique is False
+
+    def test_fool_is_unique(self) -> None:
+        f = get_card_definition("Fool")
+        assert f.unique is True
 
 
 # ---------------------------------------------------------------------------
@@ -303,18 +408,17 @@ class TestCardAbilities:
 
     def test_palace_scores_unique_constructions(self) -> None:
         palace = get_card_definition("Palace")
-        inn = get_card_definition("Inn")
         chapel = get_card_definition("Chapel")
-        player = _make_player(city=[palace, inn, chapel])
+        player = _make_player(city=[palace, chapel])
         game = _make_game()
-        # palace + inn + chapel are all unique constructions = 3
-        assert palace.on_score(game, player) == 3
+        # palace + chapel are unique constructions = 2
+        assert palace.on_score(game, player) == 2
 
     def test_school_scores_common_critters(self) -> None:
         school = get_card_definition("School")
-        fool = get_card_definition("Fool")
         wanderer = get_card_definition("Wanderer")
-        player = _make_player(city=[school, fool, wanderer])
+        teacher = get_card_definition("Teacher")
+        player = _make_player(city=[school, wanderer, teacher])
         game = _make_game()
         assert school.on_score(game, player) == 2
 

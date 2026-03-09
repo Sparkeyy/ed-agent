@@ -33,7 +33,7 @@ class Architect(ProsperityCard):
     cost: ResourceBank = ResourceBank(berry=4)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Crane"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -48,7 +48,7 @@ class King(ProsperityCard):
     cost: ResourceBank = ResourceBank(berry=6)
     base_points: int = 4
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Castle"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -61,10 +61,10 @@ class King(ProsperityCard):
 class Wife(ProsperityCard):
     name: str = "Wife"
     category: CardCategory = CardCategory.CRITTER
-    cost: ResourceBank = ResourceBank(berry=3)
+    cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 2
-    unique: bool = True
-    copies_in_deck: int = 1
+    unique: bool = False
+    copies_in_deck: int = 4
     paired_with: str | None = "Farm"
 
     def on_score(self, game: GameState, player: Player) -> int:
@@ -120,7 +120,7 @@ class Doctor(ProductionCard):
     cost: ResourceBank = ResourceBank(berry=4)
     base_points: int = 4
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "University"
 
     def on_production(self, game: GameState, player: Player) -> None:
@@ -135,8 +135,8 @@ class Husband(ProductionCard):
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=3)
     base_points: int = 2
-    unique: bool = True
-    copies_in_deck: int = 1
+    unique: bool = False
+    copies_in_deck: int = 4
     paired_with: str | None = "Farm"
 
     def on_production(self, game: GameState, player: Player) -> None:
@@ -168,7 +168,7 @@ class Monk(ProductionCard):
     cost: ResourceBank = ResourceBank(berry=1)
     base_points: int = 0
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Monastery"
 
     def on_production(self, game: GameState, player: Player) -> None:
@@ -185,7 +185,7 @@ class Peddler(ProductionCard):
     base_points: int = 1
     unique: bool = False
     copies_in_deck: int = 3
-    paired_with: str | None = "General Store"
+    paired_with: str | None = "Ruins"
 
     def on_production(self, game: GameState, player: Player) -> None:
         """Trade up to 2 resources for 2 other resources."""
@@ -215,9 +215,9 @@ class Woodcarver(ProductionCard):
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 2
-    unique: bool = True
-    copies_in_deck: int = 1
-    paired_with: str | None = None  # TODO: confirm pairing
+    unique: bool = False
+    copies_in_deck: int = 3
+    paired_with: str | None = "Storehouse"
 
     def on_production(self, game: GameState, player: Player) -> None:
         """Pay up to 3 twigs, gain 1 pt per twig paid."""
@@ -237,7 +237,7 @@ class Queen(DestinationCard):
     cost: ResourceBank = ResourceBank(berry=5)
     base_points: int = 4
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Palace"
 
     def on_worker_placed(
@@ -260,8 +260,8 @@ class Historian(GovernanceCard):
     cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
-    paired_with: str | None = "School"
+    copies_in_deck: int = 3
+    paired_with: str | None = "Clock Tower"
 
     def on_card_played(
         self, game: GameState, player: Player, played_card: Card
@@ -278,7 +278,7 @@ class Innkeeper(GovernanceCard):
     cost: ResourceBank = ResourceBank(berry=1)
     base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 3
     paired_with: str | None = "Inn"
 
     def on_card_played(
@@ -296,7 +296,7 @@ class Judge(GovernanceCard):
     cost: ResourceBank = ResourceBank(berry=3)
     base_points: int = 2
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Courthouse"
 
     def on_card_played(
@@ -314,7 +314,7 @@ class Shopkeeper(GovernanceCard):
     cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 3
     paired_with: str | None = "General Store"
 
     def on_card_played(
@@ -337,7 +337,7 @@ class Bard(TravelerCard):
     cost: ResourceBank = ResourceBank(berry=3)
     base_points: int = 0
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Theater"
 
     def on_play(self, game: GameState, player: Player) -> None:
@@ -352,8 +352,8 @@ class Fool(TravelerCard):
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=3)
     base_points: int = -2
-    unique: bool = False
-    copies_in_deck: int = 3
+    unique: bool = True
+    copies_in_deck: int = 2
     paired_with: str | None = "Fair Grounds"
 
     def on_play(self, game: GameState, player: Player) -> None:
@@ -383,9 +383,9 @@ class Ranger(TravelerCard):
     name: str = "Ranger"
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=2)
-    base_points: int = 2
+    base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Dungeon"
 
     def on_play(self, game: GameState, player: Player) -> None:
@@ -399,9 +399,9 @@ class Shepherd(TravelerCard):
     name: str = "Shepherd"
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=3)
-    base_points: int = 3
+    base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Chapel"
 
     def on_play(self, game: GameState, player: Player) -> None:
@@ -417,7 +417,7 @@ class Undertaker(TravelerCard):
     cost: ResourceBank = ResourceBank(berry=2)
     base_points: int = 1
     unique: bool = True
-    copies_in_deck: int = 1
+    copies_in_deck: int = 2
     paired_with: str | None = "Cemetery"
 
     def on_play(self, game: GameState, player: Player) -> None:
@@ -431,10 +431,10 @@ class Wanderer(TravelerCard):
     name: str = "Wanderer"
     category: CardCategory = CardCategory.CRITTER
     cost: ResourceBank = ResourceBank(berry=2)
-    base_points: int = 0
+    base_points: int = 1
     unique: bool = False
     copies_in_deck: int = 3
-    paired_with: str | None = None
+    paired_with: str | None = "Lookout"
     occupies_city_space: bool = False
 
     def on_play(self, game: GameState, player: Player) -> None:

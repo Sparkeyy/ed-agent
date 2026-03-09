@@ -38,3 +38,6 @@ services:
       - VITE_API_URL=http://localhost:4242
     depends_on:
       - ed-engine
+
+volumes:
+  engine-data:

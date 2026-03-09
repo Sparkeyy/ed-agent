@@ -173,5 +173,13 @@ class PlayerStore:
             "move_accuracy": accuracy,
         }
 
+    def get_elo_history(self, player_id: str, limit: int = 50) -> list[int]:
+        """Return list of elo_after values from game_history, oldest first."""
+        rows = self._conn.execute(
+            "SELECT elo_after FROM game_history WHERE player_id = ? ORDER BY played_at ASC LIMIT ?",
+            (player_id, limit),
+        ).fetchall()
+        return [r[0] for r in rows]
+
     def close(self) -> None:
         self._conn.close()

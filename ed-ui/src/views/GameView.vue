@@ -81,6 +81,18 @@ const workerDisplay = computed(() => {
   return { available, total: store.myPlayer.workers_total }
 })
 
+const leftBasicLocations = computed(() => {
+  const all = store.state?.basic_locations || []
+  const mid = Math.ceil(all.length / 2)
+  return all.slice(0, mid)
+})
+
+const rightBasicLocations = computed(() => {
+  const all = store.state?.basic_locations || []
+  const mid = Math.ceil(all.length / 2)
+  return all.slice(mid)
+})
+
 const leftForest = computed(() => {
   const all = store.state?.forest_locations || []
   const mid = Math.ceil(all.length / 2)
@@ -328,31 +340,34 @@ function goToScores() {
       </div>
     </div>
 
-    <!-- Middle: Events → Locations → Forest|Meadow|Forest → Haven/Journey -->
-    <div class="middle-area">
-      <!-- Events row -->
-      <EventsPanel
-        v-if="store.state.events"
-        :events="store.state.events"
-        :claimable-event-ids="claimableEventIds"
-        @claim-event="handleClaimEvent"
-      />
+    <!-- Board: three-column layout -->
+    <div class="board-area">
+      <!-- Left column: basic locations -->
+      <div class="board-left-locs">
+        <GameBoard
+          :basic-locations="leftBasicLocations"
+          :forest-locations="[]"
+          :haven-locations="[]"
+          :journey-locations="[]"
+          :valid-location-ids="validLocationIds"
+          :player-names="playerNamesMap"
+          :current-season="store.myPlayer?.season ?? 'winter'"
+          @place-worker="handlePlaceWorker"
+        />
+      </div>
 
-      <!-- Basic locations row -->
-      <GameBoard
-        :basic-locations="store.state.basic_locations"
-        :forest-locations="[]"
-        :haven-locations="[]"
-        :journey-locations="[]"
-        :valid-location-ids="validLocationIds"
-        :player-names="playerNamesMap"
-        :current-season="store.myPlayer?.season ?? 'winter'"
-        @place-worker="handlePlaceWorker"
-      />
+      <!-- Center column -->
+      <div class="board-center">
+        <!-- Special Events -->
+        <EventsPanel
+          v-if="store.state.events"
+          :events="store.state.events"
+          :claimable-event-ids="claimableEventIds"
+          @claim-event="handleClaimEvent"
+        />
 
-      <!-- Forest | Meadow | Forest row -->
-      <div class="meadow-row">
-        <div class="forest-side">
+        <!-- Forest row -->
+        <div class="forest-row">
           <GameBoard
             :basic-locations="[]"
             :forest-locations="leftForest"
@@ -363,15 +378,6 @@ function goToScores() {
             :current-season="store.myPlayer?.season ?? 'winter'"
             @place-worker="handlePlaceWorker"
           />
-        </div>
-        <div class="meadow-center">
-          <MeadowDisplay
-            :meadow="store.meadow"
-            :playable-indices="playableMeadowIndices"
-            @play-from-meadow="handlePlayFromMeadow"
-          />
-        </div>
-        <div class="forest-side">
           <GameBoard
             :basic-locations="[]"
             :forest-locations="rightForest"
@@ -383,19 +389,42 @@ function goToScores() {
             @place-worker="handlePlaceWorker"
           />
         </div>
+
+        <!-- The Meadow -->
+        <MeadowDisplay
+          :meadow="store.meadow"
+          :playable-indices="playableMeadowIndices"
+          @play-from-meadow="handlePlayFromMeadow"
+        />
+
+        <!-- Haven + Journey -->
+        <div class="haven-journey-row">
+          <GameBoard
+            :basic-locations="[]"
+            :forest-locations="[]"
+            :haven-locations="store.state.haven_locations || []"
+            :journey-locations="store.state.journey_locations || []"
+            :valid-location-ids="validLocationIds"
+            :player-names="playerNamesMap"
+            :current-season="store.myPlayer?.season ?? 'winter'"
+            @place-worker="handlePlaceWorker"
+          />
+        </div>
       </div>
 
-      <!-- Haven + Journey row -->
-      <GameBoard
-        :basic-locations="[]"
-        :forest-locations="[]"
-        :haven-locations="store.state.haven_locations || []"
-        :journey-locations="store.state.journey_locations || []"
-        :valid-location-ids="validLocationIds"
-        :player-names="playerNamesMap"
-        :current-season="store.myPlayer?.season ?? 'winter'"
-        @place-worker="handlePlaceWorker"
-      />
+      <!-- Right column: basic locations -->
+      <div class="board-right-locs">
+        <GameBoard
+          :basic-locations="rightBasicLocations"
+          :forest-locations="[]"
+          :haven-locations="[]"
+          :journey-locations="[]"
+          :valid-location-ids="validLocationIds"
+          :player-names="playerNamesMap"
+          :current-season="store.myPlayer?.season ?? 'winter'"
+          @place-worker="handlePlaceWorker"
+        />
+      </div>
     </div>
 
     <!-- City tabs -->
@@ -570,35 +599,46 @@ function goToScores() {
   text-transform: capitalize;
 }
 
-/* Middle area */
-.middle-area {
+/* Board area: three-column layout */
+.board-area {
+  display: grid;
+  grid-template-columns: 180px 1fr 180px;
+  grid-template-rows: 1fr;
+  gap: 8px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  padding: 8px;
+}
+
+.board-left-locs,
+.board-right-locs {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: var(--gap-sm);
   gap: var(--gap-sm);
 }
 
-/* Forest | Meadow | Forest row */
-.meadow-row {
+.board-center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  min-width: 0;
+}
+
+.forest-row {
   display: flex;
   gap: var(--gap-sm);
-  align-items: flex-start;
   justify-content: center;
-  width: 100%;
 }
 
-.forest-side {
-  flex: 0 0 200px;
-  min-width: 160px;
+.forest-row > * {
+  flex: 1;
+  min-width: 0;
 }
 
-.meadow-center {
-  flex: 0 1 auto;
-  min-width: 300px;
+.haven-journey-row {
+  display: flex;
+  justify-content: center;
 }
 
 /* City section */

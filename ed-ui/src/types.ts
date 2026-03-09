@@ -98,12 +98,27 @@ export const RESOURCE_ICONS: Record<keyof ResourceBank, string> = {
   berry: '\u{1FAD0}',
 }
 
+export const RESOURCE_IMAGES: Record<keyof ResourceBank, string> = {
+  twig: '/assets/resources/twig.png',
+  resin: '/assets/resources/resin.png',
+  pebble: '/assets/resources/pebble.png',
+  berry: '/assets/resources/berry.png',
+}
+
+export const CARD_TYPE_IMAGES: Record<CardType, string> = {
+  tan_traveler: '/assets/card-types/traveler.png',
+  green_production: '/assets/card-types/production.png',
+  red_destination: '/assets/card-types/destination.png',
+  blue_governance: '/assets/card-types/governance.png',
+  purple_prosperity: '/assets/card-types/prosperity.png',
+}
+
 // Move evaluation from ed-ai service
 export type MoveQuality = 'brilliant' | 'good' | 'inaccuracy' | 'mistake' | 'blunder'
 
 export interface MoveAlternative {
   action: ValidAction
-  description: string
+  reason: string
   score_delta: number
 }
 

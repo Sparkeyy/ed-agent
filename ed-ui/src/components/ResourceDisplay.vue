@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { ResourceBank } from '../types'
-import { RESOURCE_ICONS } from '../types'
+import { RESOURCE_ICONS, RESOURCE_IMAGES } from '../types'
 
 withDefaults(defineProps<{
   resources: ResourceBank
@@ -17,6 +18,8 @@ const resourceLabels: Record<keyof ResourceBank, string> = {
   pebble: 'Pebbles',
   berry: 'Berries',
 }
+
+const imgFailed = ref<Record<string, boolean>>({})
 </script>
 
 <template>
@@ -26,7 +29,14 @@ const resourceLabels: Record<keyof ResourceBank, string> = {
       :key="key"
       class="resource-item"
     >
-      <span class="resource-icon">{{ RESOURCE_ICONS[key] }}</span>
+      <img
+        v-if="!imgFailed[key]"
+        :src="RESOURCE_IMAGES[key]"
+        :alt="resourceLabels[key]"
+        class="resource-icon resource-img"
+        @error="imgFailed[key] = true"
+      >
+      <span v-else class="resource-icon">{{ RESOURCE_ICONS[key] }}</span>
       <span class="resource-count">{{ resources[key] }}</span>
       <span v-if="!compact" class="resource-label">{{ resourceLabels[key] }}</span>
     </div>
@@ -63,8 +73,19 @@ const resourceLabels: Record<keyof ResourceBank, string> = {
   font-size: 1rem;
 }
 
+.resource-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .compact .resource-icon {
   font-size: 0.85rem;
+}
+
+.compact .resource-img {
+  width: 16px;
+  height: 16px;
 }
 
 .resource-count {

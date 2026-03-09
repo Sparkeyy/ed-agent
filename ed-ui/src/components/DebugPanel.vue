@@ -141,7 +141,7 @@ defineExpose({ toggle, captureAction })
               class="alt-item"
             >
               <div class="alt-action">{{ describeAction(alt.action) }}</div>
-              <div class="alt-desc">{{ alt.description }}</div>
+              <div class="alt-desc">{{ alt.reason }}</div>
               <div class="alt-delta" :class="{ positive: alt.score_delta > 0 }">
                 {{ alt.score_delta > 0 ? '+' : '' }}{{ alt.score_delta.toFixed(1) }}
               </div>

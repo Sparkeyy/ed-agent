@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { CardData, ResourceBank } from '../types'
-import { CARD_TYPE_LABELS, RESOURCE_ICONS } from '../types'
+import { CARD_TYPE_LABELS, CARD_TYPE_IMAGES, RESOURCE_ICONS, RESOURCE_IMAGES } from '../types'
+
+const typeImgFailed = ref<Record<string, boolean>>({})
+const resImgFailed = ref<Record<string, boolean>>({})
 
 withDefaults(defineProps<{
   card: CardData
@@ -55,12 +59,27 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
         <div class="card-name">{{ card.name }}</div>
         <div class="card-meta">
           <span class="card-category" :class="categoryCls(card.category)">{{ categoryLabel(card.category) }}</span>
+          <img
+            v-if="!typeImgFailed[card.card_type]"
+            :src="CARD_TYPE_IMAGES[card.card_type]"
+            :alt="CARD_TYPE_LABELS[card.card_type]"
+            class="card-type-icon"
+            @error="typeImgFailed[card.card_type] = true"
+          >
           <span class="card-type-label">{{ CARD_TYPE_LABELS[card.card_type] }}</span>
           <span v-if="card.unique" class="unique-badge">U</span>
         </div>
         <div class="card-cost">
           <span v-for="entry in costEntries(card.cost)" :key="entry.key" class="cost-item">
-            {{ entry.icon }}<span class="cost-num">{{ entry.count }}</span>
+            <img
+              v-if="!resImgFailed[entry.key]"
+              :src="RESOURCE_IMAGES[entry.key as keyof typeof RESOURCE_IMAGES]"
+              :alt="entry.key"
+              class="cost-icon-img"
+              @error="resImgFailed[entry.key] = true"
+            >
+            <span v-else>{{ entry.icon }}</span>
+            <span class="cost-num">{{ entry.count }}</span>
           </span>
           <span v-if="costEntries(card.cost).length === 0" class="cost-free">Free</span>
         </div>
@@ -188,11 +207,24 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   background: #5a6b7a;
 }
 
+.card-type-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
 .card-type-label {
   font-family: var(--font-body);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.cost-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .unique-badge {

@@ -48,6 +48,9 @@ function isPlayable(index: number): boolean {
 <style scoped>
 .meadow-section {
   padding: var(--gap-md);
+  background: linear-gradient(135deg, rgba(74, 124, 89, 0.06), rgba(74, 124, 89, 0.02));
+  border: 1.5px solid rgba(74, 124, 89, 0.2);
+  border-radius: var(--radius-lg);
 }
 
 .meadow-title {

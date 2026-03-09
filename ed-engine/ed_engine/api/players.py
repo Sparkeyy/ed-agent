@@ -58,5 +58,20 @@ async def get_profile(username: str) -> dict:
         raise HTTPException(status_code=404, detail="Player not found")
     stats = _store.get_player_stats(player["id"])
     stats["classification"] = classify(stats["elo"])
-    stats["game_history"] = _store.get_game_history(player["id"])
+    stats["avg_move_accuracy"] = stats.pop("move_accuracy", 0.0)
+    stats["elo_history"] = _store.get_elo_history(player["id"])
+
+    # Shape game_history into recent_games format
+    raw_history = _store.get_game_history(player["id"])
+    recent_games = []
+    for g in raw_history:
+        recent_games.append({
+            "game_id": g["game_id"],
+            "date": g.get("played_at", ""),
+            "players": 0,  # not tracked per-game yet
+            "placement": g["placement"],
+            "score": g["final_score"],
+            "opponent_scores": [],
+        })
+    stats["recent_games"] = recent_games
     return stats

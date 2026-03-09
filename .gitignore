@@ -23,3 +23,9 @@ docker-compose.override.yml
 
 # OS
 .DS_Store
+
+# Gas Town (added by gt)
+.runtime/
+.claude/
+.logs/
+.beads/

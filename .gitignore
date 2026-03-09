@@ -28,3 +28,4 @@ docker-compose.override.yml
 .runtime/
 .claude/
 .logs/
+.beads/

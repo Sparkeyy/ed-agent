@@ -7,10 +7,10 @@ trajectories for PPO training.
 from __future__ import annotations
 
 import logging
+import multiprocessing as mp
 import random
 import sys
 import traceback
-from multiprocessing import Pool
 from typing import Any
 
 import numpy as np
@@ -33,7 +33,7 @@ def _make_player_names(num_players: int) -> list[str]:
 
 
 def play_one_game(
-    network_state_dict: dict | None,
+    network_weights_bytes: bytes | None,
     seed: int | None = None,
     num_players: int | None = None,
     temperature: float = 1.0,
@@ -45,7 +45,9 @@ def play_one_game(
     and creates a fresh network instance to avoid pickling issues.
 
     Args:
-        network_state_dict: Serialized network weights (or None for random policy)
+        network_weights_bytes: Serialized network weights as bytes (via torch.save
+            to BytesIO), or None for random policy. Using bytes avoids PyTorch
+            tensor pickle deadlocks with multiprocessing fork.
         seed: Random seed for reproducibility
         num_players: 2-4 (or None for random)
         temperature: Action sampling temperature
@@ -56,6 +58,7 @@ def play_one_game(
         - transitions: list of (state, action, log_prob, value, mask) tuples
         - final_score: int
     """
+    import io
     import torch
     from ed_engine.engine.game_manager import GameManager
     from ed_ai.rl.network import EverdellNetwork
@@ -68,10 +71,12 @@ def play_one_game(
     player_names = _make_player_names(num_players)
     gm = GameManager(player_names, seed=seed)
 
-    # Create network
+    # Create network — deserialize from bytes to avoid pickle issues
     net = EverdellNetwork()
-    if network_state_dict is not None:
-        net.load_state_dict(network_state_dict)
+    if network_weights_bytes is not None:
+        buf = io.BytesIO(network_weights_bytes)
+        state_dict = torch.load(buf, map_location="cpu", weights_only=True)
+        net.load_state_dict(state_dict)
     net.eval()
 
     # Per-player trajectories
@@ -168,6 +173,17 @@ def _play_game_wrapper(args: tuple) -> list[dict]:
     return play_one_game(*args)
 
 
+def _serialize_state_dict(state_dict: dict | None) -> bytes | None:
+    """Serialize PyTorch state dict to bytes for safe multiprocessing transfer."""
+    if state_dict is None:
+        return None
+    import io
+    import torch
+    buf = io.BytesIO()
+    torch.save(state_dict, buf)
+    return buf.getvalue()
+
+
 def parallel_self_play(
     network_state_dict: dict | None,
     num_games: int = 64,
@@ -193,12 +209,15 @@ def parallel_self_play(
 
     rng = random.Random(base_seed)
 
+    # Serialize state dict to bytes once — avoids PyTorch tensor pickle deadlocks
+    weights_bytes = _serialize_state_dict(network_state_dict)
+
     # Prepare args for each game
     args_list = []
     for i in range(num_games):
         game_seed = rng.randint(0, 2**31) if base_seed is not None else None
         num_players = rng.choice([2, 3, 4])
-        args_list.append((network_state_dict, game_seed, num_players, temperature))
+        args_list.append((weights_bytes, game_seed, num_players, temperature))
 
     # Run games in parallel
     all_trajectories: list[Trajectory] = []
@@ -209,7 +228,9 @@ def parallel_self_play(
             game_results = play_one_game(*args)
             all_trajectories.extend(_convert_results(game_results))
     else:
-        with Pool(processes=num_workers) as pool:
+        # Use 'spawn' context to avoid PyTorch fork deadlocks
+        ctx = mp.get_context("spawn")
+        with ctx.Pool(processes=num_workers) as pool:
             for game_results in pool.imap_unordered(_play_game_wrapper, args_list):
                 all_trajectories.extend(_convert_results(game_results))
 
@@ -218,21 +239,21 @@ def parallel_self_play(
 
 def _convert_results(game_results: list[dict]) -> list[Trajectory]:
     """Convert raw game results to Trajectory objects."""
+    from ed_ai.rl.ppo_agent import Transition
+
     trajectories = []
     for result in game_results:
         traj = Trajectory()
         for state, action, log_prob, value, mask in result["transitions"]:
-            traj.transitions.append(
-                __import__("ed_ai.rl.ppo_agent", fromlist=["Transition"]).Transition(
-                    state=state,
-                    action=action,
-                    log_prob=log_prob,
-                    value=value,
-                    reward=0.0,
-                    done=False,
-                    action_mask=mask,
-                )
-            )
+            traj.transitions.append(Transition(
+                state=state,
+                action=action,
+                log_prob=log_prob,
+                value=value,
+                reward=0.0,
+                done=False,
+                action_mask=mask,
+            ))
         traj.finalize(result["final_score"])
         if traj.transitions:
             trajectories.append(traj)

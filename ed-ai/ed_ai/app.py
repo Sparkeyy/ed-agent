@@ -260,3 +260,78 @@ async def list_games() -> list[GameSession]:
         GameSession(**player.status())
         for player in _active_games.values()
     ]
+
+
+# --- RL Training Endpoints ---
+
+@app.get("/rl/status")
+async def rl_status() -> dict[str, Any]:
+    """Get RL model and training status."""
+    from ed_ai.rl.train import get_training_status
+    from ed_ai.rl.checkpoint import list_checkpoints, DEFAULT_MODEL_DIR
+
+    training = get_training_status()
+    checkpoints = list_checkpoints()
+    rl_loaded = bool(getattr(app, "_rl_loaded", False))
+
+    return {
+        "training": training,
+        "checkpoints": checkpoints,
+        "model_dir": str(DEFAULT_MODEL_DIR),
+        "rl_available": len(checkpoints) > 0,
+    }
+
+
+class TrainRequest(BaseModel):
+    num_batches: int = Field(default=10000, ge=1, le=1000000)
+    games_per_batch: int = Field(default=64, ge=1, le=512)
+    num_workers: int | None = None
+    lr: float = Field(default=3e-4, gt=0)
+    temperature: float = Field(default=1.0, gt=0)
+    resume_from: str | None = None
+
+
+@app.post("/rl/train")
+async def rl_train(req: TrainRequest) -> dict[str, Any]:
+    """Start RL training in background thread."""
+    from ed_ai.rl.train import start_background_training
+
+    result = start_background_training(
+        num_batches=req.num_batches,
+        games_per_batch=req.games_per_batch,
+        num_workers=req.num_workers,
+        lr=req.lr,
+        temperature=req.temperature,
+        resume_from=req.resume_from,
+    )
+    return result
+
+
+@app.post("/rl/cancel")
+async def rl_cancel() -> dict[str, Any]:
+    """Cancel active RL training."""
+    from ed_ai.rl.train import cancel_training
+    return cancel_training()
+
+
+@app.get("/rl/progress")
+async def rl_progress(last_n: int = 50) -> dict[str, Any]:
+    """Get recent training progress metrics."""
+    from ed_ai.rl.checkpoint import DEFAULT_MODEL_DIR
+    import json
+
+    progress_file = DEFAULT_MODEL_DIR / "training_progress.jsonl"
+    if not progress_file.exists():
+        return {"metrics": [], "total_entries": 0}
+
+    lines = progress_file.read_text().strip().split("\n")
+    total = len(lines)
+    recent = lines[-last_n:] if last_n < total else lines
+    metrics = []
+    for line in recent:
+        try:
+            metrics.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+    return {"metrics": metrics, "total_entries": total}

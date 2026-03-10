@@ -20,9 +20,28 @@ logger = logging.getLogger("ed_ai.agent")
 # Season ordering for heuristic decisions
 _SEASON_ORDER = {"spring": 0, "summer": 1, "autumn": 2, "winter": 3}
 
+# RL model cache (loaded once per difficulty)
+_rl_cache: dict[str, tuple[Any, float]] = {}
+
+
+def _try_load_rl(difficulty: str) -> tuple[Any, float] | None:
+    """Attempt to load RL model for given difficulty. Returns (network, temperature) or None."""
+    if difficulty in _rl_cache:
+        return _rl_cache[difficulty]
+    try:
+        from ed_ai.rl.checkpoint import load_for_difficulty
+        network, temperature, _ = load_for_difficulty(difficulty)
+        _rl_cache[difficulty] = (network, temperature)
+        logger.info("RL model loaded for difficulty=%s (temp=%.1f)", difficulty, temperature)
+        return (network, temperature)
+    except (ImportError, FileNotFoundError) as e:
+        logger.debug("RL model not available for %s: %s", difficulty, e)
+        _rl_cache[difficulty] = None  # type: ignore[assignment]
+        return None
+
 
 class AIPlayer:
-    """AI opponent that polls the game engine, thinks via Ollama, and submits actions."""
+    """AI opponent that polls the game engine, thinks via Ollama or RL model, and submits actions."""
 
     MAX_RETRIES = 3
     POLL_INTERVAL = 1.0  # seconds between game state polls
@@ -35,6 +54,7 @@ class AIPlayer:
         difficulty: str = "journeyman",
         engine_url: str | None = None,
         ollama_client: OllamaClient | None = None,
+        use_rl: bool | None = None,
     ) -> None:
         self.game_id = game_id
         self.player_token = player_token
@@ -49,6 +69,14 @@ class AIPlayer:
         self.game_over = False
         self.turns_played = 0
         self.last_error: str | None = None
+        # RL model: auto-detect if available, or force with use_rl param
+        self._use_rl = use_rl
+        self._rl_model = None
+        self._rl_temperature = 1.0
+        if use_rl is not False:
+            rl = _try_load_rl(difficulty)
+            if rl:
+                self._rl_model, self._rl_temperature = rl
 
     async def play_game(self) -> None:
         """Main loop: poll for game state, think when it's our turn, submit action."""
@@ -115,15 +143,56 @@ class AIPlayer:
             resp.raise_for_status()
             return resp.json()
 
+    def _think_rl(self, state: dict[str, Any]) -> dict[str, Any] | None:
+        """Try RL model inference. Returns action dict or None on failure."""
+        if self._rl_model is None:
+            return None
+        try:
+            import torch
+            from ed_ai.rl.state_encoder import encode_state_from_dict
+            from ed_ai.rl.action_encoder import (
+                build_action_mask, build_event_id_map, decode_action,
+            )
+
+            valid_actions = state.get("valid_actions", [])
+            if not valid_actions:
+                return None
+
+            encoded = encode_state_from_dict(state, self.player_id)
+            event_id_map = build_event_id_map(state)
+            mask = build_action_mask(valid_actions, event_id_map)
+            if mask.sum() == 0:
+                return None
+
+            state_t = torch.from_numpy(encoded).float()
+            mask_t = torch.from_numpy(mask).float()
+            action_idx, _, _ = self._rl_model.get_action(
+                state_t, mask_t, temperature=self._rl_temperature
+            )
+            action = decode_action(action_idx, valid_actions, event_id_map)
+            if action and self._is_valid(action, valid_actions):
+                logger.info("RL model chose action: %s", action.get("action_type"))
+                return action
+        except Exception as exc:
+            logger.warning("RL inference failed: %s", exc)
+        return None
+
     async def think(self, state: dict[str, Any]) -> dict[str, Any]:
-        """AI reasoning: serialize state, prompt Ollama, parse, validate, fallback.
+        """AI reasoning: try RL model first, then Ollama, then heuristic fallback.
 
         Returns a valid action dict ready for submission.
         """
         valid_actions = state.get("valid_actions", [])
-        user_prompt = self.serializer.serialize(state)
+
+        # Try RL model first (<1ms inference)
+        if self._rl_model is not None:
+            rl_action = self._think_rl(state)
+            if rl_action is not None:
+                return rl_action
+            logger.debug("RL model failed, falling through to Ollama")
 
         # Try Ollama if available
+        user_prompt = self.serializer.serialize(state)
         ollama_available = await self.ollama.is_available()
         if ollama_available:
             last_error = ""

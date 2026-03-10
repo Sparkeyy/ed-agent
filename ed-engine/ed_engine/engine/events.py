@@ -100,117 +100,129 @@ BASIC_EVENT_DEFS: list[dict] = [
 
 
 SPECIAL_EVENT_DEFS: list[dict] = [
-    {
-        "id": "se_brilliant_wedding",
-        "name": "A Brilliant Wedding",
-        "description": "Have Harvester and Gatherer in your city",
-        "points": 3,
-        "required_cards": ["Harvester", "Gatherer"],
-    },
+    # Verified against physical card scans 2026-03-10
     {
         "id": "se_performer_in_residence",
         "name": "Performer in Residence",
-        "description": "Have Bard and Theater in your city",
+        "description": "Have Inn and Bard in your city. 3 VP.",
         "points": 3,
-        "required_cards": ["Bard", "Theater"],
+        "required_cards": ["Inn", "Bard"],
     },
     {
-        "id": "se_ancient_discovery",
-        "name": "An Ancient Discovery",
-        "description": "Have Mine and Historian in your city",
+        "id": "se_ancient_scrolls_discovered",
+        "name": "Ancient Scrolls Discovered",
+        "description": "Have Cemetery and Historian in your city. 3 VP.",
         "points": 3,
-        "required_cards": ["Mine", "Historian"],
+        "required_cards": ["Cemetery", "Historian"],
     },
     {
-        "id": "se_tax_relief",
-        "name": "Tax Relief",
-        "description": "Have Queen and Castle in your city",
-        "points": 3,
-        "required_cards": ["Queen", "Castle"],
-    },
-    {
-        "id": "se_pristine_chapel_ceiling",
-        "name": "Pristine Chapel Ceiling",
-        "description": "Have Chapel and Woodcarver in your city",
-        "points": 3,
-        "required_cards": ["Chapel", "Woodcarver"],
-    },
-    {
-        "id": "se_grand_tour",
-        "name": "Grand Tour",
-        "description": "Have Inn, Post Office, and Lookout in your city",
-        "points": 3,
-        "required_cards": ["Inn", "Post Office", "Lookout"],
-    },
-    {
-        "id": "se_minister_to_miscreants",
-        "name": "Minister to Miscreants",
-        "description": "Have Monk, Dungeon, and Cemetery in your city",
-        "points": 3,
-        "required_cards": ["Monk", "Dungeon", "Cemetery"],
-    },
-    {
-        "id": "se_completion_ever_tree",
-        "name": "Completion of the Ever Tree",
-        "description": "Have Ever Tree, Gatherer, and Harvester in your city",
-        "points": 3,
-        "required_cards": ["Ever Tree", "Gatherer", "Harvester"],
-    },
-    {
-        "id": "se_flying_doctor_service",
-        "name": "Flying Doctor Service",
-        "description": "Have Doctor and Postal Pigeon in your city",
-        "points": 3,
-        "required_cards": ["Doctor", "Postal Pigeon"],
-    },
-    {
-        "id": "se_jubilant_alliance",
-        "name": "A Jubilant Alliance",
-        "description": "Have King and Shepherd in your city",
-        "points": 3,
-        "required_cards": ["King", "Shepherd"],
-    },
-    {
-        "id": "se_scholarly_mission",
-        "name": "A Scholarly Mission",
-        "description": "Have Teacher and University in your city",
-        "points": 3,
-        "required_cards": ["Teacher", "University"],
-    },
-    {
-        "id": "se_small_fortune",
-        "name": "A Small Fortune",
-        "description": "Have Shopkeeper and Mine in your city",
-        "points": 3,
-        "required_cards": ["Shopkeeper", "Mine"],
-    },
-    {
-        "id": "se_great_feast",
-        "name": "The Great Feast",
-        "description": "Have General Store, Farm, and Harvester in your city",
-        "points": 3,
-        "required_cards": ["General Store", "Farm", "Harvester"],
+        "id": "se_unexpected_bounty",
+        "name": "An Unexpected Bounty",
+        "description": "Place up to 3 resources (berry, resin, pebble) here. 3 VP per resource on this Event.",
+        "points": 0,  # variable: up to 9 VP
+        "required_cards": ["Harvester", "Farm"],
+        "scoring": "variable",
     },
     {
         "id": "se_remembering_fallen",
         "name": "Remembering the Fallen",
-        "description": "Have Cemetery and Shepherd in your city",
-        "points": 3,
+        "description": "Place up to 2 Critters from your city beneath this Event. 3 VP per Critter.",
+        "points": 0,  # variable: up to 6 VP
         "required_cards": ["Cemetery", "Shepherd"],
+        "scoring": "variable",
     },
     {
-        "id": "se_unexpected_visitor",
-        "name": "An Unexpected Visitor",
-        "description": "Have Innkeeper and Fair Grounds in your city",
-        "points": 3,
-        "required_cards": ["Innkeeper", "Fair Grounds"],
+        "id": "se_brilliant_marketing_plan",
+        "name": "A Brilliant Marketing Plan",
+        "description": "Give opponents up to 3 of any resource. 2 VP per resource donated.",
+        "points": 0,  # variable: up to 6 VP
+        "required_cards": ["Shopkeeper", "Post Office"],
+        "scoring": "variable",
     },
     {
-        "id": "se_fine_collection",
-        "name": "A Fine Collection",
-        "description": "Have Judge and Courthouse in your city",
+        "id": "se_under_new_management",
+        "name": "Under New Management",
+        "description": "Place up to 3 resources here. Berry/twig = 1 VP, resin/pebble = 2 VP.",
+        "points": 0,  # variable: up to 6 VP
+        "required_cards": ["Peddler", "General Store"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_well_run_city",
+        "name": "A Well Run City",
+        "description": "Bring back one of your deployed workers. 4 VP.",
+        "points": 4,
+        "required_cards": ["Chip Sweep", "Clock Tower"],
+    },
+    {
+        "id": "se_tax_relief",
+        "name": "Tax Relief",
+        "description": "Activate Production. 3 VP.",
         "points": 3,
-        "required_cards": ["Judge", "Courthouse"],
+        "required_cards": ["Judge", "Queen"],
+    },
+    {
+        "id": "se_path_of_pilgrims",
+        "name": "Path of the Pilgrims",
+        "description": "3 VP for each worker in your Monastery.",
+        "points": 0,  # variable
+        "required_cards": ["Monastery", "Wanderer"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_ministering_to_miscreants",
+        "name": "Ministering to Miscreants",
+        "description": "3 VP for each prisoner in your Dungeon.",
+        "points": 0,  # variable
+        "required_cards": ["Monk", "Dungeon"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_evening_of_fireworks",
+        "name": "An Evening of Fireworks",
+        "description": "Place up to 3 twigs here. 2 VP per twig on this Event.",
+        "points": 0,  # variable: up to 6 VP
+        "required_cards": ["Lookout", "Miner Mole"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_pristine_chapel_ceiling",
+        "name": "Pristine Chapel Ceiling",
+        "description": "Draw 1 card and gain 1 VP per VP token on Chapel. 2 VP per VP token on Chapel.",
+        "points": 0,  # variable
+        "required_cards": ["Woodcarver", "Chapel"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_graduation_of_scholars",
+        "name": "Graduation of Scholars",
+        "description": "Place up to 3 Critters from hand beneath this Event. 2 VP per Critter.",
+        "points": 0,  # variable: up to 6 VP
+        "required_cards": ["Teacher", "University"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_croak_wart_cure",
+        "name": "Croak Wart Cure",
+        "description": "Pay 2 berries and discard 2 cards from your city. 6 VP.",
+        "points": 6,
+        "required_cards": ["Undertaker", "Barge Toad"],
+    },
+    {
+        "id": "se_capture_acorn_thieves",
+        "name": "Capture of the Acorn Thieves",
+        "description": "Place up to 2 Critters from city beneath this Event. 3 VP per Critter.",
+        "points": 0,  # variable: up to 6 VP
+        "required_cards": ["Courthouse", "Ranger"],
+        "scoring": "variable",
+    },
+    {
+        "id": "se_flying_doctor_service",
+        "name": "Flying Doctor Service",
+        "description": "3 VP for each Harvester/Gatherer pair in every City.",
+        "points": 0,  # variable
+        "required_cards": ["Doctor", "Postal Pigeon"],
+        "scoring": "variable",
     },
 ]
 

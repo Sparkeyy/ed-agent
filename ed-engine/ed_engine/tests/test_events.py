@@ -131,53 +131,53 @@ class TestClaimingEvents:
 
 
 class TestSpecialEventCardRequirements:
-    def test_brilliant_wedding_requires_husband_and_wife(self):
+    def test_performer_in_residence_requires_inn_and_bard(self):
         p = _make_player()
         mgr = EventManager(seed=None)
-        # Force the brilliant wedding into the special events
         from ed_engine.engine.events import SPECIAL_EVENT_DEFS
 
-        wedding_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_brilliant_wedding")
-        mgr.special_events = [SpecialEvent(**wedding_def)]
+        event_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_performer_in_residence")
+        mgr.special_events = [SpecialEvent(**event_def)]
 
         # No cards — not available
         avail = mgr.get_available_events(p)
-        assert all(e.id != "se_brilliant_wedding" for e in avail)
+        assert all(e.id != "se_performer_in_residence" for e in avail)
 
         # Add both required cards
-        p.city = [Harvester(), Gatherer()]
+        p.city = [Inn(), Bard()]
         avail = mgr.get_available_events(p)
-        wedding = [e for e in avail if e.id == "se_brilliant_wedding"]
-        assert len(wedding) == 1
+        matched = [e for e in avail if e.id == "se_performer_in_residence"]
+        assert len(matched) == 1
 
-    def test_three_card_special_event(self):
-        """Grand Tour special event needs Inn + Post Office + Lookout."""
+    def test_tax_relief_requires_judge_and_queen(self):
+        """Tax Relief requires Judge + Queen (verified from physical card scan)."""
         p = _make_player()
         mgr = EventManager(seed=None)
-        gt_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_grand_tour")
-        mgr.special_events = [SpecialEvent(**gt_def)]
+        from ed_engine.cards.critters import Queen
+        tax_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_tax_relief")
+        mgr.special_events = [SpecialEvent(**tax_def)]
 
-        # Only 2 of 3
-        p.city = [Inn(), PostOffice()]
+        # Only 1 of 2
+        p.city = [Judge()]
         avail = mgr.get_available_events(p)
-        assert all(e.id != "se_grand_tour" for e in avail)
+        assert all(e.id != "se_tax_relief" for e in avail)
 
-        # All 3
-        p.city.append(Lookout())
+        # Both
+        p.city.append(Queen())
         avail = mgr.get_available_events(p)
-        gt = [e for e in avail if e.id == "se_grand_tour"]
-        assert len(gt) == 1
+        matched = [e for e in avail if e.id == "se_tax_relief"]
+        assert len(matched) == 1
 
     def test_special_event_claim(self):
         p = _make_player()
         pid = str(p.id)
         mgr = EventManager(seed=None)
-        wedding_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_brilliant_wedding")
-        mgr.special_events = [SpecialEvent(**wedding_def)]
+        event_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_performer_in_residence")
+        mgr.special_events = [SpecialEvent(**event_def)]
 
-        p.city = [Harvester(), Gatherer()]
-        assert mgr.claim_event("se_brilliant_wedding", pid) is True
-        assert mgr.claim_event("se_brilliant_wedding", pid) is False  # already claimed
+        p.city = [Inn(), Bard()]
+        assert mgr.claim_event("se_performer_in_residence", pid) is True
+        assert mgr.claim_event("se_performer_in_residence", pid) is False  # already claimed
 
 
 class TestSetupDraws4SpecialEvents:
@@ -221,13 +221,13 @@ class TestEventCanOnlyBeClaimedOnce:
         p1 = _make_player("Alice")
         p2 = _make_player("Bob")
         mgr = EventManager(seed=None)
-        wedding_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_brilliant_wedding")
-        mgr.special_events = [SpecialEvent(**wedding_def)]
+        event_def = next(d for d in SPECIAL_EVENT_DEFS if d["id"] == "se_performer_in_residence")
+        mgr.special_events = [SpecialEvent(**event_def)]
 
-        p1.city = [Harvester(), Gatherer()]
-        p2.city = [Harvester(), Gatherer()]
-        assert mgr.claim_event("se_brilliant_wedding", str(p1.id)) is True
-        assert mgr.claim_event("se_brilliant_wedding", str(p2.id)) is False
+        p1.city = [Inn(), Bard()]
+        p2.city = [Inn(), Bard()]
+        assert mgr.claim_event("se_performer_in_residence", str(p1.id)) is True
+        assert mgr.claim_event("se_performer_in_residence", str(p2.id)) is False
 
 
 class TestToGameStateDicts:

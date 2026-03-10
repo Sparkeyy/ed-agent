@@ -19,8 +19,8 @@
       ],
       "ability_text": "+1 VP per leftover resin and pebble, up to 6.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_architect.png",
-      "source_scan": "unique_critter_architect.png",
+      "image_file": "critters/unique_critter_architect.jpg",
+      "source_scan": "unique_critter_architect.jpg",
       "status": "reviewed"
     },
     {
@@ -41,8 +41,8 @@
       ],
       "ability_text": "Discard up to 5 cards, gain 1 VP per card discarded.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_bard.png",
-      "source_scan": "unique_critter_bard.png",
+      "image_file": "critters/unique_critter_bard.jpg",
+      "source_scan": "unique_critter_bard.jpg",
       "status": "reviewed"
     },
     {
@@ -63,8 +63,8 @@
       ],
       "ability_text": "Gain 2 twigs per Farm in your city.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_barge-toad.png",
-      "source_scan": "common_critter_barge-toad.png",
+      "image_file": "critters/common_critter_barge-toad.jpg",
+      "source_scan": "common_critter_barge-toad.jpg",
       "status": "reviewed"
     },
     {
@@ -85,9 +85,9 @@
       ],
       "ability_text": "+1 VP per Common Construction in your city.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_castle.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_castle.jpg",
+      "source_scan": "IMG_0047.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Cemetery",
@@ -107,9 +107,9 @@
       ],
       "ability_text": "Reveal 4 cards from deck/discard, play 1 for free.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_cemetery.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_cemetery.jpg",
+      "source_scan": "IMG_0027.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Chapel",
@@ -129,9 +129,9 @@
       ],
       "ability_text": "Place 1 VP token on Chapel, draw 2 cards per VP token.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_chapel.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_chapel.jpg",
+      "source_scan": "IMG_0031.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Chip Sweep",
@@ -151,8 +151,8 @@
       ],
       "ability_text": "Activate any 1 green Production card in your city.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_chip-sweep.png",
-      "source_scan": "common_critter_chip-sweep.png",
+      "image_file": "critters/common_critter_chip-sweep.jpg",
+      "source_scan": "common_critter_chip-sweep.jpg",
       "status": "reviewed"
     },
     {
@@ -173,9 +173,9 @@
       ],
       "ability_text": "3 VP tokens; before Prepare for Season, remove 1 to activate a location.",
       "copies_in_deck": 3,
-      "image_file": "constructions/unique_construction_clock-tower.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_clock-tower.jpg",
+      "source_scan": "IMG_0028.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Courthouse",
@@ -195,9 +195,9 @@
       ],
       "ability_text": "Gain 1 twig, resin, or pebble when playing a Construction.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_courthouse.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_courthouse.jpg",
+      "source_scan": "IMG_0043.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Crane",
@@ -217,9 +217,9 @@
       ],
       "ability_text": "Discard to decrease a Construction's cost by 3 of any resource.",
       "copies_in_deck": 3,
-      "image_file": "constructions/unique_construction_crane.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_crane.jpg",
+      "source_scan": "IMG_0032.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Doctor",
@@ -239,8 +239,8 @@
       ],
       "ability_text": "Pay up to 3 berries, gain 1 VP per berry paid.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_doctor.png",
-      "source_scan": "unique_critter_doctor.png",
+      "image_file": "critters/unique_critter_doctor.jpg",
+      "source_scan": "unique_critter_doctor.jpg",
       "status": "reviewed"
     },
     {
@@ -261,9 +261,9 @@
       ],
       "ability_text": "Place a Critter from your city beneath to reduce played card cost by 3.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_dungeon.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_dungeon.jpg",
+      "source_scan": "IMG_0029.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Ever Tree",
@@ -281,9 +281,9 @@
       "paired_with": [],
       "ability_text": "+1 VP per Prosperity (purple) card in your city.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_ever-tree.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_ever-tree.jpg",
+      "source_scan": "IMG_0049.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Fair Grounds",
@@ -303,9 +303,9 @@
       ],
       "ability_text": "Draw 2 cards.",
       "copies_in_deck": 3,
-      "image_file": "constructions/unique_construction_fair-grounds.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_fair-grounds.jpg",
+      "source_scan": "IMG_0044.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Farm",
@@ -326,9 +326,9 @@
       ],
       "ability_text": "Gain 1 berry.",
       "copies_in_deck": 8,
-      "image_file": "constructions/common_construction_farm.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_farm.jpg",
+      "source_scan": "IMG_0030.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Fool",
@@ -348,8 +348,8 @@
       ],
       "ability_text": "Played into an opponent's city. Worth -2 VP for them.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_fool.png",
-      "source_scan": "common_critter_fool.png",
+      "image_file": "critters/unique_critter_fool.jpg",
+      "source_scan": "common_critter_fool.jpg",
       "status": "reviewed"
     },
     {
@@ -370,8 +370,8 @@
       ],
       "ability_text": "+3 VP if paired Harvester is in your city. Shares city space with Harvester.",
       "copies_in_deck": 4,
-      "image_file": "critters/common_critter_gatherer.png",
-      "source_scan": "common_critter-gatherer.png",
+      "image_file": "critters/common_critter_gatherer.jpg",
+      "source_scan": "common_critter-gatherer.jpg",
       "status": "reviewed"
     },
     {
@@ -392,9 +392,9 @@
       ],
       "ability_text": "Gain 1 berry, or 2 berries if you have a Farm.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_general-store.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_general-store.jpg",
+      "source_scan": "IMG_0033.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Harvester",
@@ -414,8 +414,8 @@
       ],
       "ability_text": "If you have a Farm, gain 1 of any resource.",
       "copies_in_deck": 4,
-      "image_file": "critters/common_critter_harvester.png",
-      "source_scan": "common_critter-harvester.png",
+      "image_file": "critters/common_critter_harvester.jpg",
+      "source_scan": "common_critter-harvester.jpg",
       "status": "reviewed"
     },
     {
@@ -436,8 +436,8 @@
       ],
       "ability_text": "Draw 1 card after playing any card.",
       "copies_in_deck": 3,
-      "image_file": "critters/unique_critter_historian.png",
-      "source_scan": "unique_critter_historian.png",
+      "image_file": "critters/unique_critter_historian.jpg",
+      "source_scan": "unique_critter_historian.jpg",
       "status": "reviewed"
     },
     {
@@ -458,9 +458,9 @@
       ],
       "ability_text": "Play a Critter or Construction from the Meadow for 3 less of any resource.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_inn.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_inn.jpg",
+      "source_scan": "IMG_0041.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Innkeeper",
@@ -480,8 +480,8 @@
       ],
       "ability_text": "Discard to decrease a Critter's cost by 3 berries.",
       "copies_in_deck": 3,
-      "image_file": "critters/unique_critter_innkeeper.png",
-      "source_scan": "unique_critter_innkeeper.png",
+      "image_file": "critters/unique_critter_innkeeper.jpg",
+      "source_scan": "unique_critter_innkeeper.jpg",
       "status": "reviewed"
     },
     {
@@ -502,8 +502,8 @@
       ],
       "ability_text": "When playing a card, replace 1 resource in cost with 1 other resource.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_judge.png",
-      "source_scan": "unique_critter_judge.png",
+      "image_file": "critters/unique_critter_judge.jpg",
+      "source_scan": "unique_critter_judge.jpg",
       "status": "reviewed"
     },
     {
@@ -524,8 +524,8 @@
       ],
       "ability_text": "+1 VP per basic Event claimed, +2 VP per special Event.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_king.png",
-      "source_scan": "unique_critter_king.png",
+      "image_file": "critters/unique_critter_king.jpg",
+      "source_scan": "unique_critter_king.jpg",
       "status": "reviewed"
     },
     {
@@ -546,9 +546,9 @@
       ],
       "ability_text": "Copy the effect of any basic or Forest location.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_lookout.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_lookout.jpg",
+      "source_scan": "IMG_0042.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Mine",
@@ -568,9 +568,9 @@
       ],
       "ability_text": "Gain 1 pebble.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_mine.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_mine.jpg",
+      "source_scan": "IMG_0039.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Miner Mole",
@@ -590,8 +590,8 @@
       ],
       "ability_text": "Copy 1 green Production card from an opponent's city.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_miner-mole.png",
-      "source_scan": "common_critter_miner-mole.png",
+      "image_file": "critters/common_critter_miner-mole.jpg",
+      "source_scan": "common_critter_miner-mole.jpg",
       "status": "reviewed"
     },
     {
@@ -612,9 +612,9 @@
       ],
       "ability_text": "Give 2 resources to an opponent, gain 4 VP. Worker stays permanently.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_monastery.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_monastery.jpg",
+      "source_scan": "IMG_0034.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Monk",
@@ -634,8 +634,8 @@
       ],
       "ability_text": "Give up to 2 berries to an opponent, gain 2 VP per berry given.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_monk.png",
-      "source_scan": "unique_critter_monk.png",
+      "image_file": "critters/unique_critter_monk.jpg",
+      "source_scan": "unique_critter_monk.jpg",
       "status": "reviewed"
     },
     {
@@ -656,9 +656,9 @@
       ],
       "ability_text": "+1 VP per Unique Construction in your city.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_palace.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_palace.jpg",
+      "source_scan": "IMG_0048.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Peddler",
@@ -678,8 +678,8 @@
       ],
       "ability_text": "Trade up to 2 resources for 2 other resources.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_peddler.png",
-      "source_scan": "common_critter_peddler.png",
+      "image_file": "critters/common_critter_peddler.jpg",
+      "source_scan": "common_critter_peddler.jpg",
       "status": "reviewed"
     },
     {
@@ -700,9 +700,9 @@
       ],
       "ability_text": "Give an opponent 2 cards, discard any from hand, draw to hand limit.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_post-office.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_post-office.jpg",
+      "source_scan": "IMG_0037.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Postal Pigeon",
@@ -722,8 +722,8 @@
       ],
       "ability_text": "Reveal 2 cards from deck, play 1 worth 3 VP or less for free.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_postal-pigeon.png",
-      "source_scan": "common_critter_postal-pigeon.png",
+      "image_file": "critters/common_critter_postal-pigeon.jpg",
+      "source_scan": "common_critter_postal-pigeon.jpg",
       "status": "reviewed"
     },
     {
@@ -744,8 +744,8 @@
       ],
       "ability_text": "Play any card worth 3 VP or less from hand or Meadow for free.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_queen.png",
-      "source_scan": "unique_critter_queen.png",
+      "image_file": "critters/unique_critter_queen.jpg",
+      "source_scan": "unique_critter_queen.jpg",
       "status": "reviewed"
     },
     {
@@ -766,8 +766,8 @@
       ],
       "ability_text": "Move 1 of your deployed workers to a new location.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_ranger.png",
-      "source_scan": "unique_critter_ranger.png",
+      "image_file": "critters/unique_critter_ranger.jpg",
+      "source_scan": "unique_critter_ranger.jpg",
       "status": "reviewed"
     },
     {
@@ -788,9 +788,9 @@
       ],
       "ability_text": "Gain 1 resin.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_resin-refinery.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_resin-refinery.jpg",
+      "source_scan": "IMG_0035.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Ruins",
@@ -810,9 +810,9 @@
       ],
       "ability_text": "Discard a Construction from city, gain its cost back, draw 2 cards.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_ruins.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_ruins.jpg",
+      "source_scan": "IMG_0026.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "School",
@@ -832,9 +832,9 @@
       ],
       "ability_text": "+1 VP per Common Critter in your city.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_school.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_school.jpg",
+      "source_scan": "IMG_0040.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Shepherd",
@@ -854,8 +854,8 @@
       ],
       "ability_text": "Gain 3 berries, gain 1 VP per VP token on your Chapel.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_shepherd.png",
-      "source_scan": "unique_critter_shepherd.png",
+      "image_file": "critters/unique_critter_shepherd.jpg",
+      "source_scan": "unique_critter_shepherd.jpg",
       "status": "reviewed"
     },
     {
@@ -876,8 +876,8 @@
       ],
       "ability_text": "Gain 1 berry after playing a Critter.",
       "copies_in_deck": 3,
-      "image_file": "critters/unique_critter_shopkeeper.png",
-      "source_scan": "unique_critter_shopkeeper.png",
+      "image_file": "critters/unique_critter_shopkeeper.jpg",
+      "source_scan": "unique_critter_shopkeeper.jpg",
       "status": "reviewed"
     },
     {
@@ -898,9 +898,9 @@
       ],
       "ability_text": "Gain 3 twigs, 2 resin, 1 pebble, or 2 berries (choose 1).",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_storehouse.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_storehouse.jpg",
+      "source_scan": "IMG_0038.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Teacher",
@@ -920,8 +920,8 @@
       ],
       "ability_text": "Draw 2 cards, keep 1, give the other to an opponent.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_teacher.png",
-      "source_scan": "common_critter_teacher.png",
+      "image_file": "critters/common_critter_teacher.jpg",
+      "source_scan": "common_critter_teacher.jpg",
       "status": "reviewed"
     },
     {
@@ -942,9 +942,9 @@
       ],
       "ability_text": "+1 VP per Unique Critter in your city.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_theater.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_theater.jpg",
+      "source_scan": "IMG_0046.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Twig Barge",
@@ -964,9 +964,9 @@
       ],
       "ability_text": "Gain 2 twigs.",
       "copies_in_deck": 3,
-      "image_file": "constructions/common_construction_twig-barge.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/common_construction_twig-barge.jpg",
+      "source_scan": "IMG_0036.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Undertaker",
@@ -986,8 +986,8 @@
       ],
       "ability_text": "Discard 3 Meadow cards, then draw 1 card from deck.",
       "copies_in_deck": 2,
-      "image_file": "critters/unique_critter_undertaker.png",
-      "source_scan": "unique_critter_undertaker.png",
+      "image_file": "critters/unique_critter_undertaker.jpg",
+      "source_scan": "unique_critter_undertaker.jpg",
       "status": "reviewed"
     },
     {
@@ -1008,9 +1008,9 @@
       ],
       "ability_text": "Discard 1 card from city, get its cost back, +1 any resource, +1 VP. Worker stays.",
       "copies_in_deck": 2,
-      "image_file": "constructions/unique_construction_university.png",
-      "source_scan": "",
-      "status": "pending"
+      "image_file": "constructions/unique_construction_university.jpg",
+      "source_scan": "IMG_0045.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Wanderer",
@@ -1030,8 +1030,8 @@
       ],
       "ability_text": "Draw 3 cards. Does not occupy a city space.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_wanderer.png",
-      "source_scan": "common_critter-wanderer.png",
+      "image_file": "critters/common_critter_wanderer.jpg",
+      "source_scan": "common_critter-wanderer.jpg",
       "status": "reviewed"
     },
     {
@@ -1052,12 +1052,123 @@
       ],
       "ability_text": "Pay up to 3 twigs, gain 1 VP per twig paid.",
       "copies_in_deck": 3,
-      "image_file": "critters/common_critter_woodcarver.png",
-      "source_scan": "common_critter_woodcarver.png",
+      "image_file": "critters/common_critter_woodcarver.jpg",
+      "source_scan": "common_critter_woodcarver.jpg",
       "status": "reviewed"
     }
   ],
-  "forest_locations": [],
+  "forest_locations": [
+    {
+      "id": "forest_01",
+      "name": "1 twig, 1 resin & 1 berry",
+      "effect": "Gain 1 twig, 1 resin, and 1 berry.",
+      "exclusive": true,
+      "interactive": false,
+      "image_file": "forest/forest_1-twig-1-resin-1-berry.jpg",
+      "source_scan": "forest_1-twig-1-resin-1-berry.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_02",
+      "name": "2 any",
+      "effect": "Gain 2 of any resource (player chooses).",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_2-any.jpg",
+      "source_scan": "forest_2-any.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_03",
+      "name": "2 berries & 1 card",
+      "effect": "Gain 2 berries and draw 1 card.",
+      "exclusive": true,
+      "interactive": false,
+      "image_file": "forest/forest_2-berries-1-card.jpg",
+      "source_scan": "forest_2-berries-1-card.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_04",
+      "name": "2 cards & 1 any",
+      "effect": "Draw 2 cards and gain 1 of any resource (player chooses).",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_2-cards-1-any.jpg",
+      "source_scan": "forest_2-cards-1-any.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_05",
+      "name": "2 resin & 1 twig",
+      "effect": "Gain 2 resin and 1 twig.",
+      "exclusive": true,
+      "interactive": false,
+      "image_file": "forest/forest_2-resin-1-twig.jpg",
+      "source_scan": "forest_2-resin-1-twig.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_06",
+      "name": "3 berries",
+      "effect": "Gain 3 berries.",
+      "exclusive": true,
+      "interactive": false,
+      "image_file": "forest/forest_3-berries.jpg",
+      "source_scan": "forest_3-berries.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_07",
+      "name": "3 cards & 1 pebble",
+      "effect": "Draw 3 cards and gain 1 pebble.",
+      "exclusive": true,
+      "interactive": false,
+      "image_file": "forest/forest_3-cards-1-pebble.jpg",
+      "source_scan": "forest_3-cards-1-pebble.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_08",
+      "name": "Copy any Basic location and draw 1 card",
+      "effect": "Copy any Basic location and draw 1 card.",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_copy-basic-draw-1.jpg",
+      "source_scan": "forest_copy-basic-draw-1.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_09",
+      "name": "Discard up to 3 cards & gain 1 any for each card",
+      "effect": "Discard up to 3 cards and gain 1 of any resource for each card discarded.",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_discard-3-gain-1-any-each.jpg",
+      "source_scan": "forest_discard-3-gain-1-any-each.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_10",
+      "name": "Discard any, then draw 2 for every card discarded",
+      "effect": "Discard any number of cards, then draw 2 cards for every card discarded.",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_discard-draw-2-each.jpg",
+      "source_scan": "forest_discard-draw-2-each.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "id": "forest_11",
+      "name": "Draw 2 Meadow cards and play 1 for -1 any",
+      "effect": "Draw 2 cards from the Meadow and play 1 of them for 1 less of any resource.",
+      "exclusive": true,
+      "interactive": true,
+      "image_file": "forest/forest_draw-2-meadow-play-1-discount.jpg",
+      "source_scan": "forest_draw-2-meadow-play-1-discount.jpg",
+      "status": "scan_verified"
+    }
+  ],
   "events": [
     {
       "name": "Governance Mastery",
@@ -1108,216 +1219,238 @@
       "status": "reviewed"
     },
     {
-      "name": "A Brilliant Wedding",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Harvester",
-        "Gatherer"
-      ],
-      "description": "Have Harvester and Gatherer in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
       "name": "Performer in Residence",
       "type": "special",
       "points": 3,
       "requirements": [
-        "Bard",
-        "Theater"
+        "Inn",
+        "Bard"
       ],
-      "description": "Have Bard and Theater in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "Have Inn and Bard in your city. 3 VP.",
+      "image_file": "events/event_performer-in-residence.jpg",
+      "source_scan": "IMG_0001.jpg",
+      "status": "scan_verified"
     },
     {
-      "name": "An Ancient Discovery",
+      "name": "Ancient Scrolls Discovered",
       "type": "special",
       "points": 3,
       "requirements": [
-        "Mine",
+        "Cemetery",
         "Historian"
       ],
-      "description": "Have Mine and Historian in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "Have Cemetery and Historian in your city. 3 VP.",
+      "image_file": "events/event_ancient-scrolls-discovered.jpg",
+      "source_scan": "IMG_0002.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "An Unexpected Bounty",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 3 resources (berry, resin, or pebble) here. 3 VP per resource on this Event.",
+      "requirements": [
+        "Harvester",
+        "Farm"
+      ],
+      "description": "When achieved, place up to 3 resources (berry, resin, pebble) here. 3 VP for each resource on this Event.",
+      "image_file": "events/event_an-unexpected-bounty.jpg",
+      "source_scan": "IMG_0003.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "Remembering the Fallen",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 2 Critters from your city beneath this Event. 3 VP per Critter beneath.",
+      "requirements": [
+        "Cemetery",
+        "Shepherd"
+      ],
+      "description": "When achieved, place up to 2 Critters from your city beneath this Event. 3 VP for each Critter beneath this Event.",
+      "image_file": "events/event_remembering-the-fallen.jpg",
+      "source_scan": "IMG_0004.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "A Brilliant Marketing Plan",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Give opponents up to 3 of any resource. 2 VP per resource donated.",
+      "requirements": [
+        "Shopkeeper",
+        "Post Office"
+      ],
+      "description": "When achieved, give opponents up to 3 of any resource. For each donation gain 2 VP.",
+      "image_file": "events/event_a-brilliant-marketing-plan.jpg",
+      "source_scan": "IMG_0005.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "Under New Management",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 3 resources here. Berry/twig = 1 VP each, resin/pebble = 2 VP each.",
+      "requirements": [
+        "Peddler",
+        "General Store"
+      ],
+      "description": "When achieved, place up to 3 resources here. Each berry/twig = 1 VP, each resin/pebble = 2 VP.",
+      "image_file": "events/event_under-new-management.jpg",
+      "source_scan": "IMG_0006.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "A Well Run City",
+      "type": "special",
+      "points": 4,
+      "requirements": [
+        "Chip Sweep",
+        "Clock Tower"
+      ],
+      "description": "Bring back one of your deployed workers. 4 VP.",
+      "on_achieve": "Return 1 deployed worker to your supply.",
+      "image_file": "events/event_a-well-run-city.jpg",
+      "source_scan": "IMG_0007.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Tax Relief",
       "type": "special",
       "points": 3,
       "requirements": [
-        "Queen",
-        "Castle"
+        "Judge",
+        "Queen"
       ],
-      "description": "Have Queen and Castle in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "Activate Production. 3 VP.",
+      "on_achieve": "Activate all green Production cards in your city.",
+      "image_file": "events/event_tax-relief.jpg",
+      "source_scan": "IMG_0008.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "Path of the Pilgrims",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "3 VP for each worker in your Monastery.",
+      "requirements": [
+        "Monastery",
+        "Wanderer"
+      ],
+      "description": "3 VP for each worker in your Monastery.",
+      "image_file": "events/event_path-of-the-pilgrims.jpg",
+      "source_scan": "IMG_0009.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "Ministering to Miscreants",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "3 VP for each prisoner in your Dungeon.",
+      "requirements": [
+        "Monk",
+        "Dungeon"
+      ],
+      "description": "3 VP for each prisoner in your Dungeon.",
+      "image_file": "events/event_ministering-to-miscreants.jpg",
+      "source_scan": "IMG_0010.jpg",
+      "status": "scan_verified"
+    },
+    {
+      "name": "An Evening of Fireworks",
+      "type": "special",
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 3 twigs here. 2 VP for each twig on this Event.",
+      "requirements": [
+        "Lookout",
+        "Miner Mole"
+      ],
+      "description": "When achieved, you may place up to 3 twigs here. 2 VP for each twig on this Event.",
+      "image_file": "events/event_an-evening-of-fireworks.jpg",
+      "source_scan": "IMG_0011.jpg",
+      "status": "scan_verified"
     },
     {
       "name": "Pristine Chapel Ceiling",
       "type": "special",
-      "points": 3,
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "2 VP for each VP token on your Chapel.",
       "requirements": [
-        "Chapel",
-        "Woodcarver"
+        "Woodcarver",
+        "Chapel"
       ],
-      "description": "Have Chapel and Woodcarver in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "When achieved, draw 1 card and receive 1 VP for each VP token on your Chapel. 2 VP for each VP token on your Chapel.",
+      "on_achieve": "Draw 1 card and gain 1 VP per VP token on your Chapel.",
+      "image_file": "events/event_pristine-chapel-ceiling.jpg",
+      "source_scan": "IMG_0012.jpg",
+      "status": "scan_verified"
     },
     {
-      "name": "Grand Tour",
+      "name": "Graduation of Scholars",
       "type": "special",
-      "points": 3,
-      "requirements": [
-        "Inn",
-        "Post Office",
-        "Lookout"
-      ],
-      "description": "Have Inn, Post Office, and Lookout in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "Minister to Miscreants",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Monk",
-        "Dungeon",
-        "Cemetery"
-      ],
-      "description": "Have Monk, Dungeon, and Cemetery in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "Completion of the Ever Tree",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Ever Tree",
-        "Gatherer",
-        "Harvester"
-      ],
-      "description": "Have Ever Tree, Gatherer, and Harvester in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "Flying Doctor Service",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Doctor",
-        "Postal Pigeon"
-      ],
-      "description": "Have Doctor and Postal Pigeon in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "A Jubilant Alliance",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "King",
-        "Shepherd"
-      ],
-      "description": "Have King and Shepherd in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "A Scholarly Mission",
-      "type": "special",
-      "points": 3,
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 3 Critters from hand beneath this Event. 2 VP per Critter beneath.",
       "requirements": [
         "Teacher",
         "University"
       ],
-      "description": "Have Teacher and University in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "When achieved, you may place up to 3 Critters from your hand beneath this Event. 2 VP for each Critter beneath this Event.",
+      "image_file": "events/event_graduation-of-scholars.jpg",
+      "source_scan": "IMG_0013.jpg",
+      "status": "scan_verified"
     },
     {
-      "name": "A Small Fortune",
+      "name": "Croak Wart Cure",
       "type": "special",
-      "points": 3,
+      "points": 6,
       "requirements": [
-        "Shopkeeper",
-        "Mine"
+        "Undertaker",
+        "Barge Toad"
       ],
-      "description": "Have Shopkeeper and Mine in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "When achieved, pay 2 berries and discard 2 cards from your city. 6 VP.",
+      "on_achieve": "Pay 2 berries and discard 2 cards from your city.",
+      "image_file": "events/event_croak-wart-cure.jpg",
+      "source_scan": "IMG_0014.jpg",
+      "status": "scan_verified"
     },
     {
-      "name": "The Great Feast",
+      "name": "Capture of the Acorn Thieves",
       "type": "special",
-      "points": 3,
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "Place up to 2 Critters from your city beneath this Event. 3 VP per Critter beneath.",
       "requirements": [
-        "General Store",
-        "Farm",
-        "Harvester"
+        "Courthouse",
+        "Ranger"
       ],
-      "description": "Have General Store, Farm, and Harvester in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "When achieved, place up to 2 Critters from your city beneath this Event. 3 VP for each Critter beneath this Event.",
+      "image_file": "events/event_capture-of-the-acorn-thieves.jpg",
+      "source_scan": "IMG_0015.jpg",
+      "status": "scan_verified"
     },
     {
-      "name": "Remembering the Fallen",
+      "name": "Flying Doctor Service",
       "type": "special",
-      "points": 3,
+      "points": 0,
+      "scoring": "variable",
+      "scoring_rule": "3 VP for each Harvester/Gatherer pair in every City.",
       "requirements": [
-        "Cemetery",
-        "Shepherd"
+        "Doctor",
+        "Postal Pigeon"
       ],
-      "description": "Have Cemetery and Shepherd in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "An Unexpected Visitor",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Innkeeper",
-        "Fair Grounds"
-      ],
-      "description": "Have Innkeeper and Fair Grounds in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
-    },
-    {
-      "name": "A Fine Collection",
-      "type": "special",
-      "points": 3,
-      "requirements": [
-        "Judge",
-        "Courthouse"
-      ],
-      "description": "Have Judge and Courthouse in your city",
-      "image_file": "",
-      "source_scan": "",
-      "status": "reviewed"
+      "description": "3 VP for each Harvester/Gatherer pair in every City.",
+      "image_file": "events/event_flying-doctor-service.jpg",
+      "source_scan": "IMG_0016.jpg",
+      "status": "scan_verified"
     }
   ]
 }

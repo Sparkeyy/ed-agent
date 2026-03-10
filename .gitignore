@@ -24,6 +24,9 @@ docker-compose.override.yml
 # OS
 .DS_Store
 
+# Raw card scans (source material, not for repo)
+docs/Everdell_Scans/
+
 # Gas Town (added by gt)
 .runtime/
 .claude/

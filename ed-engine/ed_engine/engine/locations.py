@@ -96,33 +96,40 @@ class ForestLocation(Location):
     exclusive: bool = True
 
     def on_activate(self, game: Any, player: Any, deck_mgr: Any = None) -> None:
-        """Grant resources/cards based on forest location id."""
-        if self.id == "forest_01":  # 2 twigs + 2 resin
-            player.resources = player.resources.gain(ResourceBank(twig=2, resin=2))
-        elif self.id == "forest_02":  # 2 resin + 1 card
-            player.resources = player.resources.gain(ResourceBank(resin=2))
-            if deck_mgr:
-                _draw_cards_for_player(player, deck_mgr, 1)
-        elif self.id == "forest_03":  # 1 twig + 1 resin + 1 pebble
-            player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, pebble=1))
-        elif self.id == "forest_04":  # 2 twigs + 1 pebble
-            player.resources = player.resources.gain(ResourceBank(twig=2, pebble=1))
-        elif self.id == "forest_05":  # 1 pebble + 1 berry
-            player.resources = player.resources.gain(ResourceBank(pebble=1, berry=1))
-        elif self.id == "forest_06":  # 2 berries + 1 card
+        """Grant resources/cards based on forest location id.
+
+        Locations verified against physical card scans 2026-03-10.
+        """
+        if self.id == "forest_01":  # 1 twig, 1 resin & 1 berry
+            player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, berry=1))
+        elif self.id == "forest_02":  # 2 any resource (interactive choice)
+            pass  # Handled at action level — player chooses 2 resources
+        elif self.id == "forest_03":  # 2 berries & 1 card
             player.resources = player.resources.gain(ResourceBank(berry=2))
             if deck_mgr:
                 _draw_cards_for_player(player, deck_mgr, 1)
-        elif self.id == "forest_07":  # 3 twigs + 1 card
-            player.resources = player.resources.gain(ResourceBank(twig=3))
+        elif self.id == "forest_04":  # 2 cards & 1 any resource (interactive choice)
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 2)
+            # +1 any resource handled at action level
+        elif self.id == "forest_05":  # 2 resin & 1 twig
+            player.resources = player.resources.gain(ResourceBank(resin=2, twig=1))
+        elif self.id == "forest_06":  # 3 berries
+            player.resources = player.resources.gain(ResourceBank(berry=3))
+        elif self.id == "forest_07":  # 3 cards & 1 pebble
+            if deck_mgr:
+                _draw_cards_for_player(player, deck_mgr, 3)
+            player.resources = player.resources.gain(ResourceBank(pebble=1))
+        elif self.id == "forest_08":  # Copy any Basic location and draw 1 card (interactive choice)
             if deck_mgr:
                 _draw_cards_for_player(player, deck_mgr, 1)
-        elif self.id == "forest_08":  # 1 twig + 1 resin + 1 berry
-            player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, berry=1))
-        elif self.id == "forest_09":  # 3 berries
-            player.resources = player.resources.gain(ResourceBank(berry=3))
-        # forest_10 (Copy basic/forest) and forest_11 (discard for any) need interactive choices
-        # These are handled at the action level, not here
+            # Basic location copy handled at action level
+        elif self.id == "forest_09":  # Discard up to 3 cards & gain 1 any for each card (interactive)
+            pass  # Handled at action level — player chooses cards to discard and resources
+        elif self.id == "forest_10":  # Discard any, then draw 2 for every card discarded (interactive)
+            pass  # Handled at action level — player chooses cards to discard
+        elif self.id == "forest_11":  # Draw 2 Meadow cards and play 1 for -1 any (interactive)
+            pass  # Handled at action level — player chooses meadow cards
 
 
 class HavenLocation(Location):
@@ -149,19 +156,19 @@ class EventLocation(Location):
     location_type: LocationType = LocationType.EVENT
 
 
-# --- All 11 possible forest location definitions ---
+# --- All 11 forest locations (verified against physical card scans 2026-03-10) ---
 ALL_FOREST_LOCATIONS = [
-    ForestLocation(id="forest_01", name="2 twigs + 2 resin"),
-    ForestLocation(id="forest_02", name="2 resin + 1 card"),
-    ForestLocation(id="forest_03", name="1 twig + 1 resin + 1 pebble"),
-    ForestLocation(id="forest_04", name="2 twigs + 1 pebble"),
-    ForestLocation(id="forest_05", name="1 pebble + 1 berry"),
-    ForestLocation(id="forest_06", name="2 berries + 1 card"),
-    ForestLocation(id="forest_07", name="3 twigs + 1 card"),
-    ForestLocation(id="forest_08", name="1 twig + 1 resin + 1 berry"),
-    ForestLocation(id="forest_09", name="3 berries"),
-    ForestLocation(id="forest_10", name="Copy any basic/forest"),
-    ForestLocation(id="forest_11", name="Discard up to 3 cards, gain any per card"),
+    ForestLocation(id="forest_01", name="1 twig, 1 resin & 1 berry"),
+    ForestLocation(id="forest_02", name="2 any"),
+    ForestLocation(id="forest_03", name="2 berries & 1 card"),
+    ForestLocation(id="forest_04", name="2 cards & 1 any"),
+    ForestLocation(id="forest_05", name="2 resin & 1 twig"),
+    ForestLocation(id="forest_06", name="3 berries"),
+    ForestLocation(id="forest_07", name="3 cards & 1 pebble"),
+    ForestLocation(id="forest_08", name="Copy any Basic location and draw 1 card"),
+    ForestLocation(id="forest_09", name="Discard up to 3 cards & gain 1 any for each card"),
+    ForestLocation(id="forest_10", name="Discard any, then draw 2 for every card discarded"),
+    ForestLocation(id="forest_11", name="Draw 2 Meadow cards and play 1 for -1 any"),
 ]
 
 

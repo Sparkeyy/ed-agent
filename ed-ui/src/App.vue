@@ -16,6 +16,7 @@ const isGameView = computed(() => route.name === 'Game')
         <nav class="app-nav">
           <router-link to="/">Lobby</router-link>
           <router-link to="/leaderboard">Leaderboard</router-link>
+          <router-link to="/training">Training</router-link>
         </nav>
       </div>
     </header>

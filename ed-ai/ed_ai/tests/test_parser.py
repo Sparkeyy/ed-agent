@@ -12,7 +12,7 @@ def parser() -> ResponseParser:
 
 SAMPLE_VALID_ACTIONS = [
     {"action_type": "place_worker", "location_id": "3 Twigs"},
-    {"action_type": "play_card", "card_name": "Husband", "source": "hand", "is_free": True},
+    {"action_type": "play_card", "card_name": "Harvester", "source": "hand", "is_free": True},
     {"action_type": "play_card", "card_name": "Bard", "source": "hand"},
     {"action_type": "prepare_for_season"},
 ]
@@ -74,11 +74,11 @@ class TestParseNumberedChoice:
 class TestParseKeywordMatch:
     def test_play_card_keyword(self, parser: ResponseParser) -> None:
         result = parser.parse(
-            "I want to play card Husband from hand",
+            "I want to play card Harvester from hand",
             valid_actions=SAMPLE_VALID_ACTIONS,
         )
         assert result is not None
-        assert result["card_name"] == "Husband"
+        assert result["card_name"] == "Harvester"
 
     def test_place_worker_keyword(self, parser: ResponseParser) -> None:
         result = parser.parse(

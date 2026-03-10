@@ -16,10 +16,12 @@ const props = withDefaults(defineProps<{
   compact?: boolean
   playable?: boolean
   selected?: boolean
+  fill?: boolean
 }>(), {
   compact: false,
   playable: false,
   selected: false,
+  fill: false,
 })
 
 const cardImageUrl = computed(() => {
@@ -57,7 +59,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
     :class="[
       'card',
       `card-type-${card.card_type}`,
-      { compact, playable, selected },
+      { compact, playable, selected, fill },
     ]"
     @click="emit('select')"
   >
@@ -188,6 +190,13 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   border: 2px solid var(--gold-bright);
   transform: scale(1.04);
   box-shadow: var(--shadow-glow);
+}
+
+/* Fill mode — stretch to parent container */
+.card.fill {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
 }
 
 /* Compact mode */

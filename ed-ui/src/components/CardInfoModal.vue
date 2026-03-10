@@ -30,13 +30,14 @@ const props = defineProps<{
   ability?: string
   cost?: ResourceBank
   points?: number
+  imageUrl?: string | null
 }>()
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const cardImageUrl = computed(() => CARD_IMAGES[props.title] || null)
+const cardImageUrl = computed(() => props.imageUrl || CARD_IMAGES[props.title] || null)
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
@@ -115,7 +116,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; count: number }> 
   background: var(--parchment, #f4ece0);
   border-radius: var(--radius-lg, 12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  max-width: 380px;
+  max-width: 500px;
   width: 90%;
   overflow: hidden;
   position: relative;
@@ -263,15 +264,14 @@ function costEntries(cost: ResourceBank): Array<{ key: string; count: number }> 
 }
 
 .modal-card-image {
-  max-height: 200px;
+  max-height: 400px;
   overflow: hidden;
 }
 
 .modal-scan-img {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
-  object-position: center 30%;
+  max-height: 400px;
+  object-fit: contain;
 }
 
 /* Transition */

@@ -53,3 +53,36 @@ export const CARD_IMAGES: Record<string, string> = {
   'Twig Barge': '/assets/cards/constructions/common_construction_twig-barge.jpg',
   'University': '/assets/cards/constructions/unique_construction_university.jpg',
 }
+
+export const EVENT_IMAGES: Record<string, string> = {
+  'A Brilliant Marketing Plan': '/assets/cards/events/event_a-brilliant-marketing-plan.jpg',
+  'Ancient Scrolls Discovered': '/assets/cards/events/event_ancient-scrolls-discovered.jpg',
+  'An Evening of Fireworks': '/assets/cards/events/event_an-evening-of-fireworks.jpg',
+  'An Unexpected Bounty': '/assets/cards/events/event_an-unexpected-bounty.jpg',
+  'A Well Run City': '/assets/cards/events/event_a-well-run-city.jpg',
+  'Capture of the Acorn Thieves': '/assets/cards/events/event_capture-of-the-acorn-thieves.jpg',
+  'Croak Wart Cure': '/assets/cards/events/event_croak-wart-cure.jpg',
+  'Flying Doctor Service': '/assets/cards/events/event_flying-doctor-service.jpg',
+  'Graduation of Scholars': '/assets/cards/events/event_graduation-of-scholars.jpg',
+  'Ministering to Miscreants': '/assets/cards/events/event_ministering-to-miscreants.jpg',
+  'Path of the Pilgrims': '/assets/cards/events/event_path-of-the-pilgrims.jpg',
+  'Performer in Residence': '/assets/cards/events/event_performer-in-residence.jpg',
+  'Pristine Chapel Ceiling': '/assets/cards/events/event_pristine-chapel-ceiling.jpg',
+  'Remembering the Fallen': '/assets/cards/events/event_remembering-the-fallen.jpg',
+  'Tax Relief': '/assets/cards/events/event_tax-relief.jpg',
+  'Under New Management': '/assets/cards/events/event_under-new-management.jpg',
+}
+
+export const FOREST_IMAGES: Record<string, string> = {
+  'forest_01': '/assets/cards/forest/forest_1-twig-1-resin-1-berry.jpg',
+  'forest_02': '/assets/cards/forest/forest_2-any.jpg',
+  'forest_03': '/assets/cards/forest/forest_2-berries-1-card.jpg',
+  'forest_04': '/assets/cards/forest/forest_2-cards-1-any.jpg',
+  'forest_05': '/assets/cards/forest/forest_2-resin-1-twig.jpg',
+  'forest_06': '/assets/cards/forest/forest_3-berries.jpg',
+  'forest_07': '/assets/cards/forest/forest_3-cards-1-pebble.jpg',
+  'forest_08': '/assets/cards/forest/forest_copy-basic-draw-1.jpg',
+  'forest_09': '/assets/cards/forest/forest_discard-3-gain-1-any-each.jpg',
+  'forest_10': '/assets/cards/forest/forest_discard-draw-2-each.jpg',
+  'forest_11': '/assets/cards/forest/forest_draw-2-meadow-play-1-discount.jpg',
+}

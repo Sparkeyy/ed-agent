@@ -57,12 +57,12 @@ class TestHeuristicFallback:
 
     def test_prefers_free_plays(self, player: AIPlayer) -> None:
         actions = [
-            {"action_type": "play_card", "card_name": "Husband", "base_points": 2, "is_free": True},
+            {"action_type": "play_card", "card_name": "Harvester", "base_points": 2, "is_free": True},
             {"action_type": "play_card", "card_name": "Castle", "base_points": 4},
         ]
         action = player.heuristic_fallback(actions, {"season": "spring"})
-        # Free Husband (2pt + 10 free bonus) beats Castle (4pt)
-        assert action["card_name"] == "Husband"
+        # Free Harvester (2pt + 10 free bonus) beats Castle (4pt)
+        assert action["card_name"] == "Harvester"
 
     def test_falls_back_to_place_worker(self, player: AIPlayer) -> None:
         action = player.heuristic_fallback(SAMPLE_ACTIONS_WORKERS_ONLY, {"season": "spring"})

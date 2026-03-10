@@ -20,6 +20,7 @@ import CardInfoModal from '../components/CardInfoModal.vue'
 import HelpPanel from '../components/HelpPanel.vue'
 import ChoicePanel from '../components/ChoicePanel.vue'
 import { CARD_INFO, LOCATION_INFO } from '../data/card-info'
+import { EVENT_IMAGES, FOREST_IMAGES } from '../data/card-images'
 
 const route = useRoute()
 const router = useRouter()
@@ -253,6 +254,7 @@ const infoModal = ref({
   ability: '',
   cost: undefined as ResourceBank | undefined,
   points: undefined as number | undefined,
+  imageUrl: null as string | null,
 })
 
 function handleCardInfo(cardName: string) {
@@ -281,6 +283,7 @@ function handleCardInfo(cardName: string) {
     ability: info?.ability || 'No ability info available.',
     cost: cardData?.cost,
     points: cardData?.base_points,
+    imageUrl: null,
   }
 }
 
@@ -296,6 +299,7 @@ function handleLocationInfo(locationId: string) {
     ability: reward || 'No info available for this location.',
     cost: undefined,
     points: undefined,
+    imageUrl: FOREST_IMAGES[locationId] || null,
   }
 }
 
@@ -315,6 +319,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
     ability: descParts.join('\n\n') || 'No details available for this event.',
     cost: undefined,
     points: eventData.points,
+    imageUrl: EVENT_IMAGES[eventData.name] || null,
   }
 }
 </script>
@@ -616,6 +621,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
       :ability="infoModal.ability"
       :cost="infoModal.cost"
       :points="infoModal.points"
+      :image-url="infoModal.imageUrl"
       @close="infoModal.visible = false"
     />
 

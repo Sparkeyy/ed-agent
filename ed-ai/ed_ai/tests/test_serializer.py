@@ -44,7 +44,7 @@ FULL_STATE = {
     ],
     "valid_actions": [
         {"action_type": "place_worker", "location_id": "3 Twigs"},
-        {"action_type": "play_card", "card_name": "Husband", "source": "hand", "is_free": True},
+        {"action_type": "play_card", "card_name": "Harvester", "source": "hand", "is_free": True},
         {"action_type": "prepare_for_season"},
     ],
     "score": 12,
@@ -107,7 +107,7 @@ class TestSerializerOutput:
         assert "PLACE WORKER" in output
         assert '"3 Twigs"' in output
         assert "PLAY CARD" in output
-        assert '"Husband"' in output
+        assert '"Harvester"' in output
         assert "(free!)" in output
         assert "PREPARE FOR SEASON" in output
 

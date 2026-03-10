@@ -30,7 +30,7 @@ MY CITY (4/15):
 
 MY HAND (5):
   [1] Castle (Purple Prosperity, 4pt, cost: 2🪵 3💧 3🪨) - Unique
-  [2] Husband (Green Production, 2pt, cost: 3🫐) - pairs with Farm
+  [2] Harvester (Green Production, 2pt, cost: 3🫐) - pairs with Farm
   [3] Shopkeeper (Blue Governance, 1pt, cost: 2🫐) - Unique
   [4] Wanderer (Tan Traveler, 1pt, cost: 2🫐)
   [5] Barge Toad (Green Production, 1pt, cost: 2🫐) - pairs with Twig Barge
@@ -46,7 +46,7 @@ OPPONENTS:
 
 VALID ACTIONS:
   1. PLACE_WORKER at "2 Resin" → gain 2 resin
-  2. PLAY_CARD "Husband" from hand (cost: 3🫐) - FREE via Farm!
+  2. PLAY_CARD "Harvester" from hand (cost: 3🫐) - FREE via Farm!
   3. PLAY_CARD "Shopkeeper" from hand (cost: 2🫐)
   4. PLAY_CARD "Wanderer" from hand (cost: 2🫐)
   5. PLAY_CARD "Barge Toad" from hand (cost: 2🫐) - FREE via Twig Barge!

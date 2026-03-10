@@ -31,6 +31,7 @@ function isPlayable(index: number): boolean {
         <CardComponent
           :card="card"
           :playable="isPlayable(index)"
+          :fill="true"
           @select="isPlayable(index) && emit('play-from-meadow', index)"
           @info="emit('card-info', $event)"
         />

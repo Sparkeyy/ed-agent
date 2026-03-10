@@ -1,0 +1,1323 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "name": "Architect",
+      "category": "critter",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 4
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Crane"
+      ],
+      "ability_text": "+1 VP per leftover resin and pebble, up to 6.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_architect.png",
+      "source_scan": "unique_critter_architect.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Bard",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": true,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Theater"
+      ],
+      "ability_text": "Discard up to 5 cards, gain 1 VP per card discarded.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_bard.png",
+      "source_scan": "unique_critter_bard.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Barge Toad",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Twig Barge"
+      ],
+      "ability_text": "Gain 2 twigs per Farm in your city.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_barge-toad.png",
+      "source_scan": "common_critter_barge-toad.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Castle",
+      "category": "construction",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 4,
+      "cost": {
+        "twig": 2,
+        "resin": 3,
+        "pebble": 3,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "King"
+      ],
+      "ability_text": "+1 VP per Common Construction in your city.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_castle.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Cemetery",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 2,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Undertaker"
+      ],
+      "ability_text": "Reveal 4 cards from deck/discard, play 1 for free.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_cemetery.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Chapel",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 2,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Shepherd"
+      ],
+      "ability_text": "Place 1 VP token on Chapel, draw 2 cards per VP token.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_chapel.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Chip Sweep",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Resin Refinery"
+      ],
+      "ability_text": "Activate any 1 green Production card in your city.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_chip-sweep.png",
+      "source_scan": "common_critter_chip-sweep.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Clock Tower",
+      "category": "construction",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 0,
+      "cost": {
+        "twig": 3,
+        "resin": 0,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Historian"
+      ],
+      "ability_text": "3 VP tokens; before Prepare for Season, remove 1 to activate a location.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/unique_construction_clock-tower.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Courthouse",
+      "category": "construction",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 1,
+        "resin": 1,
+        "pebble": 2,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Judge"
+      ],
+      "ability_text": "Gain 1 twig, resin, or pebble when playing a Construction.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_courthouse.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Crane",
+      "category": "construction",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Architect"
+      ],
+      "ability_text": "Discard to decrease a Construction's cost by 3 of any resource.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/unique_construction_crane.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Doctor",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": true,
+      "base_points": 4,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 4
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "University"
+      ],
+      "ability_text": "Pay up to 3 berries, gain 1 VP per berry paid.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_doctor.png",
+      "source_scan": "unique_critter_doctor.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Dungeon",
+      "category": "construction",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 1,
+        "pebble": 2,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Ranger"
+      ],
+      "ability_text": "Place a Critter from your city beneath to reduce played card cost by 3.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_dungeon.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Ever Tree",
+      "category": "construction",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 5,
+      "cost": {
+        "twig": 3,
+        "resin": 3,
+        "pebble": 3,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [],
+      "ability_text": "+1 VP per Prosperity (purple) card in your city.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_ever-tree.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Fair Grounds",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": true,
+      "base_points": 3,
+      "cost": {
+        "twig": 1,
+        "resin": 2,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Fool"
+      ],
+      "ability_text": "Draw 2 cards.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/unique_construction_fair-grounds.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Farm",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 2,
+        "resin": 1,
+        "pebble": 0,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Harvester",
+        "Gatherer"
+      ],
+      "ability_text": "Gain 1 berry.",
+      "copies_in_deck": 8,
+      "image_file": "constructions/common_construction_farm.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Fool",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": true,
+      "base_points": -2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Fair Grounds"
+      ],
+      "ability_text": "Played into an opponent's city. Worth -2 VP for them.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_fool.png",
+      "source_scan": "common_critter_fool.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Gatherer",
+      "category": "critter",
+      "card_type": "purple_prosperity",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Farm"
+      ],
+      "ability_text": "+3 VP if paired Harvester is in your city. Shares city space with Harvester.",
+      "copies_in_deck": 4,
+      "image_file": "critters/common_critter_gatherer.png",
+      "source_scan": "common_critter-gatherer.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "General Store",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Shopkeeper"
+      ],
+      "ability_text": "Gain 1 berry, or 2 berries if you have a Farm.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_general-store.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Harvester",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Farm"
+      ],
+      "ability_text": "If you have a Farm, gain 1 of any resource.",
+      "copies_in_deck": 4,
+      "image_file": "critters/common_critter_harvester.png",
+      "source_scan": "common_critter-harvester.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Historian",
+      "category": "critter",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Clock Tower"
+      ],
+      "ability_text": "Draw 1 card after playing any card.",
+      "copies_in_deck": 3,
+      "image_file": "critters/unique_critter_historian.png",
+      "source_scan": "unique_critter_historian.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Inn",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 2,
+        "resin": 1,
+        "pebble": 0,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Innkeeper"
+      ],
+      "ability_text": "Play a Critter or Construction from the Meadow for 3 less of any resource.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_inn.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Innkeeper",
+      "category": "critter",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 1
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Inn"
+      ],
+      "ability_text": "Discard to decrease a Critter's cost by 3 berries.",
+      "copies_in_deck": 3,
+      "image_file": "critters/unique_critter_innkeeper.png",
+      "source_scan": "unique_critter_innkeeper.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Judge",
+      "category": "critter",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Courthouse"
+      ],
+      "ability_text": "When playing a card, replace 1 resource in cost with 1 other resource.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_judge.png",
+      "source_scan": "unique_critter_judge.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "King",
+      "category": "critter",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 4,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 6
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Castle"
+      ],
+      "ability_text": "+1 VP per basic Event claimed, +2 VP per special Event.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_king.png",
+      "source_scan": "unique_critter_king.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Lookout",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 1,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Wanderer"
+      ],
+      "ability_text": "Copy the effect of any basic or Forest location.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_lookout.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Mine",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 1,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Miner Mole"
+      ],
+      "ability_text": "Gain 1 pebble.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_mine.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Miner Mole",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Mine"
+      ],
+      "ability_text": "Copy 1 green Production card from an opponent's city.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_miner-mole.png",
+      "source_scan": "common_critter_miner-mole.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Monastery",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 1,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Monk"
+      ],
+      "ability_text": "Give 2 resources to an opponent, gain 4 VP. Worker stays permanently.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_monastery.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Monk",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": true,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 1
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Monastery"
+      ],
+      "ability_text": "Give up to 2 berries to an opponent, gain 2 VP per berry given.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_monk.png",
+      "source_scan": "unique_critter_monk.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Palace",
+      "category": "construction",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 4,
+      "cost": {
+        "twig": 2,
+        "resin": 3,
+        "pebble": 3,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Queen"
+      ],
+      "ability_text": "+1 VP per Unique Construction in your city.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_palace.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Peddler",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Ruins"
+      ],
+      "ability_text": "Trade up to 2 resources for 2 other resources.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_peddler.png",
+      "source_scan": "common_critter_peddler.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Post Office",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 1,
+        "resin": 2,
+        "pebble": 0,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Postal Pigeon"
+      ],
+      "ability_text": "Give an opponent 2 cards, discard any from hand, draw to hand limit.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_post-office.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Postal Pigeon",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": false,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Post Office"
+      ],
+      "ability_text": "Reveal 2 cards from deck, play 1 worth 3 VP or less for free.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_postal-pigeon.png",
+      "source_scan": "common_critter_postal-pigeon.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Queen",
+      "category": "critter",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 4,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 5
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Palace"
+      ],
+      "ability_text": "Play any card worth 3 VP or less from hand or Meadow for free.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_queen.png",
+      "source_scan": "unique_critter_queen.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Ranger",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Dungeon"
+      ],
+      "ability_text": "Move 1 of your deployed workers to a new location.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_ranger.png",
+      "source_scan": "unique_critter_ranger.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Resin Refinery",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Chip Sweep"
+      ],
+      "ability_text": "Gain 1 resin.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_resin-refinery.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Ruins",
+      "category": "construction",
+      "card_type": "tan_traveler",
+      "unique": false,
+      "base_points": 0,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Peddler"
+      ],
+      "ability_text": "Discard a Construction from city, gain its cost back, draw 2 cards.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_ruins.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "School",
+      "category": "construction",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 2,
+      "cost": {
+        "twig": 2,
+        "resin": 2,
+        "pebble": 0,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Teacher"
+      ],
+      "ability_text": "+1 VP per Common Critter in your city.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_school.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Shepherd",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 3
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Chapel"
+      ],
+      "ability_text": "Gain 3 berries, gain 1 VP per VP token on your Chapel.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_shepherd.png",
+      "source_scan": "unique_critter_shepherd.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Shopkeeper",
+      "category": "critter",
+      "card_type": "blue_governance",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "General Store"
+      ],
+      "ability_text": "Gain 1 berry after playing a Critter.",
+      "copies_in_deck": 3,
+      "image_file": "critters/unique_critter_shopkeeper.png",
+      "source_scan": "unique_critter_shopkeeper.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Storehouse",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 1,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Woodcarver"
+      ],
+      "ability_text": "Gain 3 twigs, 2 resin, 1 pebble, or 2 berries (choose 1).",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_storehouse.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Teacher",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "School"
+      ],
+      "ability_text": "Draw 2 cards, keep 1, give the other to an opponent.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_teacher.png",
+      "source_scan": "common_critter_teacher.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Theater",
+      "category": "construction",
+      "card_type": "purple_prosperity",
+      "unique": true,
+      "base_points": 3,
+      "cost": {
+        "twig": 3,
+        "resin": 1,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Bard"
+      ],
+      "ability_text": "+1 VP per Unique Critter in your city.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_theater.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Twig Barge",
+      "category": "construction",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 1,
+        "resin": 0,
+        "pebble": 1,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Barge Toad"
+      ],
+      "ability_text": "Gain 2 twigs.",
+      "copies_in_deck": 3,
+      "image_file": "constructions/common_construction_twig-barge.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Undertaker",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": true,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Cemetery"
+      ],
+      "ability_text": "Discard 3 Meadow cards, then draw 1 card from deck.",
+      "copies_in_deck": 2,
+      "image_file": "critters/unique_critter_undertaker.png",
+      "source_scan": "unique_critter_undertaker.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "University",
+      "category": "construction",
+      "card_type": "red_destination",
+      "unique": true,
+      "base_points": 3,
+      "cost": {
+        "twig": 0,
+        "resin": 1,
+        "pebble": 2,
+        "berry": 0
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Doctor"
+      ],
+      "ability_text": "Discard 1 card from city, get its cost back, +1 any resource, +1 VP. Worker stays.",
+      "copies_in_deck": 2,
+      "image_file": "constructions/unique_construction_university.png",
+      "source_scan": "",
+      "status": "pending"
+    },
+    {
+      "name": "Wanderer",
+      "category": "critter",
+      "card_type": "tan_traveler",
+      "unique": false,
+      "base_points": 1,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Lookout"
+      ],
+      "ability_text": "Draw 3 cards. Does not occupy a city space.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_wanderer.png",
+      "source_scan": "common_critter-wanderer.png",
+      "status": "reviewed"
+    },
+    {
+      "name": "Woodcarver",
+      "category": "critter",
+      "card_type": "green_production",
+      "unique": false,
+      "base_points": 2,
+      "cost": {
+        "twig": 0,
+        "resin": 0,
+        "pebble": 0,
+        "berry": 2
+      },
+      "cost_type": "and",
+      "paired_with": [
+        "Storehouse"
+      ],
+      "ability_text": "Pay up to 3 twigs, gain 1 VP per twig paid.",
+      "copies_in_deck": 3,
+      "image_file": "critters/common_critter_woodcarver.png",
+      "source_scan": "common_critter_woodcarver.png",
+      "status": "reviewed"
+    }
+  ],
+  "forest_locations": [],
+  "events": [
+    {
+      "name": "Governance Mastery",
+      "type": "basic",
+      "points": 3,
+      "requirements": [
+        "Have 3 or more Governance (Blue) cards in your city"
+      ],
+      "description": "Have 3 or more Governance (Blue) cards in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Grand Tour",
+      "type": "basic",
+      "points": 3,
+      "requirements": [
+        "Have 3 or more Destination (Red) cards in your city"
+      ],
+      "description": "Have 3 or more Destination (Red) cards in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Well Traveled",
+      "type": "basic",
+      "points": 3,
+      "requirements": [
+        "Have 3 or more Traveler (Tan) cards in your city"
+      ],
+      "description": "Have 3 or more Traveler (Tan) cards in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Year of Plenty",
+      "type": "basic",
+      "points": 3,
+      "requirements": [
+        "Have 3 or more Production (Green) cards in your city"
+      ],
+      "description": "Have 3 or more Production (Green) cards in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Brilliant Wedding",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Harvester",
+        "Gatherer"
+      ],
+      "description": "Have Harvester and Gatherer in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Performer in Residence",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Bard",
+        "Theater"
+      ],
+      "description": "Have Bard and Theater in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "An Ancient Discovery",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Mine",
+        "Historian"
+      ],
+      "description": "Have Mine and Historian in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Tax Relief",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Queen",
+        "Castle"
+      ],
+      "description": "Have Queen and Castle in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Pristine Chapel Ceiling",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Chapel",
+        "Woodcarver"
+      ],
+      "description": "Have Chapel and Woodcarver in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Grand Tour",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Inn",
+        "Post Office",
+        "Lookout"
+      ],
+      "description": "Have Inn, Post Office, and Lookout in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Minister to Miscreants",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Monk",
+        "Dungeon",
+        "Cemetery"
+      ],
+      "description": "Have Monk, Dungeon, and Cemetery in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Completion of the Ever Tree",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Ever Tree",
+        "Gatherer",
+        "Harvester"
+      ],
+      "description": "Have Ever Tree, Gatherer, and Harvester in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Flying Doctor Service",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Doctor",
+        "Postal Pigeon"
+      ],
+      "description": "Have Doctor and Postal Pigeon in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Jubilant Alliance",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "King",
+        "Shepherd"
+      ],
+      "description": "Have King and Shepherd in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Scholarly Mission",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Teacher",
+        "University"
+      ],
+      "description": "Have Teacher and University in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Small Fortune",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Shopkeeper",
+        "Mine"
+      ],
+      "description": "Have Shopkeeper and Mine in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "The Great Feast",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "General Store",
+        "Farm",
+        "Harvester"
+      ],
+      "description": "Have General Store, Farm, and Harvester in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "Remembering the Fallen",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Cemetery",
+        "Shepherd"
+      ],
+      "description": "Have Cemetery and Shepherd in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "An Unexpected Visitor",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Innkeeper",
+        "Fair Grounds"
+      ],
+      "description": "Have Innkeeper and Fair Grounds in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    },
+    {
+      "name": "A Fine Collection",
+      "type": "special",
+      "points": 3,
+      "requirements": [
+        "Judge",
+        "Courthouse"
+      ],
+      "description": "Have Judge and Courthouse in your city",
+      "image_file": "",
+      "source_scan": "",
+      "status": "reviewed"
+    }
+  ]
+}

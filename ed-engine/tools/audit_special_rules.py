@@ -52,7 +52,18 @@ KNOWN_RULES: list[dict] = [
     {"card": "Ruins", "rule": "Free to play (0 cost)",
      "check": lambda c: c.cost.twig == 0 and c.cost.resin == 0 and c.cost.pebble == 0 and c.cost.berry == 0,
      "expected": True},
+
+    # Dual pairing: Farm pairs with BOTH Harvester and Gatherer (free-play one)
+    # Gatherer+Harvester share city space and score 5 VP together
+    {"card": "Gatherer", "rule": "Scores +3 VP if Harvester in city (5 total with base 2)",
+     "check": lambda c: c.base_points == 2, "expected": True},
 ]
+
+# Cards with dual pairings — paired_with is a single string in engine,
+# but some cards legitimately pair with multiple partners.
+DUAL_PAIRINGS: dict[str, list[str]] = {
+    "Farm": ["Harvester", "Gatherer"],  # Farm can free-play either one
+}
 
 
 def check_method_implemented(card, method_name: str) -> str:
@@ -158,18 +169,35 @@ def audit_pairings(manifest: dict) -> list[dict]:
             continue
 
         partner = paired_cls()
-        if partner.paired_with != name:
-            # Check manifest for dual pairing (e.g., Farm paired with Harvester AND Gatherer)
+        partner_name = card.paired_with
+
+        if partner.paired_with == name:
+            # Standard bidirectional pairing
             results.append({
                 "card": name,
-                "rule": f"Paired with '{card.paired_with}' but partner paired with '{partner.paired_with}'",
-                "engine_status": "MISMATCH" if partner.paired_with else "MISSING",
+                "rule": f"Paired with '{partner_name}' (bidirectional)",
+                "engine_status": "OK",
+            })
+        elif partner_name in DUAL_PAIRINGS and name in DUAL_PAIRINGS[partner_name]:
+            # This card pairs with a dual-pairing card (e.g., Gatherer -> Farm)
+            # The partner's paired_with points to another card, but both are valid
+            results.append({
+                "card": name,
+                "rule": f"Paired with '{partner_name}' (dual: {partner_name} pairs with {DUAL_PAIRINGS[partner_name]})",
+                "engine_status": "OK",
+            })
+        elif name in DUAL_PAIRINGS:
+            # This card IS a dual-pairing card (e.g., Farm -> Harvester, but also pairs with Gatherer)
+            results.append({
+                "card": name,
+                "rule": f"Paired with '{partner_name}' (dual pairing: also pairs with {DUAL_PAIRINGS[name]})",
+                "engine_status": "OK",
             })
         else:
             results.append({
                 "card": name,
-                "rule": f"Paired with '{card.paired_with}' (bidirectional)",
-                "engine_status": "OK",
+                "rule": f"Paired with '{partner_name}' but partner paired with '{partner.paired_with}'",
+                "engine_status": "MISMATCH" if partner.paired_with else "MISSING",
             })
 
     return results

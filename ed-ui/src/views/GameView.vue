@@ -151,16 +151,18 @@ function captureAndSubmit(action: ValidAction) {
 }
 
 function handlePlayFromHand(cardName: string) {
-  const action = store.validActions.find(
+  const actions = store.validActions.filter(
     a => a.action_type === 'play_card' && a.source === 'hand' && a.card_name === cardName
   )
+  const action = actions.find(a => a.use_paired_construction) || actions[0]
   if (action) captureAndSubmit(action)
 }
 
 function handlePlayFromMeadow(index: number) {
-  const action = store.validActions.find(
+  const actions = store.validActions.filter(
     a => a.action_type === 'play_card' && a.source === 'meadow' && a.meadow_index === index
   )
+  const action = actions.find(a => a.use_paired_construction) || actions[0]
   if (action) captureAndSubmit(action)
 }
 

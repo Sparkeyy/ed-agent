@@ -412,7 +412,7 @@
       "paired_with": [
         "Farm"
       ],
-      "ability_text": "If you have a Farm, gain 1 of any resource.",
+      "ability_text": "Gain 1 of any resource if paired with a Gatherer and you have at least 1 Farm in your city.",
       "copies_in_deck": 4,
       "image_file": "critters/common_critter_harvester.jpg",
       "source_scan": "common_critter-harvester.jpg",

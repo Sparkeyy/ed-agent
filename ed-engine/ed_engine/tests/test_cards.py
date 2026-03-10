@@ -631,10 +631,11 @@ class TestInteractiveChoices:
 
     # --- Harvester ---
 
-    def test_harvester_sets_4_options_with_farm(self) -> None:
+    def test_harvester_sets_4_options_with_farm_and_gatherer(self) -> None:
         h = get_card_definition("Harvester")
         farm = get_card_definition("Farm")
-        player = _make_player(city=[farm])
+        gatherer = get_card_definition("Gatherer")
+        player = _make_player(city=[farm, gatherer])
         game = _make_game()
         h.on_production(game, player)
         assert game.pending_choice is not None
@@ -648,10 +649,29 @@ class TestInteractiveChoices:
         h.on_production(game, player)
         assert game.pending_choice is None
 
-    def test_harvester_resolve_berry(self) -> None:
+    def test_harvester_no_choice_with_farm_only(self) -> None:
+        """Harvester requires both Farm and Gatherer — Farm alone is not enough."""
         h = get_card_definition("Harvester")
         farm = get_card_definition("Farm")
         player = _make_player(city=[farm])
+        game = _make_game()
+        h.on_production(game, player)
+        assert game.pending_choice is None
+
+    def test_harvester_no_choice_with_gatherer_only(self) -> None:
+        """Harvester requires both Farm and Gatherer — Gatherer alone is not enough."""
+        h = get_card_definition("Harvester")
+        gatherer = get_card_definition("Gatherer")
+        player = _make_player(city=[gatherer])
+        game = _make_game()
+        h.on_production(game, player)
+        assert game.pending_choice is None
+
+    def test_harvester_resolve_berry(self) -> None:
+        h = get_card_definition("Harvester")
+        farm = get_card_definition("Farm")
+        gatherer = get_card_definition("Gatherer")
+        player = _make_player(city=[farm, gatherer])
         game = _make_game()
         h.on_production(game, player)
         option = game.pending_choice["options"][3]  # 1 Berry

@@ -186,9 +186,10 @@ class Harvester(ProductionCard):
     paired_with: str | None = "Farm"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """If have Farm in city, gain 1 of any resource — interactive choice."""
+        """If paired with Gatherer and have Farm, gain 1 of any resource."""
         has_farm = any(c.name == "Farm" for c in player.city)
-        if has_farm:
+        has_gatherer = any(c.name == "Gatherer" for c in player.city)
+        if has_farm and has_gatherer:
             game.pending_choice = {
                 "choice_type": "select_resource",
                 "card": "Harvester",

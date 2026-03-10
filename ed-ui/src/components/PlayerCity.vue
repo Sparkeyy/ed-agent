@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const MAX_CITY_SIZE = 15
 const GRID_SNAP = 8
-const CARD_W = 104
+const CARD_W = 124
 const CARD_H = 40
 const COLS = 5
 
@@ -223,8 +223,8 @@ function destinationVisited(cardName: string): boolean {
 /* Draggable canvas for my city */
 .city-canvas {
   position: relative;
-  background-image: radial-gradient(circle, var(--parchment-deep) 1px, transparent 1px);
-  background-size: 8px 8px;
+  background-image: radial-gradient(circle, var(--parchment-deep) 0.5px, transparent 0.5px);
+  background-size: 16px 16px;
   border: 1px dashed var(--parchment-deep);
   border-radius: var(--radius-md);
   min-height: 120px;
@@ -254,7 +254,7 @@ function destinationVisited(cardName: string): boolean {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(3, auto);
-  gap: var(--gap-xs);
+  gap: 6px;
 }
 
 .city-slot {
@@ -268,11 +268,11 @@ function destinationVisited(cardName: string): boolean {
 }
 
 .empty-city-slot {
-  width: 100px;
+  width: 120px;
   height: 36px;
-  border: 1.5px dashed var(--parchment-deep);
+  border: 1px dashed var(--parchment-deep);
   border-radius: var(--radius-sm);
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
 .worker-dots {

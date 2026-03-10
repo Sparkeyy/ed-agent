@@ -60,7 +60,7 @@ const seasonLabels: Record<Season, string> = {
   gap: 2px;
   padding: 4px 8px;
   border-radius: var(--radius-md);
-  opacity: 0.4;
+  opacity: 0.55;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -80,7 +80,7 @@ const seasonLabels: Record<Season, string> = {
 
 .season-label {
   font-family: var(--font-display);
-  font-size: 0.55rem;
+  font-size: 0.65rem;
   color: var(--ink-light);
   text-transform: uppercase;
   letter-spacing: 0.06em;

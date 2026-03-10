@@ -187,6 +187,14 @@ function workerTitle(workerId: string): string {
   overflow-x: auto;
 }
 
+@media (max-width: 768px) {
+  .basic-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow-x: visible;
+  }
+}
+
 .loc-info-btn {
   position: absolute;
   top: 4px;
@@ -232,7 +240,7 @@ function workerTitle(workerId: string): string {
   border: 1.5px solid var(--parchment-deep);
   border-radius: var(--radius-lg);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  min-width: clamp(100px, 10vw, 150px);
+  min-width: clamp(120px, 12vw, 170px);
   flex-shrink: 0;
 }
 
@@ -248,7 +256,7 @@ function workerTitle(workerId: string): string {
 }
 
 .forest-location {
-  background: var(--green-production-bg);
+  background: rgba(74, 124, 89, 0.12);
   border-color: rgba(74, 124, 89, 0.3);
 }
 
@@ -268,7 +276,7 @@ function workerTitle(workerId: string): string {
 
 .location-workers {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   margin-top: var(--gap-xs);
   flex-wrap: wrap;
 }
@@ -277,7 +285,7 @@ function workerTitle(workerId: string): string {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
+  min-width: 26px;
   height: 20px;
   padding: 0 4px;
   border-radius: 10px;
@@ -322,7 +330,7 @@ function workerTitle(workerId: string): string {
 .exclusive-badge {
   position: absolute;
   top: 4px;
-  right: 6px;
+  left: 6px;
   width: 16px;
   height: 16px;
   border-radius: 50%;

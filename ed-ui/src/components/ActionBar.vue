@@ -53,6 +53,8 @@ const emit = defineEmits<{
 
 .action-bar.my-turn {
   background: linear-gradient(to right, var(--parchment-dark), rgba(201, 169, 110, 0.15));
+  border-top: 2px solid var(--gold);
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 .action-bar.game-over {
@@ -68,6 +70,7 @@ const emit = defineEmits<{
 .your-turn-text {
   color: var(--forest-light);
   font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .waiting-text {
@@ -98,6 +101,10 @@ const emit = defineEmits<{
 .btn-season {
   background: var(--forest-light);
   color: white;
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
 }
 
 .btn-season:hover {

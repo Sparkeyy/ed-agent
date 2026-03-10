@@ -132,7 +132,7 @@ function emitEventInfo(eventData: any, eventId: string) {
 
 .events-group-title {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -184,13 +184,17 @@ function emitEventInfo(eventData: any, eventId: string) {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   background: var(--parchment-dark);
   border: 1.5px solid var(--parchment-deep);
   border-radius: var(--radius-md);
-  min-width: 120px;
-  max-width: 160px;
+  min-width: 140px;
+  max-width: 200px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-card:not(.basic) {
+  border-left: 3px solid var(--purple-prosperity);
 }
 
 .event-card.basic {
@@ -209,19 +213,19 @@ function emitEventInfo(eventData: any, eventId: string) {
 }
 
 .event-card.claimed {
-  opacity: 0.45;
+  opacity: 0.6;
 }
 
 .event-card-name {
   font-family: var(--font-card);
   font-weight: 600;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--ink);
   line-height: 1.2;
 }
 
 .event-card-req {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--ink-faint);
   line-height: 1.2;
 }

@@ -59,6 +59,7 @@ function isPlayable(cardName: string): boolean {
   display: flex;
   gap: var(--gap-sm);
   overflow-x: auto;
+  padding: var(--gap-xs) 0;
   padding-bottom: var(--gap-sm);
   scrollbar-width: thin;
   scrollbar-color: var(--parchment-deep) transparent;

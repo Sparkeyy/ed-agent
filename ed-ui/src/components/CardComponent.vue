@@ -177,8 +177,8 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-4px);
 }
 
 .card.playable {
@@ -201,7 +201,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 
 /* Compact mode */
 .card.compact {
-  width: 100px;
+  width: 120px;
   height: 36px;
   flex-direction: row;
   align-items: center;
@@ -230,7 +230,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 
 /* Full card */
 .card-top-bar {
-  height: 4px;
+  height: 6px;
   width: 100%;
   flex-shrink: 0;
 }
@@ -246,7 +246,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 .card-name {
   font-family: var(--font-card);
   font-weight: 700;
-  font-size: clamp(0.65rem, 0.8vw, 0.82rem);
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
   color: var(--ink);
   line-height: 1.2;
   text-align: center;
@@ -265,10 +265,10 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: white;
 }
@@ -318,7 +318,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 .vp-badge,
 .vp-badge-sm {
   display: inline-block;
-  background: #b8860b;
+  background: var(--forest-dark);
   color: white;
   font-size: 0.5rem;
   font-weight: 700;
@@ -329,7 +329,7 @@ function costEntries(cost: ResourceBank): Array<{ key: string; icon: string; cou
 }
 
 .vp-badge-sm {
-  font-size: 0.45rem;
+  font-size: 0.55rem;
   padding: 0 2px;
 }
 

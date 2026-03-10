@@ -684,7 +684,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
 }
 
 .info-label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
@@ -736,7 +736,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
 }
 
 .pw-season {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   color: var(--ink-faint);
   text-transform: capitalize;
 }
@@ -746,19 +746,31 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(4px, 0.5vw, 8px);
+  gap: clamp(8px, 1vw, 16px);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: clamp(4px, 0.5vw, 8px);
+  padding: clamp(8px, 1vw, 16px);
 }
 
 .forest-meadow-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: clamp(4px, 0.5vw, 8px);
+  gap: clamp(8px, 1vw, 16px);
   width: 100%;
   align-items: start;
+}
+
+@media (max-width: 768px) {
+  .forest-meadow-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  /* Left and right forest share the top row */
+  .forest-meadow-row > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  .forest-meadow-row > :nth-child(3) { grid-column: 2; grid-row: 1; }
+  /* Meadow spans full width below */
+  .forest-meadow-row > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
 }
 
 .haven-journey-row {

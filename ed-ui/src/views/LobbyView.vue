@@ -166,6 +166,7 @@ function rejoinGame(gameId: string) {
   font-size: 3rem;
   color: var(--forest-dark);
   letter-spacing: 0.08em;
+  line-height: 1.1;
   margin-bottom: var(--gap-xs);
 }
 
@@ -205,7 +206,7 @@ function rejoinGame(gameId: string) {
   background: white;
   border: var(--border-card);
   border-radius: var(--radius-lg);
-  padding: var(--gap-lg);
+  padding: 28px 24px;
   box-shadow: var(--shadow-sm);
 }
 

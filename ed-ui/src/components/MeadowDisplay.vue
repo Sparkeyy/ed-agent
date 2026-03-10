@@ -67,7 +67,7 @@ function isPlayable(index: number): boolean {
 .meadow-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--gap-sm);
+  gap: var(--gap-md);
   justify-items: center;
 }
 
@@ -79,13 +79,22 @@ function isPlayable(index: number): boolean {
 .empty-slot {
   width: clamp(100px, 11vw, 150px);
   height: clamp(140px, 15vw, 200px);
-  border: 2px dashed var(--parchment-deep);
+  border: 1.5px dashed var(--parchment-deep);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ink-faint);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-style: italic;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 768px) {
+  .meadow-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

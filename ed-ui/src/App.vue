@@ -68,7 +68,7 @@ const isGameView = computed(() => route.name === 'Game')
   color: var(--parchment);
   text-decoration: none;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   opacity: 0.8;
   transition: opacity 0.2s ease;
 }

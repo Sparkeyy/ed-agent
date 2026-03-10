@@ -58,8 +58,13 @@ def play_one_game(
         - transitions: list of (state, action, log_prob, value, mask) tuples
         - final_score: int
     """
+    import os
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
     import io
     import torch
+    torch.set_num_threads(1)
     from ed_engine.engine.game_manager import GameManager
     from ed_ai.rl.network import EverdellNetwork
 
@@ -205,7 +210,7 @@ def parallel_self_play(
     """
     import os
     if num_workers is None:
-        num_workers = max(1, (os.cpu_count() or 4) // 2)
+        num_workers = max(1, (os.cpu_count() or 4) - 2)
 
     rng = random.Random(base_seed)
 

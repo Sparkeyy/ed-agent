@@ -13,6 +13,12 @@ import argparse
 import json
 import logging
 import os
+
+# Prevent PyTorch/NumPy thread explosion in multiprocessing workers
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
 import sys
 import threading
 import time
@@ -21,6 +27,8 @@ from typing import Any
 
 import numpy as np
 import torch
+
+torch.set_num_threads(1)
 
 from ed_ai.rl.checkpoint import DEFAULT_MODEL_DIR, save_checkpoint
 from ed_ai.rl.network import EverdellNetwork
@@ -51,7 +59,7 @@ class TrainingRun:
     ):
         self.num_batches = num_batches
         self.games_per_batch = games_per_batch
-        self.num_workers = num_workers or max(1, (os.cpu_count() or 4) // 2)
+        self.num_workers = num_workers or max(1, (os.cpu_count() or 4) - 2)
         self.lr = lr
         self.temperature = temperature
         self.eval_interval = eval_interval

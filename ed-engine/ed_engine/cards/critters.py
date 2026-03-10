@@ -440,8 +440,117 @@ class Peddler(ProductionCard):
     paired_with: str | None = "Ruins"
 
     def on_production(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Trade up to 2 resources for 2 other resources. (Skipped — complex trade logic.)"""
-        pass
+        """Trade up to 2 resources for 2 other resources — interactive choice."""
+        total = player.resources.twig + player.resources.resin + player.resources.pebble + player.resources.berry
+        if total == 0:
+            return
+        options: list[dict] = [{"label": "Trade nothing", "value": "0"}]
+        if total >= 1:
+            options.append({"label": "Trade 1 resource", "value": "1"})
+        if total >= 2:
+            options.append({"label": "Trade 2 resources", "value": "2"})
+        game.pending_choice = {
+            "choice_type": "select_resource",
+            "card": "Peddler",
+            "player_id": str(player.id),
+            "step": "pick_trade_count",
+            "prompt": "How many resources to trade? (Peddler)",
+            "options": options,
+            "context": {},
+        }
+
+    def resolve_choice(
+        self, game: GameState, player: Player, choice_index: int, option: dict,
+        pending_choice: dict, *, ctx: dict | None = None,
+    ) -> list[str]:
+        step = pending_choice.get("step", "")
+        context = pending_choice.get("context", {})
+
+        if step == "pick_trade_count":
+            count = int(option["value"])
+            if count == 0:
+                game.pending_choice = None
+                return [f"{player.name} traded nothing via Peddler"]
+            give_options: list[dict] = []
+            for res in ("twig", "resin", "pebble", "berry"):
+                if getattr(player.resources, res) > 0:
+                    give_options.append({"label": f"1 {res.title()}", "value": res})
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Peddler",
+                "player_id": str(player.id),
+                "step": "pick_give",
+                "prompt": f"Choose resource to give (1 of {count}) — Peddler",
+                "options": give_options,
+                "context": {"trade_count": count, "given": [], "remaining_give": count},
+            }
+            return []
+
+        elif step == "pick_give":
+            res = option["value"]
+            given = list(context.get("given", []))
+            given.append(res)
+            remaining = context["remaining_give"] - 1
+            player.resources = player.resources.spend(ResourceBank(**{res: 1}))
+
+            if remaining > 0:
+                give_options = []
+                for r in ("twig", "resin", "pebble", "berry"):
+                    if getattr(player.resources, r) > 0:
+                        give_options.append({"label": f"1 {r.title()}", "value": r})
+                if not give_options:
+                    remaining = 0
+                else:
+                    game.pending_choice = {
+                        "choice_type": "select_resource",
+                        "card": "Peddler",
+                        "player_id": str(player.id),
+                        "step": "pick_give",
+                        "prompt": f"Choose resource to give ({remaining} left) — Peddler",
+                        "options": give_options,
+                        "context": {"trade_count": context["trade_count"], "given": given, "remaining_give": remaining},
+                    }
+                    return []
+
+            # Now pick resources to receive
+            trade_count = len(given)
+            receive_options = [{"label": f"1 {r.title()}", "value": r} for r in ("twig", "resin", "pebble", "berry")]
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "Peddler",
+                "player_id": str(player.id),
+                "step": "pick_receive",
+                "prompt": f"Choose resource to receive (1 of {trade_count}) — Peddler",
+                "options": receive_options,
+                "context": {"given": given, "received": [], "remaining_receive": trade_count},
+            }
+            return []
+
+        elif step == "pick_receive":
+            res = option["value"]
+            received = list(context.get("received", []))
+            received.append(res)
+            remaining = context["remaining_receive"] - 1
+            player.resources = player.resources.gain(ResourceBank(**{res: 1}))
+
+            if remaining > 0:
+                receive_options = [{"label": f"1 {r.title()}", "value": r} for r in ("twig", "resin", "pebble", "berry")]
+                game.pending_choice = {
+                    "choice_type": "select_resource",
+                    "card": "Peddler",
+                    "player_id": str(player.id),
+                    "step": "pick_receive",
+                    "prompt": f"Choose resource to receive ({remaining} left) — Peddler",
+                    "options": receive_options,
+                    "context": {"given": context["given"], "received": received, "remaining_receive": remaining},
+                }
+                return []
+
+            game.pending_choice = None
+            return [f"{player.name} traded {', '.join(context['given'])} for {', '.join(received)} via Peddler"]
+
+        game.pending_choice = None
+        return []
 
 
 @register
@@ -900,8 +1009,88 @@ class Ranger(TravelerCard):
     paired_with: str | None = "Dungeon"
 
     def on_play(self, game: GameState, player: Player, *, ctx: dict | None = None) -> None:
-        """Move 1 deployed worker to a new location. (Deferred — complex worker movement.)"""
-        pass
+        """Move 1 deployed worker to a new location."""
+        if not player.workers_deployed:
+            return  # No deployed workers to move
+
+        game.pending_choice = {
+            "card": self.name,
+            "type": "pick_worker",
+            "prompt": "Choose a deployed worker to move:",
+            "options": list(player.workers_deployed),
+        }
+
+    def resolve_choice(
+        self,
+        game: GameState,
+        player: Player,
+        idx: int,
+        option: str,
+        pending: dict,
+        *,
+        ctx: dict | None = None,
+    ) -> list[str]:
+        choice_type = pending.get("type")
+        location_mgr = (ctx or {}).get("location_mgr")
+
+        if choice_type == "pick_worker":
+            # Player chose which deployed worker to move
+            old_location_id = option
+
+            # Remove worker from old location
+            if location_mgr:
+                old_loc = location_mgr.get_location(old_location_id)
+                if old_loc is not None:
+                    old_loc.remove_worker(str(player.id))
+
+            # Find available locations for the worker
+            if location_mgr:
+                available = location_mgr.get_available_locations(str(player.id), player.season)
+                available_ids = [loc.id for loc in available if loc.id != old_location_id]
+            else:
+                available_ids = []
+
+            if not available_ids:
+                # No valid destinations — put worker back
+                if location_mgr:
+                    old_loc = location_mgr.get_location(old_location_id)
+                    if old_loc is not None:
+                        old_loc.place_worker(str(player.id))
+                game.pending_choice = None
+                return [f"{player.name}'s Ranger found no available location to move to"]
+
+            game.pending_choice = {
+                "card": self.name,
+                "type": "pick_destination",
+                "prompt": "Choose a new location for the worker:",
+                "options": available_ids,
+                "context": {"old_location": old_location_id},
+            }
+            return [f"{player.name}'s Ranger picks up worker from {old_location_id}"]
+
+        elif choice_type == "pick_destination":
+            # Player chose the new location
+            new_location_id = option
+            old_location_id = pending.get("context", {}).get("old_location")
+
+            # Update workers_deployed
+            if old_location_id in player.workers_deployed:
+                player.workers_deployed.remove(old_location_id)
+            player.workers_deployed.append(new_location_id)
+
+            # Place worker on new location and activate it
+            if location_mgr:
+                new_loc = location_mgr.get_location(new_location_id)
+                if new_loc is not None:
+                    new_loc.place_worker(str(player.id))
+                    deck_mgr = (ctx or {}).get("deck_mgr")
+                    new_loc.on_activate(game, player, deck_mgr=deck_mgr)
+
+            game.pending_choice = None
+            return [f"{player.name}'s Ranger moved worker to {new_location_id}"]
+
+        game.pending_choice = None
+        return []
 
 
 @register

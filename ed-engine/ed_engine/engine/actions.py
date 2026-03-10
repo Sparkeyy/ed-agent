@@ -386,7 +386,7 @@ class ActionHandler:
         if action.action_type == ActionType.PLACE_WORKER:
             return ActionHandler._place_worker(game, player, action, location_mgr, deck_mgr)
         elif action.action_type == ActionType.PLAY_CARD:
-            return ActionHandler._play_card(game, player, action, deck_mgr)
+            return ActionHandler._play_card(game, player, action, deck_mgr, location_mgr)
         elif action.action_type == ActionType.PREPARE_FOR_SEASON:
             return SeasonManager.prepare_for_season(
                 game, player, location_mgr, deck_mgr
@@ -394,7 +394,7 @@ class ActionHandler:
         elif action.action_type == ActionType.CLAIM_EVENT:
             return ActionHandler._claim_event(game, player, action)
         elif action.action_type == ActionType.RESOLVE_CHOICE:
-            return ActionHandler._resolve_choice(game, player, action, deck_mgr)
+            return ActionHandler._resolve_choice(game, player, action, deck_mgr, location_mgr)
         return []
 
     @staticmethod
@@ -438,6 +438,7 @@ class ActionHandler:
         player: Player,
         action: GameAction,
         deck_mgr: DeckManager,
+        location_mgr: LocationManager | None = None,
     ) -> list[str]:
         """Play a card from hand or meadow."""
         events: list[str] = []
@@ -468,7 +469,7 @@ class ActionHandler:
         player.city.append(card)
 
         # Trigger on_play
-        ctx = {"deck_mgr": deck_mgr, "game": game}
+        ctx = {"deck_mgr": deck_mgr, "game": game, "location_mgr": location_mgr}
         card.on_play(game, player, ctx=ctx)
 
         # Trigger blue governance cards in city
@@ -590,6 +591,7 @@ class ActionHandler:
         player: Player,
         action: GameAction,
         deck_mgr: DeckManager,
+        location_mgr: LocationManager | None = None,
     ) -> list[str]:
         """Resolve a pending choice — dispatch to card's resolve_choice if options-based."""
         pc = game.pending_choice
@@ -606,7 +608,7 @@ class ActionHandler:
             card_name = pc.get("card")
             from ed_engine.cards import get_card_definition
             card = get_card_definition(card_name)
-            ctx = {"deck_mgr": deck_mgr, "game": game}
+            ctx = {"deck_mgr": deck_mgr, "game": game, "location_mgr": location_mgr}
             events = card.resolve_choice(game, player, idx, option, pc, ctx=ctx)
 
             # After card resolves, check production queue

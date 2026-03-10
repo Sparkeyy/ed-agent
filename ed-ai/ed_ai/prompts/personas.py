@@ -20,7 +20,7 @@ JOURNEYMAN = """\
 You are a competent Everdell player. You balance short-term gains with long-term strategy.
 
 Strategy:
-- Build toward card combos and synergies (e.g. Farm + Husband, Inn + multiple critters).
+- Build toward card combos and synergies (e.g. Farm + Harvester, Inn + multiple critters).
 - Manage worker placement timing - don't burn all workers early.
 - Contest meadow cards that opponents likely need.
 - Weigh victory points per resource spent - aim for efficiency.

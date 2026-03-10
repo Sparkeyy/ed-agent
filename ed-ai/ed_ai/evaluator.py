@@ -151,9 +151,17 @@ def heuristic_evaluate(
             "explanation": "No better options available; preparing for season is reasonable.",
         }
 
-    # Playing a high-point card is generally good
+    # Playing cards: evaluate by points and free-play status
     if action_type == "play_card":
         points = action_taken.get("base_points", action_taken.get("points", 0)) or 0
+        is_free = action_taken.get("use_paired_construction") or action_taken.get("is_free")
+        if is_free:
+            return {
+                "quality": "brilliant" if points >= 2 else "good",
+                "score": QUALITY_SCORES["brilliant" if points >= 2 else "good"],
+                "alternatives": [],
+                "explanation": f"Free play of a {points}-point card is excellent tempo.",
+            }
         if points >= 3:
             return {
                 "quality": "good",
@@ -161,6 +169,15 @@ def heuristic_evaluate(
                 "alternatives": [],
                 "explanation": f"Playing a {points}-point card is a solid move.",
             }
+
+    # Claiming events is always good (free VP)
+    if action_type == "claim_event":
+        return {
+            "quality": "good",
+            "score": QUALITY_SCORES["good"],
+            "alternatives": [],
+            "explanation": "Claiming an event for free VP is always worthwhile.",
+        }
 
     # Only one valid action means any choice is fine
     if len(valid_actions) <= 1:

@@ -170,6 +170,8 @@ class AIPlayer:
         play_card_actions = []
         place_worker_actions = []
         prepare_actions = []
+        claim_event_actions = []
+        resolve_choice_actions = []
         other_actions = []
 
         for action in valid_actions:
@@ -180,25 +182,56 @@ class AIPlayer:
                 place_worker_actions.append(action)
             elif action_type == "prepare_for_season":
                 prepare_actions.append(action)
+            elif action_type == "claim_event":
+                claim_event_actions.append(action)
+            elif action_type == "resolve_choice":
+                resolve_choice_actions.append(action)
             else:
                 other_actions.append(action)
 
-        # Determine game phase from season
-        season = (state or {}).get("season", "spring")
-        season_idx = _SEASON_ORDER.get(season.lower() if isinstance(season, str) else "spring", 0)
+        # Resolve choices immediately — pick by base_points or resource value
+        if resolve_choice_actions:
+            def resolve_score(a: dict) -> float:
+                pts = a.get("base_points", 0) or 0
+                if pts:
+                    return pts
+                # Resource value heuristic
+                val = a.get("value", "")
+                resource_value = {"pebble": 4, "resin": 3, "berry": 2, "twig": 1}
+                return resource_value.get(val, 0)
+            resolve_choice_actions.sort(key=resolve_score, reverse=True)
+            return resolve_choice_actions[0]
+
+        # Claim events — free VP, always prioritize
+        if claim_event_actions:
+            return claim_event_actions[0]
+
+        # Determine game phase from season (check player-level season)
+        season = "spring"
+        if state:
+            # Season may be at top level or in current player data
+            season = state.get("season", "")
+            if not season:
+                players = state.get("players", [])
+                for p in players:
+                    if p.get("is_current"):
+                        season = p.get("season", "spring")
+                        break
+        season = season.lower() if isinstance(season, str) else "spring"
+        season_idx = _SEASON_ORDER.get(season, 0)
         is_late_game = season_idx >= 2  # autumn or winter
 
-        # Prefer play_card actions, sorted by base_points
+        # Prefer play_card actions, sorted by efficiency
         if play_card_actions:
             def card_score(a: dict) -> float:
                 pts = a.get("base_points", a.get("points", 0)) or 0
                 card_type = a.get("card_type", "").lower()
-                # Free plays are always great
-                bonus = 10 if a.get("is_free") else 0
-                # Production cards better early, prosperity cards better late
-                if card_type == "production" and not is_late_game:
+                # Free plays via paired construction
+                bonus = 10 if a.get("use_paired_construction") or a.get("is_free") else 0
+                # Card type bonuses — match both short and full enum names
+                if "production" in card_type and not is_late_game:
                     bonus += 3
-                elif card_type == "prosperity" and is_late_game:
+                elif "prosperity" in card_type and is_late_game:
                     bonus += 3
                 return pts + bonus
 
@@ -207,8 +240,6 @@ class AIPlayer:
 
         # Place workers on resource locations
         if place_worker_actions:
-            # Prefer locations that give more resources or have strategic value
-            # Simple shuffle to add variety
             random.shuffle(place_worker_actions)
             return place_worker_actions[0]
 

@@ -51,6 +51,37 @@ def _find_card(action: GameAction, game) -> object | None:
     return None
 
 
+def _smart_resolve_sim(resolve: list[GameAction], game, rng: random.Random) -> GameAction:
+    """Score resolve_choice options by context (card type, resource value)."""
+    pc = game.pending_choice if game.pending_choice else {}
+    choice_type = pc.get("choice_type", "")
+    options = pc.get("options", [])
+
+    def score_option(action: GameAction) -> float:
+        idx = action.choice_index or 0
+        opt = options[idx] if idx < len(options) else {}
+        if not isinstance(opt, dict):
+            return 0
+
+        # Card selection: pick highest base_points
+        if choice_type == "select_card":
+            return opt.get("base_points", 0)
+
+        # Resource selection: value pebble > resin > berry > twig
+        if choice_type == "select_resource":
+            val = opt.get("value", "")
+            # Trade-count options ("0", "1", "2"): prefer trading 1
+            if val.isdigit():
+                n = int(val)
+                return 1 if n == 1 else (0.5 if n == 0 else -1)
+            resource_value = {"pebble": 4, "resin": 3, "berry": 2, "twig": 1}
+            return resource_value.get(val, 0)
+
+        return 0
+
+    return max(resolve, key=score_option)
+
+
 def pick_action_apprentice(valid_actions: list[GameAction], game, rng: random.Random) -> GameAction:
     """Apprentice: 30% play cards, rest random."""
     if len(valid_actions) == 1:
@@ -73,7 +104,7 @@ def pick_action_journeyman(valid_actions: list[GameAction], game, rng: random.Ra
 
     resolve = [a for a in valid_actions if a.action_type == ActionType.RESOLVE_CHOICE]
     if resolve:
-        return rng.choice(resolve)
+        return _smart_resolve_sim(resolve, game, rng)
 
     play_card = [a for a in valid_actions if a.action_type == ActionType.PLAY_CARD]
     place_worker = [a for a in valid_actions if a.action_type == ActionType.PLACE_WORKER]
@@ -104,17 +135,15 @@ def pick_action_journeyman(valid_actions: list[GameAction], game, rng: random.Ra
 
 
 def pick_action_master(valid_actions: list[GameAction], game, rng: random.Random) -> GameAction:
-    """Master: Always best card, smart resolve_choice, claims events eagerly,
-    prefers forest locations by resource value, journey in autumn."""
+    """Master: Efficiency-based card scoring, smart resolve_choice, claims events eagerly,
+    production cards early, prosperity cards late."""
     if len(valid_actions) == 1:
         return valid_actions[0]
 
-    # Smart resolve_choice: pick highest-value option (highest choice_index
-    # tends to be better resources, but we pick last which is often "best")
+    # Smart resolve_choice
     resolve = [a for a in valid_actions if a.action_type == ActionType.RESOLVE_CHOICE]
     if resolve:
-        # Pick the last option (highest index) which is typically the best resource
-        return max(resolve, key=lambda a: a.choice_index or 0)
+        return _smart_resolve_sim(resolve, game, rng)
 
     claim_event = [a for a in valid_actions if a.action_type == ActionType.CLAIM_EVENT]
     play_card = [a for a in valid_actions if a.action_type == ActionType.PLAY_CARD]
@@ -130,34 +159,33 @@ def pick_action_master(valid_actions: list[GameAction], game, rng: random.Random
         for a in play_card:
             card = _find_card(a, game)
             pts = card.base_points if card else 0
-            bonus = 5 if a.use_paired_construction else 0
-            # Purple prosperity cards score bonus VP
-            if card and hasattr(card, 'card_type') and str(card.card_type) == "CardType.PURPLE_PROSPERITY":
-                bonus += 3
-            scored.append((pts + bonus, a))
+
+            # Free plays (paired construction) are always top priority
+            if a.use_paired_construction:
+                scored.append((100 + pts, a))
+                continue
+
+            cost = card.cost.total() if card and hasattr(card, "cost") else 0
+            card_type = str(card.card_type) if card and hasattr(card, "card_type") else ""
+
+            # Efficiency: VP value minus resource cost penalty
+            score = pts * 2 - cost
+
+            # Production cards better early (more activations ahead)
+            if "GREEN_PRODUCTION" in card_type:
+                score += 3
+            # Prosperity cards better late (on_score bonus)
+            if "PURPLE_PROSPERITY" in card_type:
+                score += 2
+
+            scored.append((score, a))
+
         scored.sort(key=lambda x: x[0], reverse=True)
         return scored[0][1]
 
     if place_worker:
-        # Prefer journey locations in autumn for extra VP
-        current_player = None
-        for p in game.players:
-            if not p.has_passed:
-                current_player = p
-                break
-
-        if current_player and str(current_player.season) in ("Season.AUTUMN", "autumn"):
-            journey = [a for a in place_worker if a.location_id and "journey" in a.location_id]
-            if journey:
-                # Pick highest journey VP
-                return max(journey, key=lambda a: int(a.location_id.split("_")[-1].replace("pt", "")) if a.location_id else 0)
-
-        # Prefer forest locations (better resources)
-        forest = [a for a in place_worker if a.location_id and "forest" in a.location_id]
-        if forest:
-            return rng.choice(forest)
-
-        return rng.choice(place_worker)
+        rng.shuffle(place_worker)
+        return place_worker[0]
 
     if prepare:
         return prepare[0]

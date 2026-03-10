@@ -149,37 +149,63 @@ def _broadcast_state(session: Any) -> None:
 def _pick_action(
     valid_actions: list[GameAction], game: Any, difficulty: str
 ) -> GameAction:
-    """Heuristic action selection. Difficulty affects randomness."""
+    """Heuristic action selection. Difficulty affects strategy quality."""
     if len(valid_actions) == 1:
         return valid_actions[0]
 
-    # Always handle resolve_choice immediately (pick randomly)
+    # --- Resolve choices: context-aware for all difficulties ---
     resolve = [a for a in valid_actions if a.action_type == "resolve_choice"]
     if resolve:
-        return random.choice(resolve)
+        if difficulty == "apprentice":
+            return random.choice(resolve)
+        return _smart_resolve(resolve, game)
 
     # Categorize
     play_card = [a for a in valid_actions if a.action_type == "play_card"]
     place_worker = [a for a in valid_actions if a.action_type == "place_worker"]
     prepare = [a for a in valid_actions if a.action_type == "prepare_for_season"]
+    claim_event = [a for a in valid_actions if a.action_type == "claim_event"]
 
-    # Apprentice: mostly random
+    # --- Apprentice: mostly random ---
     if difficulty == "apprentice":
         if random.random() < 0.3 and play_card:
             return random.choice(play_card)
         return random.choice(valid_actions)
 
-    # Score each play_card action
+    # --- Claim events first — free VP for journeyman & master ---
+    if claim_event:
+        return claim_event[0]
+
+    # --- Score each play_card action ---
     if play_card:
         scored = []
         for a in play_card:
             card = _find_card(a, game)
             pts = card.base_points if card else 0
-            bonus = 5 if a.use_paired_construction else 0  # Free play is great
-            scored.append((pts + bonus, a))
+
+            # Free plays (paired construction) are always top priority
+            if a.use_paired_construction:
+                scored.append((100 + pts, a))
+                continue
+
+            cost = card.cost.total() if card and hasattr(card, "cost") else 0
+            card_type = str(card.card_type) if card and hasattr(card, "card_type") else ""
+
+            # Efficiency: VP value minus resource cost penalty
+            score = pts * 2 - cost
+
+            # Production cards better early (more activations ahead)
+            if "GREEN_PRODUCTION" in card_type:
+                score += 3
+            # Prosperity cards better late (on_score bonus)
+            if "PURPLE_PROSPERITY" in card_type:
+                score += 2
+
+            scored.append((score, a))
+
         scored.sort(key=lambda x: x[0], reverse=True)
 
-        # Master: always pick best. Journeyman: sometimes pick 2nd best.
+        # Master: always pick best. Journeyman: 80% best, 20% second best.
         if difficulty == "master" or len(scored) == 1:
             return scored[0][1]
         if random.random() < 0.8:
@@ -194,6 +220,38 @@ def _pick_action(
         return prepare[0]
 
     return valid_actions[0]
+
+
+def _smart_resolve(resolve: list[GameAction], game: Any) -> GameAction:
+    """Score resolve_choice options by context (card type, resource value)."""
+    pc = game.pending_choice if game.pending_choice else {}
+    choice_type = pc.get("choice_type", "")
+    options = pc.get("options", [])
+
+    def score_option(action: GameAction) -> float:
+        idx = action.choice_index or 0
+        opt = options[idx] if idx < len(options) else {}
+        if not isinstance(opt, dict):
+            return 0
+
+        # Card selection: pick highest base_points
+        if choice_type == "select_card":
+            return opt.get("base_points", 0)
+
+        # Resource selection: value pebble > resin > berry > twig
+        if choice_type == "select_resource":
+            val = opt.get("value", "")
+            # Trade-count options ("0", "1", "2"): prefer trading 1 (net positive
+            # without wasting too many resolve turns)
+            if val.isdigit():
+                n = int(val)
+                return 1 if n == 1 else (0.5 if n == 0 else -1)
+            resource_value = {"pebble": 4, "resin": 3, "berry": 2, "twig": 1}
+            return resource_value.get(val, 0)
+
+        return 0
+
+    return max(resolve, key=score_option)
 
 
 def _find_card(action: GameAction, game: Any) -> Any:

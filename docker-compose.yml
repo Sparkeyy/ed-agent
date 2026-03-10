@@ -9,6 +9,7 @@ services:
     environment:
       - ED_ENV=development
       - ED_DB_PATH=/app/data/ed.db
+      - ED_AI_URL=http://ed-ai:4243
     restart: unless-stopped
 
   ed-ai:
@@ -17,6 +18,7 @@ services:
       - "4243:4243"
     volumes:
       - ./ed-ai/ed_ai:/app/ed_ai
+      - ./ed-ai/models:/app/models
     environment:
       - ED_ENV=development
       - OLLAMA_HOST=http://host.docker.internal:11434

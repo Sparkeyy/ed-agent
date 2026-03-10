@@ -55,7 +55,7 @@ class ThinkResponse(BaseModel):
     action: dict[str, Any]
     reasoning: str = ""
     retries: int = 0
-    source: str = "ollama"  # "ollama" or "heuristic"
+    source: str = "rl"  # "rl", "ollama", or "heuristic"
 
 
 class EvaluateRequest(BaseModel):
@@ -137,7 +137,10 @@ async def join_game(req: JoinRequest, background_tasks: BackgroundTasks) -> Join
 
 @app.post("/think", response_model=ThinkResponse)
 async def think(req: ThinkRequest) -> ThinkResponse:
-    """Given a game state + valid_actions, return chosen action (for external callers)."""
+    """Given a game state + valid_actions, return chosen action (for external callers).
+
+    Pipeline: RL model → Ollama → heuristic fallback.
+    """
     # Merge valid_actions into game_state if provided separately
     state = dict(req.game_state)
     if req.valid_actions and "valid_actions" not in state:
@@ -145,13 +148,31 @@ async def think(req: ThinkRequest) -> ThinkResponse:
     elif req.valid_actions:
         state["valid_actions"] = req.valid_actions
 
+    valid_actions = state.get("valid_actions", [])
+
+    # Try RL model first (<1ms inference)
+    temp_player = AIPlayer(
+        game_id="", player_token="", player_id="",
+        difficulty=req.difficulty, ollama_client=_ollama,
+        use_rl=True,
+    )
+    if temp_player._rl_model is not None:
+        rl_action = temp_player._think_rl(state)
+        if rl_action is not None:
+            return ThinkResponse(
+                action=rl_action,
+                reasoning="RL model inference",
+                retries=0,
+                source="rl",
+            )
+        logger.info("/think: RL inference failed, trying Ollama")
+
+    # Try Ollama
     serializer = GameStateSerializer()
     parser = ResponseParser()
     system_prompt = get_system_prompt(req.difficulty)
-    valid_actions = state.get("valid_actions", [])
     user_prompt = serializer.serialize(state)
 
-    # Try Ollama
     ollama_available = await _ollama.is_available()
     if ollama_available:
         last_error = ""
@@ -175,10 +196,6 @@ async def think(req: ThinkRequest) -> ThinkResponse:
                 last_error = str(exc)
 
     # Heuristic fallback
-    temp_player = AIPlayer(
-        game_id="", player_token="", player_id="",
-        difficulty=req.difficulty, ollama_client=_ollama,
-    )
     action = temp_player.heuristic_fallback(valid_actions, state)
     return ThinkResponse(
         action=action,

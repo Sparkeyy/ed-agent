@@ -1,16 +1,25 @@
-"""In-process AI player that runs as a background asyncio task."""
+"""In-process AI player that runs as a background asyncio task.
+
+Decision pipeline: calls ed-ai service (/think) for RL-powered decisions,
+falls back to local heuristic if ed-ai is unreachable.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import random
 from typing import Any
 from uuid import UUID
 
+import httpx
+
 from ed_engine.engine.actions import GameAction
 
 logger = logging.getLogger("ed_engine.ai_runner")
+
+ED_AI_URL = os.environ.get("ED_AI_URL", "http://localhost:4243")
 
 # Active AI tasks keyed by (game_id, player_id)
 _ai_tasks: dict[tuple[str, str], asyncio.Task] = {}
@@ -36,7 +45,11 @@ async def run_ai_player(
     player_id: str,
     difficulty: str,
 ) -> None:
-    """Background task: poll game state, pick action, submit."""
+    """Background task: poll game state, pick action, submit.
+
+    Uses ed-ai service for RL-powered decisions when available,
+    falls back to local heuristic otherwise.
+    """
     game_id = session.game_id
     logger.info("AI started: game=%s player=%s difficulty=%s", game_id, player_id, difficulty)
 
@@ -74,8 +87,10 @@ async def run_ai_player(
                 await asyncio.sleep(0.5)
                 continue
 
-            # Pick action
-            action = _pick_action(valid_actions, game, difficulty)
+            # Pick action: try ed-ai service first, then local heuristic
+            action = await _pick_action_smart(
+                session, gm_uuid_str, valid_actions, game, difficulty
+            )
 
             # Delay before executing so humans can see the board state
             await asyncio.sleep(1.2 if difficulty == "master" else 0.8)
@@ -113,6 +128,93 @@ async def run_ai_player(
         _ai_tasks.pop((game_id, player_id), None)
 
 
+async def _pick_action_smart(
+    session: Any,
+    gm_uuid_str: str,
+    valid_actions: list[GameAction],
+    game: Any,
+    difficulty: str,
+) -> GameAction:
+    """Try ed-ai service for RL-powered decision, fall back to local heuristic."""
+    if len(valid_actions) == 1:
+        return valid_actions[0]
+
+    try:
+        # Serialize game state the same way the API does
+        from ed_engine.engine.perspective import PerspectiveFilter
+        state_dict = PerspectiveFilter.serialize_for_api(
+            session.game_manager, player_id=gm_uuid_str,
+        )
+
+        # Serialize valid actions as dicts
+        va_dicts = []
+        for a in valid_actions:
+            d: dict[str, Any] = {"action_type": a.action_type}
+            if a.location_id:
+                d["location_id"] = a.location_id
+            if a.card_name:
+                d["card_name"] = a.card_name
+            if a.source:
+                d["source"] = a.source
+            if a.meadow_index is not None:
+                d["meadow_index"] = a.meadow_index
+            if a.use_paired_construction:
+                d["use_paired_construction"] = True
+            if a.event_id:
+                d["event_id"] = a.event_id
+            if a.choice_index is not None:
+                d["choice_index"] = a.choice_index
+            va_dicts.append(d)
+
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(
+                f"{ED_AI_URL}/think",
+                json={
+                    "game_state": state_dict,
+                    "valid_actions": va_dicts,
+                    "difficulty": difficulty,
+                },
+            )
+            resp.raise_for_status()
+            result = resp.json()
+
+        action_dict = result.get("action", {})
+        source = result.get("source", "unknown")
+        action = _action_from_dict(action_dict, valid_actions, gm_uuid_str)
+        if action is not None:
+            logger.info("AI decision via ed-ai (%s): %s", source, action.action_type)
+            return action
+        logger.warning("ed-ai returned unmatchable action: %s", action_dict)
+
+    except Exception as exc:
+        logger.debug("ed-ai unavailable, using local heuristic: %s", exc)
+
+    return _pick_action(valid_actions, game, difficulty)
+
+
+def _action_from_dict(
+    action_dict: dict[str, Any],
+    valid_actions: list[GameAction],
+    player_id: str,
+) -> GameAction | None:
+    """Match an action dict from ed-ai to a valid GameAction."""
+    action_type = action_dict.get("action_type", "")
+    for va in valid_actions:
+        if va.action_type != action_type:
+            continue
+        match = True
+        for key in ("card_name", "location_id", "meadow_index", "source",
+                     "event_id", "choice_index", "use_paired_construction"):
+            if key in action_dict and action_dict[key] is not None:
+                va_val = getattr(va, key, None)
+                if va_val != action_dict[key]:
+                    match = False
+                    break
+        if match:
+            return va
+    return None
+
+
 def _broadcast_state(session: Any) -> None:
     """Push game state to all SSE subscribers."""
     from ed_engine.engine.perspective import PerspectiveFilter
@@ -135,6 +237,10 @@ def _broadcast_state(session: Any) -> None:
             for p in filtered.get("players", []):
                 if p.get("id") in gm_to_session:
                     p["id"] = gm_to_session[p["id"]]
+            # Remap worker IDs inside all location lists
+            for loc_key in ("basic_locations", "forest_locations", "haven_locations", "journey_locations"):
+                for loc in filtered.get(loc_key, []):
+                    loc["workers"] = [gm_to_session.get(w, w) for w in loc.get("workers", [])]
 
             event = {"event": "game_state", "data": filtered}
             queue.put_nowait(event)

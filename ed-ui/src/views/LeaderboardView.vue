@@ -51,9 +51,9 @@ function rankDisplay(rank: number): string {
       <h1 class="leaderboard-title">Leaderboard</h1>
       <p class="leaderboard-subtitle">The finest builders in Everdell Valley</p>
       <div class="divider">
-        <span class="leaf">\u{1F33F}</span>
+        <span class="leaf">&#x1F33F;</span>
         <span class="divider-line"></span>
-        <span class="leaf">\u{1F33F}</span>
+        <span class="leaf">&#x1F33F;</span>
       </div>
     </div>
 

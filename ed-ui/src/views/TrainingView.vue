@@ -219,19 +219,19 @@ const topCards = computed(() => {
             </text>
 
             <!-- Data lines -->
-            <path
-              v-for="diff in DIFFICULTIES"
-              :key="diff"
-              v-if="currentData[diff]?.vp_over_time"
-              :d="buildLinePath(currentData[diff].vp_over_time)"
-              fill="none"
-              :stroke="DIFF_COLORS[diff]"
-              stroke-width="2.5"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-            >
-              <title>{{ DIFF_LABELS[diff] }}</title>
-            </path>
+            <template v-for="diff in DIFFICULTIES" :key="diff">
+              <path
+                v-if="currentData[diff]?.vp_over_time"
+                :d="buildLinePath(currentData[diff].vp_over_time)"
+                fill="none"
+                :stroke="DIFF_COLORS[diff]"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              >
+                <title>{{ DIFF_LABELS[diff] }}</title>
+              </path>
+            </template>
           </svg>
 
           <!-- Legend -->
@@ -248,9 +248,8 @@ const topCards = computed(() => {
       <div class="stats-section">
         <h2 class="section-title">Expected VP by Difficulty</h2>
         <div class="difficulty-cards">
+          <template v-for="diff in DIFFICULTIES" :key="diff">
           <div
-            v-for="diff in DIFFICULTIES"
-            :key="diff"
             v-if="currentData[diff]"
             class="diff-card"
             :class="'diff-' + diff"
@@ -267,6 +266,7 @@ const topCards = computed(() => {
               {{ currentData[diff].completed.toLocaleString() }} / {{ currentData[diff].games.toLocaleString() }} completed
             </div>
           </div>
+          </template>
         </div>
       </div>
 

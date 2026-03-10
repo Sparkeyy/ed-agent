@@ -258,6 +258,104 @@ def run_game(player_count: int, seed: int, difficulty: str) -> dict:
     }
 
 
+def run_mixed_game(player_count: int, seed: int) -> dict:
+    """Run a game where each player has a randomly assigned difficulty."""
+    rng = random.Random(seed)
+    diff_choices = [rng.choice(DIFFICULTIES) for _ in range(player_count)]
+    names = [f"{diff_choices[i].capitalize()}_{i+1}" for i in range(player_count)]
+
+    gm = GameManager(player_names=names, seed=seed)
+    turns = 0
+
+    # Map player index to their strategy
+    player_strategies = {}
+    for i, p in enumerate(gm.game.players):
+        player_strategies[str(p.id)] = STRATEGIES[diff_choices[i]]
+
+    while not gm.is_game_over() and turns < MAX_TURNS:
+        actions = gm.get_valid_actions()
+        if not actions:
+            gm.current_player.has_passed = True
+            gm.advance_turn()
+            turns += 1
+            continue
+        current_id = str(gm.current_player.id)
+        pick_fn = player_strategies.get(current_id, STRATEGIES["journeyman"])
+        chosen = pick_fn(actions, gm.game, rng)
+        gm.perform_action(chosen)
+        turns += 1
+
+    completed = gm.is_game_over()
+    scores_raw = ScoringEngine.calculate_final_scores(gm.game)
+
+    scores = {}
+    player_difficulties = {}
+    cards_played = {}
+    for i, p in enumerate(gm.game.players):
+        breakdown = scores_raw.get(p.name)
+        if breakdown:
+            scores[p.name] = {
+                "total": breakdown.total,
+                "base_card_points": breakdown.base_card_points,
+                "bonus_card_points": breakdown.bonus_card_points,
+                "event_points": breakdown.event_points,
+                "journey_points": breakdown.journey_points,
+                "point_tokens": breakdown.point_tokens,
+            }
+        else:
+            scores[p.name] = {"total": 0}
+        player_difficulties[p.name] = diff_choices[i]
+        cards_played[p.name] = [c.name for c in p.city]
+
+    winner = max(scores, key=lambda n: scores[n]["total"]) if scores else None
+
+    return {
+        "seed": seed,
+        "player_count": player_count,
+        "difficulty": "mixed",
+        "player_difficulties": player_difficulties,
+        "turns": turns,
+        "completed": completed,
+        "scores": scores,
+        "winner": winner,
+        "winner_difficulty": player_difficulties.get(winner, "unknown") if winner else None,
+        "cards_played": cards_played,
+    }
+
+
+def run_mixed_batch(player_count: int, count: int) -> Path:
+    """Run a batch of mixed-difficulty games."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = RESULTS_DIR / f"results_{player_count}p_mixed.jsonl"
+
+    existing = count_existing(filepath)
+    if existing >= count:
+        print(f"  {filepath.name}: {existing}/{count} already done, skipping")
+        return filepath
+
+    if existing > 0:
+        print(f"  {filepath.name}: resuming from game {existing}/{count}")
+
+    t0 = time.time()
+    with open(filepath, "a") as f:
+        for i in range(existing, count):
+            seed = i + (player_count * 200_000)
+            result = run_mixed_game(player_count, seed)
+            f.write(json.dumps(result) + "\n")
+
+            done = i - existing + 1
+            if done % 1000 == 0:
+                elapsed = time.time() - t0
+                rate = done / elapsed
+                remaining = (count - existing - done) / rate
+                print(f"  {filepath.name}: {i+1}/{count} ({rate:.0f} games/s, ~{remaining:.0f}s left)")
+
+    elapsed = time.time() - t0
+    total_new = count - existing
+    print(f"  {filepath.name}: {total_new} games in {elapsed:.1f}s ({total_new/elapsed:.0f} games/s)")
+    return filepath
+
+
 def count_existing(filepath: Path) -> int:
     """Count lines in existing JSONL file."""
     if not filepath.exists():
@@ -403,6 +501,65 @@ def generate_summary() -> dict:
                 "avg_breakdown": avg_breakdown,
             }
 
+    # --- Mixed-difficulty results ---
+    summary["mixed"] = {}
+    for pc in (2, 3, 4):
+        filepath = RESULTS_DIR / f"results_{pc}p_mixed.jsonl"
+        if not filepath.exists():
+            continue
+
+        results = []
+        with open(filepath) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    results.append(json.loads(line))
+
+        if not results:
+            continue
+
+        total_games = len(results)
+        completed = sum(1 for r in results if r["completed"])
+
+        # Per-difficulty stats in mixed games
+        diff_vps = defaultdict(list)      # difficulty -> [vp, ...]
+        diff_wins = defaultdict(int)       # difficulty -> win count
+        diff_appearances = defaultdict(int)  # difficulty -> times played
+
+        for r in results:
+            pd = r.get("player_difficulties", {})
+            winner = r.get("winner")
+            winner_diff = r.get("winner_difficulty")
+
+            for name, diff in pd.items():
+                diff_appearances[diff] += 1
+                if name in r["scores"]:
+                    diff_vps[diff].append(r["scores"][name]["total"])
+
+            if winner_diff:
+                diff_wins[winner_diff] += 1
+
+        diff_stats = {}
+        for diff in DIFFICULTIES:
+            vps = diff_vps.get(diff, [])
+            wins = diff_wins.get(diff, 0)
+            appearances = diff_appearances.get(diff, 0)
+            if vps:
+                diff_stats[diff] = {
+                    "avg_vp": round(sum(vps) / len(vps), 1),
+                    "win_rate": round(wins / total_games, 3) if total_games else 0,
+                    "wins": wins,
+                    "appearances": appearances,
+                    "min_vp": min(vps),
+                    "max_vp": max(vps),
+                }
+
+        summary["mixed"][str(pc)] = {
+            "games": total_games,
+            "completed": completed,
+            "by_difficulty": diff_stats,
+        }
+
     return summary
 
 
@@ -441,6 +598,8 @@ def main():
     parser.add_argument("--difficulty", type=str, default="master",
                         choices=["apprentice", "journeyman", "master", "all"],
                         help="AI difficulty (default: master)")
+    parser.add_argument("--mixed", action="store_true",
+                        help="Run mixed-difficulty games (random difficulty per player)")
     parser.add_argument("--summary", action="store_true",
                         help="Print summary from existing results")
     args = parser.parse_args()
@@ -449,19 +608,28 @@ def main():
         print_summary()
         return
 
-    player_counts = [args.players] if args.players else [2, 3, 4]
-    difficulties = list(DIFFICULTIES) if args.difficulty == "all" else [args.difficulty]
-
-    total_games = len(player_counts) * len(difficulties) * args.count
-    print(f"Simulating {total_games:,} games ({len(player_counts)} player counts x "
-          f"{len(difficulties)} difficulties x {args.count:,} each)\n")
-
-    t0 = time.time()
-    for pc in player_counts:
-        for diff in difficulties:
-            print(f"[{pc}p {diff}]")
-            run_batch(pc, diff, args.count)
+    if args.mixed:
+        player_counts = [args.players] if args.players else [4]
+        print(f"Simulating {args.count:,} mixed-difficulty games per player count\n")
+        t0 = time.time()
+        for pc in player_counts:
+            print(f"[{pc}p mixed]")
+            run_mixed_batch(pc, args.count)
             print()
+    else:
+        player_counts = [args.players] if args.players else [2, 3, 4]
+        difficulties = list(DIFFICULTIES) if args.difficulty == "all" else [args.difficulty]
+
+        total_games = len(player_counts) * len(difficulties) * args.count
+        print(f"Simulating {total_games:,} games ({len(player_counts)} player counts x "
+              f"{len(difficulties)} difficulties x {args.count:,} each)\n")
+
+        t0 = time.time()
+        for pc in player_counts:
+            for diff in difficulties:
+                print(f"[{pc}p {diff}]")
+                run_batch(pc, diff, args.count)
+                print()
 
     elapsed = time.time() - t0
     print(f"Total time: {elapsed:.1f}s")

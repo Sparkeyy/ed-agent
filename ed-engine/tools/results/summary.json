@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-10T04:43:52.274739+00:00",
+  "generated_at": "2026-03-10T04:57:26.655291+00:00",
   "by_player_count": {
     "2": {
       "apprentice": {
@@ -1615,6 +1615,38 @@
           "event_points": 1.6,
           "journey_points": 0.0,
           "point_tokens": 2.8
+        }
+      }
+    }
+  },
+  "mixed": {
+    "4": {
+      "games": 50000,
+      "completed": 50000,
+      "by_difficulty": {
+        "apprentice": {
+          "avg_vp": 13.6,
+          "win_rate": 0.209,
+          "wins": 10448,
+          "appearances": 66739,
+          "min_vp": -3,
+          "max_vp": 53
+        },
+        "journeyman": {
+          "avg_vp": 17.5,
+          "win_rate": 0.362,
+          "wins": 18124,
+          "appearances": 66387,
+          "min_vp": -2,
+          "max_vp": 60
+        },
+        "master": {
+          "avg_vp": 17.7,
+          "win_rate": 0.429,
+          "wins": 21428,
+          "appearances": 66874,
+          "min_vp": -2,
+          "max_vp": 57
         }
       }
     }

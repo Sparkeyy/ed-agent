@@ -13,9 +13,25 @@ interface DifficultyStats {
   avg_breakdown: Record<string, number>
 }
 
+interface MixedDiffStats {
+  avg_vp: number
+  win_rate: number
+  wins: number
+  appearances: number
+  min_vp: number
+  max_vp: number
+}
+
+interface MixedData {
+  games: number
+  completed: number
+  by_difficulty: Record<string, MixedDiffStats>
+}
+
 interface TrainingSummary {
   generated_at: string
   by_player_count: Record<string, Record<string, DifficultyStats>>
+  mixed?: Record<string, MixedData>
 }
 
 const summary = ref<TrainingSummary | null>(null)
@@ -147,6 +163,12 @@ const topCards = computed(() => {
   const masterStats = currentData.value['master']
   if (!masterStats?.top_cards) return []
   return masterStats.top_cards.slice(0, 10)
+})
+
+// Mixed-difficulty data for selected player count
+const mixedData = computed(() => {
+  if (!summary.value?.mixed) return null
+  return summary.value.mixed[selectedPlayers.value] ?? null
 })
 </script>
 
@@ -301,6 +323,58 @@ const topCards = computed(() => {
               <div class="card-bar-fill" :style="{ width: (rate * 100) + '%' }"></div>
             </div>
             <span class="card-rate">{{ (rate * 100).toFixed(0) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mixed Difficulty Results -->
+      <div class="mixed-section" v-if="mixedData">
+        <h2 class="section-title">Mixed Difficulty Games ({{ mixedData.games.toLocaleString() }} games)</h2>
+        <p class="mixed-subtitle">Each player randomly assigned a difficulty. Shows relative strength when different AI levels compete head-to-head.</p>
+
+        <div class="mixed-cards">
+          <template v-for="diff in DIFFICULTIES" :key="'mixed-' + diff">
+          <div
+            v-if="mixedData.by_difficulty[diff]"
+            class="mixed-card"
+            :class="'diff-' + diff"
+          >
+            <div class="diff-name">{{ DIFF_LABELS[diff] }}</div>
+            <div class="mixed-win-rate">{{ (mixedData.by_difficulty[diff].win_rate * 100).toFixed(1) }}%</div>
+            <div class="mixed-win-label">win rate</div>
+            <div class="mixed-stats">
+              <div class="mixed-stat">
+                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].avg_vp }}</span>
+                <span class="mixed-stat-label">avg VP</span>
+              </div>
+              <div class="mixed-stat">
+                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].wins.toLocaleString() }}</span>
+                <span class="mixed-stat-label">wins</span>
+              </div>
+              <div class="mixed-stat">
+                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].min_vp }}&ndash;{{ mixedData.by_difficulty[diff].max_vp }}</span>
+                <span class="mixed-stat-label">VP range</span>
+              </div>
+            </div>
+          </div>
+          </template>
+        </div>
+
+        <!-- Win rate bar visualization -->
+        <div class="mixed-bar-container" v-if="mixedData.by_difficulty">
+          <div class="mixed-bar">
+            <template v-for="diff in DIFFICULTIES" :key="'bar-' + diff">
+            <div
+              v-if="mixedData.by_difficulty[diff]"
+              class="mixed-bar-segment"
+              :class="'bg-' + diff"
+              :style="{ width: (mixedData.by_difficulty[diff].win_rate * 100) + '%' }"
+            >
+              <span v-if="mixedData.by_difficulty[diff].win_rate > 0.08" class="bar-label">
+                {{ DIFF_LABELS[diff] }} {{ (mixedData.by_difficulty[diff].win_rate * 100).toFixed(0) }}%
+              </span>
+            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -589,6 +663,113 @@ const topCards = computed(() => {
   color: var(--ink);
   flex-shrink: 0;
 }
+
+/* Mixed difficulty section */
+.mixed-section {
+  margin-bottom: var(--gap-xl);
+}
+
+.mixed-subtitle {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-bottom: var(--gap-md);
+  font-style: italic;
+}
+
+.mixed-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap-md);
+  margin-bottom: var(--gap-lg);
+}
+
+.mixed-card {
+  background: white;
+  border: var(--border-card);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md) var(--gap-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid transparent;
+}
+
+.mixed-win-rate {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.mixed-win-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+
+.mixed-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap-md);
+  border-top: 1px solid var(--parchment-deep);
+  padding-top: 8px;
+}
+
+.mixed-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mixed-stat-value {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mixed-stat-label {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mixed-bar-container {
+  background: white;
+  border: var(--border-card);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.mixed-bar {
+  display: flex;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mixed-bar-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.5s ease;
+}
+
+.bar-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.bg-apprentice { background: #c0392b; }
+.bg-journeyman { background: #d4a017; }
+.bg-master { background: #27ae60; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }

@@ -79,7 +79,7 @@ const maxPoints = computed(() => {
 })
 
 // Player colors for bars
-const playerColors = ['var(--forest-light)', 'var(--gold)', 'var(--blue-governance)', 'var(--purple-prosperity)']
+const playerColors = ['#e07020', '#2196f3', '#e53980', '#00a86b']
 
 defineExpose({ toggle })
 </script>

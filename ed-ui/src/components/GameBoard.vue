@@ -8,12 +8,14 @@ const props = withDefaults(defineProps<{
   journeyLocations?: LocationData[]
   validLocationIds?: string[]
   playerNames?: Record<string, string>
+  playerOrder?: string[]
   currentSeason?: string
 }>(), {
   havenLocations: () => [],
   journeyLocations: () => [],
   validLocationIds: () => [],
   playerNames: () => ({}),
+  playerOrder: () => [],
   currentSeason: 'winter',
 })
 
@@ -26,18 +28,18 @@ function isValid(id: string): boolean {
   return props.validLocationIds.includes(id)
 }
 
-// Simple color hash for worker tokens
-const WORKER_COLORS = ['#4a7c59', '#a83832', '#3a6b8c', '#6b4c7a']
+// Distinct player colors — high contrast, won't blend with location backgrounds
+const PLAYER_COLORS = ['#e07020', '#2196f3', '#e53980', '#00a86b']
 function workerColor(workerId: string): string {
-  let hash = 0
-  for (const ch of workerId) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffffff
-  return WORKER_COLORS[hash % WORKER_COLORS.length]
+  const idx = props.playerOrder.indexOf(workerId)
+  if (idx >= 0) return PLAYER_COLORS[idx % PLAYER_COLORS.length]
+  return '#888'
 }
 
 function workerLabel(workerId: string): string {
   const name = props.playerNames[workerId]
   if (name) return name.substring(0, 2).toUpperCase()
-  return workerId.substring(0, 2).toUpperCase()
+  return '??'
 }
 
 function workerTitle(workerId: string): string {

@@ -123,6 +123,11 @@ const playerNamesMap = computed<Record<string, string>>(() => {
   return map
 })
 
+const playerOrderList = computed<string[]>(() => {
+  if (!store.state) return []
+  return store.state.players.map(p => p.id)
+})
+
 // City tabs: me first, then opponents
 const cityTabs = computed(() => {
   const tabs: Array<{ id: string; name: string; isMe: boolean }> = []
@@ -463,6 +468,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
         :journey-locations="[]"
         :valid-location-ids="validLocationIds"
         :player-names="playerNamesMap"
+        :player-order="playerOrderList"
         :current-season="store.myPlayer?.season ?? 'winter'"
         @place-worker="handlePlaceWorker"
         @location-info="handleLocationInfo"
@@ -477,6 +483,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           :journey-locations="[]"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
+        :player-order="playerOrderList"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
           @location-info="handleLocationInfo"
@@ -507,6 +514,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           :journey-locations="[]"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
+        :player-order="playerOrderList"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
           @location-info="handleLocationInfo"
@@ -522,6 +530,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           :journey-locations="store.state.journey_locations || []"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
+        :player-order="playerOrderList"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
           @location-info="handleLocationInfo"
@@ -533,6 +542,7 @@ function handleEventInfo(eventData: { name: string; description?: string; requir
           :journey-locations="[]"
           :valid-location-ids="validLocationIds"
           :player-names="playerNamesMap"
+        :player-order="playerOrderList"
           :current-season="store.myPlayer?.season ?? 'winter'"
           @place-worker="handlePlaceWorker"
           @location-info="handleLocationInfo"

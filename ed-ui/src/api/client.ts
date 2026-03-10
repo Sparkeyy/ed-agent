@@ -104,7 +104,7 @@ export async function getProfile(username: string): Promise<PlayerProfile> {
 
 // Leaderboard
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  return request<LeaderboardEntry[]>('/leaderboard')
+  return request<LeaderboardEntry[]>('/players/leaderboard')
 }
 
 // Add AI opponent (via engine)

@@ -35,6 +35,7 @@ services:
       - ./ed-ui/src:/app/src
       - ./ed-ui/index.html:/app/index.html
       - ./ed-ui/public/assets/cards:/app/public/assets/cards
+      - ./ed-ui/public/data:/app/public/data
     environment:
       - VITE_API_URL=http://localhost:4242
     depends_on:

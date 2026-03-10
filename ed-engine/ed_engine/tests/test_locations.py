@@ -81,7 +81,7 @@ class TestLocationManager:
     def test_basic_locations_4_player(self) -> None:
         mgr = LocationManager(player_count=4, seed=42)
         basics = [l for l in mgr.all_locations if l.location_type == LocationType.BASIC]
-        assert len(basics) == 9  # 7 + 2 copies of 2-any
+        assert len(basics) == 8  # Same 8 basic locations regardless of player count
 
     def test_forest_locations_2_player(self) -> None:
         mgr = LocationManager(player_count=2, seed=42)

@@ -270,7 +270,7 @@ class TestSeasonProgression:
         ai.on_human_prepares_for_season(Season.SUMMER, loc_mgr)
 
         assert 1 in ai.workers_on_meadow  # meadow slot 2
-        assert ai.roaming_worker_location == "basic_1pebble_1card"
+        assert ai.roaming_worker_location == "basic_1pebble"
 
     def test_autumn_blocks_meadow_3_and_4_journey_and_forest(self):
         ai = RugwortAI(year=1, seed=0)
@@ -462,7 +462,7 @@ class TestSoloGameSimulation:
         summer_events = ai.on_human_prepares_for_season(
             Season.SUMMER, loc_mgr, event_mgr
         )
-        assert ai.roaming_worker_location == "basic_1pebble_1card"
+        assert ai.roaming_worker_location == "basic_1pebble"
         assert 1 in ai.workers_on_meadow
 
         # Simulate summer plays

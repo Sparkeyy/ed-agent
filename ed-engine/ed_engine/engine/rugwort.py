@@ -35,7 +35,7 @@ _BASIC_EVENT_COLORS: dict[str, CardType] = {
 # Season -> which basic location Rugwort's roaming worker moves to
 _ROAMING_WORKER_PROGRESSION: dict[Season, str] = {
     Season.SPRING: "basic_2resin",
-    Season.SUMMER: "basic_1pebble_1card",
+    Season.SUMMER: "basic_1pebble",
     Season.AUTUMN: "basic_1berry_1card",
 }
 

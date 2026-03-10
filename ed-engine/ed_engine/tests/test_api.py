@@ -20,10 +20,11 @@ from ed_engine.api import players as players_module
 def _clear_stores():
     """Clear all in-memory stores between tests."""
     store._games.clear()
-    players_module._players.clear()
+    # Reset the player store with a fresh in-memory database
+    from ed_engine.db import PlayerStore
+    players_module._store = PlayerStore(db_path=":memory:")
     yield
     store._games.clear()
-    players_module._players.clear()
 
 
 @pytest.fixture
@@ -456,23 +457,23 @@ def test_register_player(client: TestClient):
     resp = client.post("/api/v1/players", json={"name": "TestPlayer"})
     assert resp.status_code == 200
     data = resp.json()
-    assert data["name"] == "TestPlayer"
+    assert data["username"] == "TestPlayer"
     assert "id" in data
 
 
 def test_get_player(client: TestClient):
     create_resp = client.post("/api/v1/players", json={"name": "TestPlayer"})
-    player_id = create_resp.json()["id"]
+    username = create_resp.json()["username"]
 
-    resp = client.get(f"/api/v1/players/{player_id}")
+    resp = client.get(f"/api/v1/players/{username}")
     assert resp.status_code == 200
-    assert resp.json()["name"] == "TestPlayer"
+    assert resp.json()["username"] == "TestPlayer"
 
 
 def test_leaderboard(client: TestClient):
     client.post("/api/v1/players", json={"name": "P1"})
     client.post("/api/v1/players", json={"name": "P2"})
 
-    resp = client.get("/api/v1/players")
+    resp = client.get("/api/v1/players/leaderboard")
     assert resp.status_code == 200
     assert len(resp.json()) == 2

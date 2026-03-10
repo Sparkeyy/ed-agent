@@ -123,7 +123,25 @@ class ForestLocation(Location):
         elif self.id == "forest_08":  # Copy any Basic location and draw 1 card (interactive choice)
             if deck_mgr:
                 _draw_cards_for_player(player, deck_mgr, 1)
-            # Basic location copy handled at action level
+            # Set pending choice for player to pick a basic location to copy
+            game.pending_choice = {
+                "choice_type": "select_basic_location",
+                "card": "forest_08",
+                "player_id": str(player.id) if hasattr(player, 'id') else "",
+                "step": "pick_location",
+                "prompt": "Choose a Basic location to copy",
+                "options": [
+                    {"label": "3 Twigs", "value": "basic_3twigs"},
+                    {"label": "2 Twigs + 1 Card", "value": "basic_2twigs_1card"},
+                    {"label": "2 Resin", "value": "basic_2resin"},
+                    {"label": "1 Resin + 1 Card", "value": "basic_1resin_1card"},
+                    {"label": "2 Cards + 1 Point", "value": "basic_2cards_1point"},
+                    {"label": "1 Pebble", "value": "basic_1pebble"},
+                    {"label": "1 Berry + 1 Card", "value": "basic_1berry_1card"},
+                    {"label": "1 Berry", "value": "basic_1berry"},
+                ],
+                "context": {},
+            }
         elif self.id == "forest_09":  # Discard up to 3 cards & gain 1 any for each card (interactive)
             pass  # Handled at action level — player chooses cards to discard and resources
         elif self.id == "forest_10":  # Discard any, then draw 2 for every card discarded (interactive)

@@ -8,6 +8,12 @@ from ed_engine.engine.locations import (
     LocationManager,
 )
 from ed_engine.models.enums import LocationType, Season
+from ed_engine.models.game import GameState
+from ed_engine.models.player import Player
+from ed_engine.models.resources import ResourceBank
+from ed_engine.engine.deck import DeckManager
+from ed_engine.engine.actions import ActionHandler, GameAction, ActionType
+from ed_engine.cards import build_deck
 
 
 class TestLocationAvailability:
@@ -143,3 +149,75 @@ class TestLocationManager:
         forests1 = sorted(l.id for l in mgr1.all_locations if l.location_type == LocationType.FOREST)
         forests2 = sorted(l.id for l in mgr2.all_locations if l.location_type == LocationType.FOREST)
         assert forests1 == forests2
+
+
+class TestForest08CopyBasicLocation:
+    """Forest 08: Copy any Basic location and draw 1 card."""
+
+    def _setup(self):
+        game = GameState()
+        player = Player(name="Alice", resources=ResourceBank())
+        deck_mgr = DeckManager(build_deck(), seed=42)
+        loc = ForestLocation(id="forest_08", name="Copy any Basic location and draw 1 card")
+        return game, player, deck_mgr, loc
+
+    def test_sets_pending_choice_with_8_options(self) -> None:
+        game, player, deck_mgr, loc = self._setup()
+        loc.on_activate(game, player, deck_mgr=deck_mgr)
+        assert game.pending_choice is not None
+        assert game.pending_choice["choice_type"] == "select_basic_location"
+        assert len(game.pending_choice["options"]) == 8
+
+    def test_draws_1_card(self) -> None:
+        game, player, deck_mgr, loc = self._setup()
+        assert len(player.hand) == 0
+        loc.on_activate(game, player, deck_mgr=deck_mgr)
+        assert len(player.hand) == 1
+
+    def test_resolve_3_twigs(self) -> None:
+        """Choosing '3 Twigs' should grant 3 twigs."""
+        game, player, deck_mgr, loc = self._setup()
+        mgr = LocationManager(player_count=2, seed=42)
+        loc.on_activate(game, player, deck_mgr=deck_mgr)
+        # Simulate resolving the choice via ActionHandler
+
+        action = GameAction(
+            action_type=ActionType.RESOLVE_CHOICE,
+            player_id=str(player.id),
+            choice_index=0,  # "3 Twigs"
+        )
+        events = ActionHandler._resolve_choice(game, player, action, deck_mgr, mgr)
+        assert player.resources.twig == 3
+        assert game.pending_choice is None
+        assert any("copied" in e.lower() or "3 Twigs" in e for e in events)
+
+    def test_resolve_1_pebble(self) -> None:
+        """Choosing '1 Pebble' should grant 1 pebble."""
+        game, player, deck_mgr, loc = self._setup()
+        mgr = LocationManager(player_count=2, seed=42)
+        loc.on_activate(game, player, deck_mgr=deck_mgr)
+        action = GameAction(
+            action_type=ActionType.RESOLVE_CHOICE,
+            player_id=str(player.id),
+            choice_index=5,  # "1 Pebble"
+        )
+
+        ActionHandler._resolve_choice(game, player, action, deck_mgr, mgr)
+        assert player.resources.pebble == 1
+        assert game.pending_choice is None
+
+    def test_resolve_2twigs_1card_draws_extra(self) -> None:
+        """Choosing '2 Twigs + 1 Card' should grant 2 twigs and draw another card."""
+        game, player, deck_mgr, loc = self._setup()
+        mgr = LocationManager(player_count=2, seed=42)
+        loc.on_activate(game, player, deck_mgr=deck_mgr)
+        cards_after_activate = len(player.hand)  # Should be 1 from forest_08 draw
+        action = GameAction(
+            action_type=ActionType.RESOLVE_CHOICE,
+            player_id=str(player.id),
+            choice_index=1,  # "2 Twigs + 1 Card"
+        )
+
+        ActionHandler._resolve_choice(game, player, action, deck_mgr, mgr)
+        assert player.resources.twig == 2
+        assert len(player.hand) == cards_after_activate + 1  # Extra card from basic location

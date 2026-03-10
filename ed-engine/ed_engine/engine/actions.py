@@ -605,6 +605,17 @@ class ActionHandler:
             if idx is None or idx < 0 or idx >= len(options):
                 return ["ERROR: Invalid choice_index"]
             option = options[idx]
+
+            # Forest_08: copy a basic location (not a card — handle directly)
+            if pc.get("choice_type") == "select_basic_location":
+                location_id = option["value"]
+                if location_mgr:
+                    loc = location_mgr.get_location(location_id)
+                    if loc:
+                        loc.on_activate(game, player, deck_mgr=deck_mgr)
+                game.pending_choice = None
+                return [f"{player.name} copied {option['label']} from forest location"]
+
             card_name = pc.get("card")
             from ed_engine.cards import get_card_definition
             card = get_card_definition(card_name)

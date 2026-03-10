@@ -157,18 +157,57 @@ const xAxisLabels = computed(() => {
   return []
 })
 
-// Top cards: merge across difficulties, show best from master
-const topCards = computed(() => {
+// Breakdown keys from any available difficulty
+const breakdownKeys = computed(() => {
   if (!currentData.value) return []
-  const masterStats = currentData.value['master']
-  if (!masterStats?.top_cards) return []
-  return masterStats.top_cards.slice(0, 10)
+  for (const diff of DIFFICULTIES) {
+    const bd = currentData.value[diff]?.avg_breakdown
+    if (bd) return Object.keys(bd)
+  }
+  return []
 })
 
-// Mixed-difficulty data for selected player count
+// Union of top card names across all difficulties (ordered by master rank)
+const allTopCards = computed(() => {
+  if (!currentData.value) return []
+  const seen = new Set<string>()
+  const ordered: string[] = []
+  // Start with master ordering, then fill from others
+  for (const diff of [...DIFFICULTIES].reverse()) {
+    const cards = currentData.value[diff]?.top_cards ?? []
+    for (const [name] of cards.slice(0, 10)) {
+      if (!seen.has(name)) {
+        seen.add(name)
+        ordered.push(name)
+      }
+    }
+  }
+  return ordered.slice(0, 12)
+})
+
+// Lookup card rate for a difficulty
+function cardRate(diff: string, cardName: string): number {
+  if (!currentData.value) return 0
+  const cards = currentData.value[diff]?.top_cards ?? []
+  for (const [name, rate] of cards) {
+    if (name === cardName) return rate
+  }
+  return 0
+}
+
+// Mixed-difficulty data — show from whichever player count has it
 const mixedData = computed(() => {
   if (!summary.value?.mixed) return null
-  return summary.value.mixed[selectedPlayers.value] ?? null
+  // Try selected player count first, then any available
+  if (summary.value.mixed[selectedPlayers.value]) {
+    return { data: summary.value.mixed[selectedPlayers.value], players: selectedPlayers.value }
+  }
+  for (const pc of ['4', '3', '2']) {
+    if (summary.value.mixed[pc]) {
+      return { data: summary.value.mixed[pc], players: pc }
+    }
+  }
+  return null
 })
 </script>
 
@@ -293,66 +332,83 @@ const mixedData = computed(() => {
       </div>
 
       <!-- Score Breakdown -->
-      <div class="breakdown-section" v-if="currentData['master']?.avg_breakdown">
-        <h2 class="section-title">Average Score Breakdown (Master)</h2>
-        <div class="breakdown-bars">
-          <div
-            v-for="(val, key) in currentData['master'].avg_breakdown"
-            :key="key"
-            class="breakdown-row"
-          >
-            <span class="breakdown-label">{{ String(key).replace(/_/g, ' ') }}</span>
-            <div class="breakdown-bar-track">
-              <div
-                class="breakdown-bar-fill"
-                :style="{ width: Math.min(100, (val / (currentData['master'].avg_vp || 1)) * 100) + '%' }"
-              ></div>
-            </div>
-            <span class="breakdown-value">{{ val.toFixed(1) }}</span>
-          </div>
+      <div class="breakdown-section" v-if="breakdownKeys.length">
+        <h2 class="section-title">Average Score Breakdown</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th v-for="diff in DIFFICULTIES" :key="diff" :class="'th-' + diff">{{ DIFF_LABELS[diff] }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="key in breakdownKeys" :key="key">
+                <td class="row-label">{{ String(key).replace(/_/g, ' ') }}</td>
+                <td v-for="diff in DIFFICULTIES" :key="diff" class="row-value">
+                  {{ currentData[diff]?.avg_breakdown?.[key]?.toFixed(1) ?? '—' }}
+                </td>
+              </tr>
+              <tr class="total-row">
+                <td class="row-label">Total VP</td>
+                <td v-for="diff in DIFFICULTIES" :key="diff" class="row-value row-total">
+                  {{ currentData[diff]?.avg_vp?.toFixed(1) ?? '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- Top Cards -->
-      <div class="cards-section" v-if="topCards.length">
-        <h2 class="section-title">Top Cards by Win Rate (Master)</h2>
-        <div class="card-bars">
-          <div v-for="[card, rate] in topCards" :key="card" class="card-row">
-            <span class="card-name">{{ card }}</span>
-            <div class="card-bar-track">
-              <div class="card-bar-fill" :style="{ width: (rate * 100) + '%' }"></div>
-            </div>
-            <span class="card-rate">{{ (rate * 100).toFixed(0) }}%</span>
-          </div>
+      <div class="cards-section" v-if="allTopCards.length">
+        <h2 class="section-title">Top Cards by Win Rate</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Card</th>
+                <th v-for="diff in DIFFICULTIES" :key="diff" :class="'th-' + diff">{{ DIFF_LABELS[diff] }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="card in allTopCards" :key="card">
+                <td class="row-label">{{ card }}</td>
+                <td v-for="diff in DIFFICULTIES" :key="diff" class="row-value">
+                  {{ cardRate(diff, card) ? (cardRate(diff, card) * 100).toFixed(0) + '%' : '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- Mixed Difficulty Results -->
       <div class="mixed-section" v-if="mixedData">
-        <h2 class="section-title">Mixed Difficulty Games ({{ mixedData.games.toLocaleString() }} games)</h2>
+        <h2 class="section-title">Mixed Difficulty Games ({{ mixedData.data.games.toLocaleString() }} {{ mixedData.players }}-player games)</h2>
         <p class="mixed-subtitle">Each player randomly assigned a difficulty. Shows relative strength when different AI levels compete head-to-head.</p>
 
         <div class="mixed-cards">
           <template v-for="diff in DIFFICULTIES" :key="'mixed-' + diff">
           <div
-            v-if="mixedData.by_difficulty[diff]"
+            v-if="mixedData.data.by_difficulty[diff]"
             class="mixed-card"
             :class="'diff-' + diff"
           >
             <div class="diff-name">{{ DIFF_LABELS[diff] }}</div>
-            <div class="mixed-win-rate">{{ (mixedData.by_difficulty[diff].win_rate * 100).toFixed(1) }}%</div>
+            <div class="mixed-win-rate">{{ (mixedData.data.by_difficulty[diff].win_rate * 100).toFixed(1) }}%</div>
             <div class="mixed-win-label">win rate</div>
             <div class="mixed-stats">
               <div class="mixed-stat">
-                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].avg_vp }}</span>
+                <span class="mixed-stat-value">{{ mixedData.data.by_difficulty[diff].avg_vp }}</span>
                 <span class="mixed-stat-label">avg VP</span>
               </div>
               <div class="mixed-stat">
-                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].wins.toLocaleString() }}</span>
+                <span class="mixed-stat-value">{{ mixedData.data.by_difficulty[diff].wins.toLocaleString() }}</span>
                 <span class="mixed-stat-label">wins</span>
               </div>
               <div class="mixed-stat">
-                <span class="mixed-stat-value">{{ mixedData.by_difficulty[diff].min_vp }}&ndash;{{ mixedData.by_difficulty[diff].max_vp }}</span>
+                <span class="mixed-stat-value">{{ mixedData.data.by_difficulty[diff].min_vp }}&ndash;{{ mixedData.data.by_difficulty[diff].max_vp }}</span>
                 <span class="mixed-stat-label">VP range</span>
               </div>
             </div>
@@ -361,17 +417,17 @@ const mixedData = computed(() => {
         </div>
 
         <!-- Win rate bar visualization -->
-        <div class="mixed-bar-container" v-if="mixedData.by_difficulty">
+        <div class="mixed-bar-container" v-if="mixedData.data.by_difficulty">
           <div class="mixed-bar">
             <template v-for="diff in DIFFICULTIES" :key="'bar-' + diff">
             <div
-              v-if="mixedData.by_difficulty[diff]"
+              v-if="mixedData.data.by_difficulty[diff]"
               class="mixed-bar-segment"
               :class="'bg-' + diff"
-              :style="{ width: (mixedData.by_difficulty[diff].win_rate * 100) + '%' }"
+              :style="{ width: (mixedData.data.by_difficulty[diff].win_rate * 100) + '%' }"
             >
-              <span v-if="mixedData.by_difficulty[diff].win_rate > 0.08" class="bar-label">
-                {{ DIFF_LABELS[diff] }} {{ (mixedData.by_difficulty[diff].win_rate * 100).toFixed(0) }}%
+              <span v-if="mixedData.data.by_difficulty[diff].win_rate > 0.08" class="bar-label">
+                {{ DIFF_LABELS[diff] }} {{ (mixedData.data.by_difficulty[diff].win_rate * 100).toFixed(0) }}%
               </span>
             </div>
             </template>
@@ -662,6 +718,72 @@ const mixedData = computed(() => {
   font-weight: 600;
   color: var(--ink);
   flex-shrink: 0;
+}
+
+/* Data tables */
+.data-table-wrap {
+  background: white;
+  border: var(--border-card);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.data-table th {
+  text-align: right;
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  border-bottom: 2px solid var(--parchment-deep);
+}
+
+.data-table th:first-child {
+  text-align: left;
+}
+
+.th-apprentice { color: #c0392b !important; }
+.th-journeyman { color: #d4a017 !important; }
+.th-master { color: #27ae60 !important; }
+
+.data-table td {
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--parchment-dark);
+}
+
+.row-label {
+  text-transform: capitalize;
+  color: var(--ink);
+}
+
+.row-value {
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.total-row {
+  font-weight: 700;
+}
+
+.total-row td {
+  border-top: 2px solid var(--parchment-deep);
+  border-bottom: none;
+  padding-top: 8px;
+}
+
+.row-total {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
 }
 
 /* Mixed difficulty section */

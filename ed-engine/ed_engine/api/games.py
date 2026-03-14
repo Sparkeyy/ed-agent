@@ -114,6 +114,10 @@ def _build_game_state_response(
     for p in filtered.get("players", []):
         if p.get("id") in gm_to_session:
             p["id"] = gm_to_session[p["id"]]
+    # Remap worker IDs inside all location lists
+    for loc_key in ("basic_locations", "forest_locations", "haven_locations", "journey_locations"):
+        for loc in filtered.get(loc_key, []):
+            loc["workers"] = [gm_to_session.get(w, w) for w in loc.get("workers", [])]
 
     return GameStateResponse(
         game_id=session.game_id,

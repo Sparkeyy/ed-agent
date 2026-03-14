@@ -103,7 +103,20 @@ class ForestLocation(Location):
         if self.id == "forest_01":  # 1 twig, 1 resin & 1 berry
             player.resources = player.resources.gain(ResourceBank(twig=1, resin=1, berry=1))
         elif self.id == "forest_02":  # 2 any resource (interactive choice)
-            pass  # Handled at action level — player chooses 2 resources
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "forest_02",
+                "player_id": str(player.id) if hasattr(player, 'id') else "",
+                "step": "pick_resource_1",
+                "prompt": "Choose your first resource (2 any)",
+                "options": [
+                    {"label": "Twig", "value": "twig", "resource": "twig", "amount": 1},
+                    {"label": "Resin", "value": "resin", "resource": "resin", "amount": 1},
+                    {"label": "Pebble", "value": "pebble", "resource": "pebble", "amount": 1},
+                    {"label": "Berry", "value": "berry", "resource": "berry", "amount": 1},
+                ],
+                "context": {"remaining": 2, "source": "forest_02"},
+            }
         elif self.id == "forest_03":  # 2 berries & 1 card
             player.resources = player.resources.gain(ResourceBank(berry=2))
             if deck_mgr:
@@ -111,7 +124,20 @@ class ForestLocation(Location):
         elif self.id == "forest_04":  # 2 cards & 1 any resource (interactive choice)
             if deck_mgr:
                 _draw_cards_for_player(player, deck_mgr, 2)
-            # +1 any resource handled at action level
+            game.pending_choice = {
+                "choice_type": "select_resource",
+                "card": "forest_04",
+                "player_id": str(player.id) if hasattr(player, 'id') else "",
+                "step": "pick_resource_1",
+                "prompt": "Choose a resource to gain (1 any)",
+                "options": [
+                    {"label": "Twig", "value": "twig", "resource": "twig", "amount": 1},
+                    {"label": "Resin", "value": "resin", "resource": "resin", "amount": 1},
+                    {"label": "Pebble", "value": "pebble", "resource": "pebble", "amount": 1},
+                    {"label": "Berry", "value": "berry", "resource": "berry", "amount": 1},
+                ],
+                "context": {"remaining": 1, "source": "forest_04"},
+            }
         elif self.id == "forest_05":  # 2 resin & 1 twig
             player.resources = player.resources.gain(ResourceBank(resin=2, twig=1))
         elif self.id == "forest_06":  # 3 berries

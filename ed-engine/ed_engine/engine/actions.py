@@ -606,6 +606,23 @@ class ActionHandler:
                 return ["ERROR: Invalid choice_index"]
             option = options[idx]
 
+            # Forest resource selection (forest_02: 2 any, forest_04: 1 any)
+            if pc.get("choice_type") == "select_resource" and pc.get("card", "").startswith("forest_"):
+                resource = option.get("resource", "twig")
+                amount = option.get("amount", 1)
+                player.resources = player.resources.gain(ResourceBank(**{resource: amount}))
+                remaining = pc.get("context", {}).get("remaining", 1) - amount
+                if remaining > 0:
+                    game.pending_choice = {
+                        **pc,
+                        "step": f"pick_resource_{pc.get('context', {}).get('remaining', 1) - remaining + 1}",
+                        "prompt": f"Choose another resource ({remaining} remaining)",
+                        "context": {**pc.get("context", {}), "remaining": remaining},
+                    }
+                else:
+                    game.pending_choice = None
+                return [f"{player.name} gained 1 {resource} from forest location"]
+
             # Forest_08: copy a basic location (not a card — handle directly)
             if pc.get("choice_type") == "select_basic_location":
                 location_id = option["value"]
